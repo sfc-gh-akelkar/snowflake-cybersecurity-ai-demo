@@ -322,12 +322,13 @@ WHERE EXTRACT(HOUR FROM ts.timestamp) BETWEEN 9 AND 18 -- Normal working hours
     AND UNIFORM(1, 100, RANDOM()) <= 60; -- 60% chance of GitHub activity
 
 -- Add anomalous GitHub activity for john.smith (correlates with suspicious logins)
-INSERT INTO GITHUB_ACTIVITY_LOGS SELECT
+INSERT INTO GITHUB_ACTIVITY_LOGS
 -- Massive code changes during suspicious login period
-('GIT_ANOMALY_001', '2024-01-21 02:45:30', 'USER_EMP001', 'john.smith', 'john.smith@company.com', 'push', 'company/core-payment-system', 'main', 'deadbeef', '203.0.113.25', 250, 5000, 2000, 'Major refactoring of payment processing logic', TRUE, 'admin'),
-('GIT_ANOMALY_002', '2024-01-21 03:20:15', 'USER_EMP001', 'john.smith', 'john.smith@company.com', 'push', 'company/user-authentication', 'feature/backdoor', 'cafebabe', '203.0.113.25', 15, 500, 50, 'Add debug authentication bypass', TRUE, 'admin'),
-('GIT_ANOMALY_003', '2024-01-21 03:25:45', 'USER_EMP001', 'john.smith', 'john.smith@company.com', 'create_repo', 'john.smith/personal-backup', 'main', 'feedface', '203.0.113.25', 100, 10000, 0, 'Initial commit with company source code', FALSE, 'admin');
-
+SELECT 'GIT_ANOMALY_001', '2024-01-21 02:45:30', 'USER_EMP001', 'john.smith', 'john.smith@company.com', 'push', 'company/core-payment-system', 'main', 'deadbeef', '203.0.113.25', 250, 5000, 2000, 'Major refactoring of payment processing logic', TRUE, 'admin'
+UNION ALL
+SELECT 'GIT_ANOMALY_002', '2024-01-21 03:20:15', 'USER_EMP001', 'john.smith', 'john.smith@company.com', 'push', 'company/user-authentication', 'feature/backdoor', 'cafebabe', '203.0.113.25', 15, 500, 50, 'Add debug authentication bypass', TRUE, 'admin'
+UNION ALL
+SELECT 'GIT_ANOMALY_003', '2024-01-21 03:25:45', 'USER_EMP001', 'john.smith', 'john.smith@company.com', 'create_repo', 'john.smith/personal-backup', 'main', 'feedface', '203.0.113.25', 100, 10000, 0, 'Initial commit with company source code', FALSE, 'admin';
 -- =====================================================
 -- NETWORK SECURITY LOGS - For threat intelligence matching
 -- =====================================================
@@ -387,8 +388,7 @@ INSERT INTO NETWORK_SECURITY_LOGS SELECT
 ('NET_THREAT_004', '2024-01-23 08:45:25', '45.33.32.156', '10.1.1.20', 54322, 22, 'TCP', 64, 0, 1, 1, 0.1, 'SYN_SENT', TRUE, 'port_scan', 0.78, TRUE, OBJECT_CONSTRUCT('src_country', 'Unknown', 'dest_country', 'US', 'src_city', 'Unknown', 'dest_city', 'New York')),
 
 -- Cryptomining communication (matches IOC004)
-('NET_THREAT_005', '2024-01-25 14:20:45', '10.2.1.35', '198.51.100.25', 45123, 4444, 'TCP', 1024, 8192, 50, 100, 600.0, 'ESTABLISHED', TRUE, 'cryptomining', 0.72, FALSE, OBJECT_CONSTRUCT('src_country', 'US', 'dest_country', 'NL', 'src_city', 'New York', 'dest_city', 'Amsterdam'));
-
+('NET_THREAT_005', '2024-01-25 14:20:45', '10.2.1.35', '198.51.100.25', 45123, 4444, 'TCP', 1024, 8192, 50, 100, 600.0, 'ESTABLISHED', TRUE, 'cryptomining', 0.72, FALSE, OBJECT_CONSTRUCT('src_country', 'US', 'dest_country', 'NL', 'src_city', 'New York', 'dest_city', 'Amsterdam');
 -- =====================================================
 -- ACCESS CONTROL LOGS - For GRC compliance violations
 -- =====================================================
@@ -432,8 +432,7 @@ INSERT INTO ACCESS_CONTROL_LOGS SELECT
 
 -- emily.davis (terminated 2024-01-20) still accessing Jira
 ('ACCESS_VIOLATION_004', '2024-01-23 11:20:00', 'USER_EMP007', 'emily.davis', 'jira', 'login', 'project_management', 'basic', '172.16.50.10', TRUE, 60, TRUE),
-('ACCESS_VIOLATION_005', '2024-01-24 16:30:00', 'USER_EMP007', 'emily.davis', 'aws_console', 'login', 'cloud_service', 'basic', '172.16.50.10', TRUE, 30, TRUE);
-
+('ACCESS_VIOLATION_005', '2024-01-24 16:30:00', 'USER_EMP007', 'emily.davis', 'aws_console', 'login', 'cloud_service', 'basic', '172.16.50.10', TRUE, 30, TRUE;
 -- =====================================================
 -- SECURITY ALERTS - For AI enrichment demonstration
 -- =====================================================
@@ -470,8 +469,7 @@ INSERT INTO SECURITY_ALERTS SELECT
 ('ALERT_005', '2024-01-20 11:30:00', 'vulnerability_exploit', 'critical', 'Potential Exploitation of CVE-2023-46604', 
  'Security monitoring detected network traffic patterns consistent with exploitation attempts targeting CVE-2023-46604 (Apache ActiveMQ RCE vulnerability). The affected system prod-api-01 hosts critical API services and contains sensitive customer data. Multiple connection attempts were observed from various source IPs attempting to exploit the deserialization vulnerability. System administrators should immediately apply available patches and implement additional monitoring for this critical vulnerability.',
  'IDS detected multiple HTTP POST requests to /admin/activemq.jsp with suspicious payload patterns. Source IPs include 198.51.100.45, 203.0.113.75. Payload analysis shows attempted Java object deserialization attack vectors.',
- ['ASSET003'], [], 'new', 'vulnerability_management', NULL, FALSE, [], [], 0.94, FALSE);
-
+ ['ASSET003'], [], 'new', 'vulnerability_management', NULL, FALSE, [], [], 0.94, FALSE;
 -- =====================================================
 -- ML PREDICTIONS - Sample model outputs
 -- =====================================================
@@ -479,6 +477,5 @@ INSERT INTO ML_PREDICTIONS SELECT
 ('PRED_001', '2024-01-24 14:35:00', 'anomaly_detection_v2', '1.2', OBJECT_CONSTRUCT('user', 'john.smith', 'login_count', 15, 'unique_ips', 2, 'unique_countries', 2), 0.92, 0.95, 'anomaly', NULL, FALSE),
 ('PRED_002', '2024-01-23 08:50:00', 'threat_classification_v1', '1.0', OBJECT_CONSTRUCT('source_ip', '45.33.32.156', 'connection_attempts', 500, 'ports_targeted', [22, 23, 80, 443]), 0.87, 0.91, 'classification', NULL, FALSE),
 ('PRED_003', '2024-01-22 16:20:00', 'compliance_risk_v1', '1.1', OBJECT_CONSTRUCT('user', 'alex.turner', 'days_since_termination', 3, 'access_attempts', 1), 0.95, 0.98, 'risk_score', NULL, FALSE),
-('PRED_004', '2024-01-25 15:45:00', 'data_exfiltration_v1', '1.0', OBJECT_CONSTRUCT('source_ip', '10.1.1.20', 'bytes_transferred', 25000000, 'destination_reputation', 'malicious'), 0.89, 0.93, 'classification', NULL, FALSE);
-
+('PRED_004', '2024-01-25 15:45:00', 'data_exfiltration_v1', '1.0', OBJECT_CONSTRUCT('source_ip', '10.1.1.20', 'bytes_transferred', 25000000, 'destination_reputation', 'malicious'), 0.89, 0.93, 'classification', NULL, FALSE;
 COMMIT;
