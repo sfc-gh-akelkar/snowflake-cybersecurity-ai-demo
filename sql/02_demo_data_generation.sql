@@ -126,17 +126,22 @@ WHERE EXTRACT(HOUR FROM ts.hour_timestamp) BETWEEN 8 AND 17 -- Normal business h
     AND UNIFORM(1, 100, RANDOM()) <= 80; -- 80% chance of login during business hours
 
 -- Add anomalous login patterns for john.smith (weekend GitHub activity correlation)
-INSERT INTO USER_AUTHENTICATION_LOGS VALUES
+INSERT INTO USER_AUTHENTICATION_LOGS 
+SELECT * FROM VALUES
 -- Unusual weekend activity
-('AUTH_ANOMALY_001', '2024-01-21 02:30:15', 'USER_EMP001', 'john.smith', 'john.smith@company.com', 'login', '203.0.113.25', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', OBJECT_CONSTRUCT('country', 'CN', 'region', 'Beijing', 'city', 'Beijing', 'lat', 39.9042, 'lon', 116.4074), TRUE, NULL, 'SESS_ANOMALY_001', OBJECT_CONSTRUCT('device_type', 'laptop', 'os', 'macOS', 'browser', 'Safari'), ['unusual_time', 'suspicious_location', 'new_device'], FALSE),
-('AUTH_ANOMALY_002', '2024-01-21 03:15:22', 'USER_EMP001', 'john.smith', 'john.smith@company.com', 'login', '203.0.113.25', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', OBJECT_CONSTRUCT('country', 'CN', 'region', 'Beijing', 'city', 'Beijing', 'lat', 39.9042, 'lon', 116.4074), TRUE, NULL, 'SESS_ANOMALY_002', OBJECT_CONSTRUCT('device_type', 'laptop', 'os', 'macOS', 'browser', 'Safari'), ['unusual_time', 'suspicious_location'], FALSE),
+('AUTH_ANOMALY_001', '2024-01-21 02:30:15', 'USER_EMP001', 'john.smith', 'john.smith@company.com', 'login', '203.0.113.25', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', OBJECT_CONSTRUCT('country', 'CN', 'region', 'Beijing', 'city', 'Beijing', 'lat', 39.9042, 'lon', 116.4074), TRUE, NULL, 'SESS_ANOMALY_001', OBJECT_CONSTRUCT('device_type', 'laptop', 'os', 'macOS', 'browser', 'Safari'), ARRAY_CONSTRUCT('unusual_time', 'suspicious_location', 'new_device'), FALSE),
+('AUTH_ANOMALY_002', '2024-01-21 03:15:22', 'USER_EMP001', 'john.smith', 'john.smith@company.com', 'login', '203.0.113.25', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', OBJECT_CONSTRUCT('country', 'CN', 'region', 'Beijing', 'city', 'Beijing', 'lat', 39.9042, 'lon', 116.4074), TRUE, NULL, 'SESS_ANOMALY_002', OBJECT_CONSTRUCT('device_type', 'laptop', 'os', 'macOS', 'browser', 'Safari'), ARRAY_CONSTRUCT('unusual_time', 'suspicious_location'), FALSE),
 
 -- Failed login attempts from suspicious IP
-('AUTH_ANOMALY_003', '2024-01-24 14:22:10', 'USER_EMP002', 'sarah.chen', 'sarah.chen@company.com', 'failed_login', '203.0.113.50', 'curl/7.68.0', OBJECT_CONSTRUCT('country', 'RU', 'region', 'Moscow', 'city', 'Moscow', 'lat', 55.7558, 'lon', 37.6176), FALSE, 'Invalid credentials', NULL, OBJECT_CONSTRUCT('device_type', 'automated', 'os', 'Linux', 'browser', 'curl'), ['suspicious_location', 'automated_tool', 'brute_force'], FALSE),
-('AUTH_ANOMALY_004', '2024-01-24 14:22:25', 'USER_EMP002', 'sarah.chen', 'sarah.chen@company.com', 'failed_login', '203.0.113.50', 'curl/7.68.0', OBJECT_CONSTRUCT('country', 'RU', 'region', 'Moscow', 'city', 'Moscow', 'lat', 55.7558, 'lon', 37.6176), FALSE, 'Invalid credentials', NULL, OBJECT_CONSTRUCT('device_type', 'automated', 'os', 'Linux', 'browser', 'curl'), ['suspicious_location', 'automated_tool', 'brute_force'], FALSE),
+('AUTH_ANOMALY_003', '2024-01-24 14:22:10', 'USER_EMP002', 'sarah.chen', 'sarah.chen@company.com', 'failed_login', '203.0.113.50', 'curl/7.68.0', OBJECT_CONSTRUCT('country', 'RU', 'region', 'Moscow', 'city', 'Moscow', 'lat', 55.7558, 'lon', 37.6176), FALSE, 'Invalid credentials', NULL, OBJECT_CONSTRUCT('device_type', 'automated', 'os', 'Linux', 'browser', 'curl'), ARRAY_CONSTRUCT('suspicious_location', 'automated_tool', 'brute_force'), FALSE),
+('AUTH_ANOMALY_004', '2024-01-24 14:22:25', 'USER_EMP002', 'sarah.chen', 'sarah.chen@company.com', 'failed_login', '203.0.113.50', 'curl/7.68.0', OBJECT_CONSTRUCT('country', 'RU', 'region', 'Moscow', 'city', 'Moscow', 'lat', 55.7558, 'lon', 37.6176), FALSE, 'Invalid credentials', NULL, OBJECT_CONSTRUCT('device_type', 'automated', 'os', 'Linux', 'browser', 'curl'), ARRAY_CONSTRUCT('suspicious_location', 'automated_tool', 'brute_force'), FALSE)
+AS t (LOG_ID, TIMESTAMP, USER_ID, USERNAME, EMAIL, EVENT_TYPE, SOURCE_IP, USER_AGENT, LOCATION, SUCCESS, FAILURE_REASON, SESSION_ID, DEVICE_INFO, RISK_FACTORS, MFA_USED);
 
 -- Terminated employee still trying to access (GRC violation)
-('AUTH_ANOMALY_005', '2024-01-22 09:15:30', 'USER_EMP006', 'alex.turner', 'alex.turner@company.com', 'failed_login', '192.168.100.50', 'Mozilla/5.0 (Windows NT 10.0)', OBJECT_CONSTRUCT('country', 'US', 'region', 'CA', 'city', 'Los Angeles', 'lat', 34.0522, 'lon', -118.2437), FALSE, 'Account disabled', NULL, OBJECT_CONSTRUCT('device_type', 'desktop', 'os', 'Windows 10', 'browser', 'Edge'), ['account_disabled', 'terminated_user'], FALSE);
+INSERT INTO USER_AUTHENTICATION_LOGS 
+SELECT * FROM VALUES
+('AUTH_ANOMALY_005', '2024-01-22 09:15:30', 'USER_EMP006', 'alex.turner', 'alex.turner@company.com', 'failed_login', '192.168.100.50', 'Mozilla/5.0 (Windows NT 10.0)', OBJECT_CONSTRUCT('country', 'US', 'region', 'CA', 'city', 'Los Angeles', 'lat', 34.0522, 'lon', -118.2437), FALSE, 'Account disabled', NULL, OBJECT_CONSTRUCT('device_type', 'desktop', 'os', 'Windows 10', 'browser', 'Edge'), ARRAY_CONSTRUCT('account_disabled', 'terminated_user'), FALSE)
+AS t (LOG_ID, TIMESTAMP, USER_ID, USERNAME, EMAIL, EVENT_TYPE, SOURCE_IP, USER_AGENT, LOCATION, SUCCESS, FAILURE_REASON, SESSION_ID, DEVICE_INFO, RISK_FACTORS, MFA_USED);
 
 -- =====================================================
 -- GITHUB ACTIVITY LOGS - For anomaly detection
