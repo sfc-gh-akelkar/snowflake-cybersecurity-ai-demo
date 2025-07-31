@@ -9,20 +9,25 @@ USE SCHEMA SECURITY_AI;
 -- =====================================================
 -- EMPLOYEE DATA - Foundation for all user activities
 -- =====================================================
-INSERT INTO EMPLOYEE_DATA VALUES
+INSERT INTO EMPLOYEE_DATA
 -- Active employees
-('EMP001', 'john.smith', 'john.smith@company.com', 'John Smith', 'Engineering', 'Senior Developer', 'MGR001', '2020-03-15', NULL, 'active', 'standard', 'elevated', '2023-03-15', 2.1),
-('EMP002', 'sarah.chen', 'sarah.chen@company.com', 'Sarah Chen', 'Security', 'Security Analyst', 'MGR002', '2021-07-01', NULL, 'active', 'confidential', 'admin', '2023-07-01', 1.5),
-('EMP003', 'mike.rodriguez', 'mike.rodriguez@company.com', 'Mike Rodriguez', 'DevOps', 'DevOps Engineer', 'MGR001', '2019-11-20', NULL, 'active', 'standard', 'admin', '2023-11-20', 3.2),
-('EMP004', 'lisa.wang', 'lisa.wang@company.com', 'Lisa Wang', 'Data Science', 'Data Scientist', 'MGR003', '2022-01-10', NULL, 'active', 'standard', 'elevated', '2023-01-10', 1.8),
-('EMP005', 'david.johnson', 'david.johnson@company.com', 'David Johnson', 'Engineering', 'Principal Engineer', 'MGR001', '2018-05-30', NULL, 'active', 'standard', 'admin', '2023-05-30', 4.5),
-
+SELECT 'EMP001', 'john.smith', 'john.smith@company.com', 'John Smith', 'Engineering', 'Senior Developer', 'MGR001', '2020-03-15', NULL, 'active', 'standard', 'elevated', '2023-03-15', 2.1
+UNION ALL
+SELECT 'EMP002', 'sarah.chen', 'sarah.chen@company.com', 'Sarah Chen', 'Security', 'Security Analyst', 'MGR002', '2021-07-01', NULL, 'active', 'confidential', 'admin', '2023-07-01', 1.5
+UNION ALL
+SELECT 'EMP003', 'mike.rodriguez', 'mike.rodriguez@company.com', 'Mike Rodriguez', 'DevOps', 'DevOps Engineer', 'MGR001', '2019-11-20', NULL, 'active', 'standard', 'admin', '2023-11-20', 3.2
+UNION ALL
+SELECT 'EMP004', 'lisa.wang', 'lisa.wang@company.com', 'Lisa Wang', 'Data Science', 'Data Scientist', 'MGR003', '2022-01-10', NULL, 'active', 'standard', 'elevated', '2023-01-10', 1.8
+UNION ALL
+SELECT 'EMP005', 'david.johnson', 'david.johnson@company.com', 'David Johnson', 'Engineering', 'Principal Engineer', 'MGR001', '2018-05-30', NULL, 'active', 'standard', 'admin', '2023-05-30', 4.5
+UNION ALL
 -- Recently terminated employees (GRC use case)
-('EMP006', 'alex.turner', 'alex.turner@company.com', 'Alex Turner', 'Engineering', 'Software Developer', 'MGR001', '2021-03-01', '2024-01-15', 'terminated', 'standard', 'basic', '2023-03-01', 6.8),
-('EMP007', 'emily.davis', 'emily.davis@company.com', 'Emily Davis', 'Marketing', 'Marketing Manager', 'MGR004', '2020-08-15', '2024-01-20', 'terminated', 'standard', 'basic', '2023-08-15', 7.2),
-
+SELECT 'EMP006', 'alex.turner', 'alex.turner@company.com', 'Alex Turner', 'Engineering', 'Software Developer', 'MGR001', '2021-03-01', '2024-01-15', 'terminated', 'standard', 'basic', '2023-03-01', 6.8
+UNION ALL
+SELECT 'EMP007', 'emily.davis', 'emily.davis@company.com', 'Emily Davis', 'Marketing', 'Marketing Manager', 'MGR004', '2020-08-15', '2024-01-20', 'terminated', 'standard', 'basic', '2023-08-15', 7.2
+UNION ALL
 -- Suspended employee (anomaly detection use case)
-('EMP008', 'carlos.lopez', 'carlos.lopez@company.com', 'Carlos Lopez', 'Finance', 'Financial Analyst', 'MGR005', '2019-12-01', NULL, 'suspended', 'confidential', 'elevated', '2023-12-01', 9.1);
+SELECT 'EMP008', 'carlos.lopez', 'carlos.lopez@company.com', 'Carlos Lopez', 'Finance', 'Financial Analyst', 'MGR005', '2019-12-01', NULL, 'suspended', 'confidential', 'elevated', '2023-12-01', 9.1;
 
 -- =====================================================
 -- ASSET INVENTORY - Critical for vulnerability prioritization
@@ -32,20 +37,28 @@ INSERT INTO ASSET_INVENTORY (
     ASSET_ID, HOSTNAME, IP_ADDRESS, ASSET_TYPE, OS_TYPE, OS_VERSION, 
     DEPARTMENT, OWNER, BUSINESS_CRITICALITY, DATA_CLASSIFICATION, 
     LOCATION, ENVIRONMENT, LAST_SCAN, PATCH_LEVEL, NETWORK_ZONE
-) VALUES
+)
 -- Critical production servers
-('ASSET001', 'prod-db-01', '10.1.1.10', 'server', 'Linux', 'Ubuntu 20.04.6', 'Engineering', 'john.smith', 'critical', 'confidential', 'AWS-US-East-1', 'production', '2024-01-20 08:00:00', 'current', 'DMZ'),
-('ASSET002', 'prod-web-01', '10.1.1.20', 'server', 'Linux', 'CentOS 8.5', 'Engineering', 'mike.rodriguez', 'critical', 'confidential', 'AWS-US-East-1', 'production', '2024-01-19 08:00:00', 'current-1', 'DMZ'),
-('ASSET003', 'prod-api-01', '10.1.1.30', 'server', 'Linux', 'Ubuntu 22.04.3', 'Engineering', 'david.johnson', 'critical', 'restricted', 'AWS-US-East-1', 'production', '2024-01-21 08:00:00', 'current', 'Internal'),
+SELECT 'ASSET001', 'prod-db-01', '10.1.1.10', 'server', 'Linux', 'Ubuntu 20.04.6', 'Engineering', 'john.smith', 'critical', 'confidential', 'AWS-US-East-1', 'production', '2024-01-20 08:00:00', 'current', 'DMZ'
+UNION ALL
+SELECT 'ASSET002', 'prod-web-01', '10.1.1.20', 'server', 'Linux', 'CentOS 8.5', 'Engineering', 'mike.rodriguez', 'critical', 'confidential', 'AWS-US-East-1', 'production', '2024-01-19 08:00:00', 'current-1', 'DMZ'
+UNION ALL
+SELECT 'ASSET003', 'prod-api-01', '10.1.1.30', 'server', 'Linux', 'Ubuntu 22.04.3', 'Engineering', 'david.johnson', 'critical', 'restricted', 'AWS-US-East-1', 'production', '2024-01-21 08:00:00', 'current', 'Internal'
+UNION ALL
 -- High-value workstations
-('ASSET004', 'DEV-JOHN-01', '10.2.1.15', 'workstation', 'Windows', 'Windows 11 Pro', 'Engineering', 'john.smith', 'high', 'internal', 'Office-NYC', 'development', '2024-01-18 10:00:00', 'current-2', 'Corporate'),
-('ASSET005', 'SEC-SARAH-01', '10.2.1.25', 'workstation', 'macOS', 'macOS 14.2', 'Security', 'sarah.chen', 'high', 'confidential', 'Office-NYC', 'development', '2024-01-20 10:00:00', 'current', 'Corporate'),
+SELECT 'ASSET004', 'DEV-JOHN-01', '10.2.1.15', 'workstation', 'Windows', 'Windows 11 Pro', 'Engineering', 'john.smith', 'high', 'internal', 'Office-NYC', 'development', '2024-01-18 10:00:00', 'current-2', 'Corporate'
+UNION ALL
+SELECT 'ASSET005', 'SEC-SARAH-01', '10.2.1.25', 'workstation', 'macOS', 'macOS 14.2', 'Security', 'sarah.chen', 'high', 'confidential', 'Office-NYC', 'development', '2024-01-20 10:00:00', 'current', 'Corporate'
+UNION ALL
 -- Medium criticality systems
-('ASSET006', 'staging-web-01', '10.3.1.10', 'server', 'Linux', 'Ubuntu 18.04.6', 'Engineering', 'mike.rodriguez', 'medium', 'internal', 'AWS-US-West-2', 'staging', '2024-01-15 08:00:00', 'current-5', 'Internal'),
-('ASSET007', 'dev-db-01', '10.3.1.20', 'server', 'Linux', 'MySQL 8.0.34', 'Engineering', 'lisa.wang', 'medium', 'internal', 'AWS-US-West-2', 'development', '2024-01-16 08:00:00', 'current-3', 'Internal'),
+SELECT 'ASSET006', 'staging-web-01', '10.3.1.10', 'server', 'Linux', 'Ubuntu 18.04.6', 'Engineering', 'mike.rodriguez', 'medium', 'internal', 'AWS-US-West-2', 'staging', '2024-01-15 08:00:00', 'current-5', 'Internal'
+UNION ALL
+SELECT 'ASSET007', 'dev-db-01', '10.3.1.20', 'server', 'Linux', 'MySQL 8.0.34', 'Engineering', 'lisa.wang', 'medium', 'internal', 'AWS-US-West-2', 'development', '2024-01-16 08:00:00', 'current-3', 'Internal'
+UNION ALL
 -- IoT and mobile devices
-('ASSET008', 'CAMERA-LOBBY-01', '10.4.1.10', 'iot', 'Linux', 'Custom IoT OS', 'Facilities', 'facilities@company.com', 'low', 'internal', 'Office-NYC', 'production', '2024-01-10 08:00:00', 'current-10', 'IoT'),
-('ASSET009', 'MOBILE-CARLOS-01', '192.168.1.150', 'mobile', 'iOS', 'iOS 17.2.1', 'Finance', 'carlos.lopez', 'medium', 'confidential', 'Remote', 'production', '2024-01-12 08:00:00', 'current-2', 'Mobile');
+SELECT 'ASSET008', 'CAMERA-LOBBY-01', '10.4.1.10', 'iot', 'Linux', 'Custom IoT OS', 'Facilities', 'facilities@company.com', 'low', 'internal', 'Office-NYC', 'production', '2024-01-10 08:00:00', 'current-10', 'IoT'
+UNION ALL
+SELECT 'ASSET009', 'MOBILE-CARLOS-01', '192.168.1.150', 'mobile', 'iOS', 'iOS 17.2.1', 'Finance', 'carlos.lopez', 'medium', 'confidential', 'Remote', 'production', '2024-01-12 08:00:00', 'current-2', 'Mobile';
 
 -- Step 2: Update compliance scope arrays separately
 UPDATE ASSET_INVENTORY SET COMPLIANCE_SCOPE = ARRAY_CONSTRUCT('PCI', 'SOX') WHERE ASSET_ID = 'ASSET001';
@@ -65,13 +78,17 @@ UPDATE ASSET_INVENTORY SET COMPLIANCE_SCOPE = ARRAY_CONSTRUCT('SOX') WHERE ASSET
 INSERT INTO THREAT_INTELLIGENCE (
     IOC_ID, IOC_VALUE, IOC_TYPE, THREAT_TYPE, CONFIDENCE, SEVERITY, 
     FIRST_SEEN, LAST_SEEN, SOURCE, DESCRIPTION, EXPIRY_DATE
-) VALUES
+)
 -- Critical threats
-('IOC001', '203.0.113.50', 'ip', 'c2_server', 'high', 'critical', '2024-01-01 00:00:00', '2024-01-25 15:30:00', 'external_feed', 'Known C2 server for banking trojan campaigns targeting financial institutions', '2024-12-31 23:59:59'),
-('IOC002', 'malicious-site.badactor.com', 'domain', 'phishing', 'high', 'high', '2024-01-10 00:00:00', '2024-01-24 12:15:00', 'partner_intel', 'Phishing domain mimicking company login portal', '2024-12-31 23:59:59'),
-('IOC003', '45.33.32.156', 'ip', 'scanning', 'medium', 'medium', '2024-01-15 00:00:00', '2024-01-23 08:45:00', 'internal', 'Persistent scanner targeting SSH services', '2024-06-30 23:59:59'),
-('IOC004', 'crypto-miner.pool.com', 'domain', 'cryptomining', 'medium', 'medium', '2024-01-18 00:00:00', '2024-01-25 14:20:00', 'external_feed', 'Cryptocurrency mining pool used by malware', '2024-12-31 23:59:59'),
-('IOC005', 'a1b2c3d4e5f6789012345678901234567890abcd', 'hash', 'malware', 'high', 'critical', '2024-01-12 00:00:00', '2024-01-25 16:00:00', 'external_feed', 'Emotet banking trojan variant', '2024-12-31 23:59:59');
+SELECT 'IOC001', '203.0.113.50', 'ip', 'c2_server', 'high', 'critical', '2024-01-01 00:00:00', '2024-01-25 15:30:00', 'external_feed', 'Known C2 server for banking trojan campaigns targeting financial institutions', '2024-12-31 23:59:59'
+UNION ALL
+SELECT 'IOC002', 'malicious-site.badactor.com', 'domain', 'phishing', 'high', 'high', '2024-01-10 00:00:00', '2024-01-24 12:15:00', 'partner_intel', 'Phishing domain mimicking company login portal', '2024-12-31 23:59:59'
+UNION ALL
+SELECT 'IOC003', '45.33.32.156', 'ip', 'scanning', 'medium', 'medium', '2024-01-15 00:00:00', '2024-01-23 08:45:00', 'internal', 'Persistent scanner targeting SSH services', '2024-06-30 23:59:59'
+UNION ALL
+SELECT 'IOC004', 'crypto-miner.pool.com', 'domain', 'cryptomining', 'medium', 'medium', '2024-01-18 00:00:00', '2024-01-25 14:20:00', 'external_feed', 'Cryptocurrency mining pool used by malware', '2024-12-31 23:59:59'
+UNION ALL
+SELECT 'IOC005', 'a1b2c3d4e5f6789012345678901234567890abcd', 'hash', 'malware', 'high', 'critical', '2024-01-12 00:00:00', '2024-01-25 16:00:00', 'external_feed', 'Emotet banking trojan variant', '2024-12-31 23:59:59';
 
 -- Step 2: Update array columns separately
 UPDATE THREAT_INTELLIGENCE SET TAGS = ARRAY_CONSTRUCT('apt', 'c2', 'banking_trojan'), MITRE_TACTICS = ARRAY_CONSTRUCT('T1071.001', 'T1041'), TARGET_SYSTEMS = ARRAY_CONSTRUCT('banking_software', 'web_browsers') WHERE IOC_ID = 'IOC001';
@@ -83,22 +100,26 @@ UPDATE THREAT_INTELLIGENCE SET TAGS = ARRAY_CONSTRUCT('emotet', 'banking_trojan'
 -- =====================================================
 -- VULNERABILITY DATA - For AI risk prioritization
 -- =====================================================
-INSERT INTO VULNERABILITY_DATA VALUES
+INSERT INTO VULNERABILITY_DATA
 -- Critical vulnerabilities on critical assets
-('VULN001', 'CVE-2023-4966', 'ASSET001', 'prod-db-01', '10.1.1.10', 'Citrix NetScaler Buffer Overflow', 'critical', 9.4, 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H', '2024-01-20 09:00:00', TRUE, '2024-01-21 10:00:00', 3.9, 5.9, 'Citrix', 'NetScaler', '13.1-49.15', 'open'),
-('VULN002', 'CVE-2023-44487', 'ASSET002', 'prod-web-01', '10.1.1.20', 'HTTP/2 Rapid Reset Attack', 'high', 7.5, 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H', '2024-01-19 10:30:00', TRUE, '2024-01-20 12:00:00', 3.9, 3.6, 'Apache', 'HTTP Server', '2.4.57', 'open'),
-('VULN003', 'CVE-2023-46604', 'ASSET003', 'prod-api-01', '10.1.1.30', 'Apache ActiveMQ RCE', 'critical', 10.0, 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H', '2024-01-21 11:00:00', TRUE, '2024-01-22 08:00:00', 3.9, 6.0, 'Apache', 'ActiveMQ', '5.18.2', 'open'),
-
+SELECT 'VULN001', 'CVE-2023-4966', 'ASSET001', 'prod-db-01', '10.1.1.10', 'Citrix NetScaler Buffer Overflow', 'critical', 9.4, 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H', '2024-01-20 09:00:00', TRUE, '2024-01-21 10:00:00', 3.9, 5.9, 'Citrix', 'NetScaler', '13.1-49.15', 'open'
+UNION ALL
+SELECT 'VULN002', 'CVE-2023-44487', 'ASSET002', 'prod-web-01', '10.1.1.20', 'HTTP/2 Rapid Reset Attack', 'high', 7.5, 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H', '2024-01-19 10:30:00', TRUE, '2024-01-20 12:00:00', 3.9, 3.6, 'Apache', 'HTTP Server', '2.4.57', 'open'
+UNION ALL
+SELECT 'VULN003', 'CVE-2023-46604', 'ASSET003', 'prod-api-01', '10.1.1.30', 'Apache ActiveMQ RCE', 'critical', 10.0, 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H', '2024-01-21 11:00:00', TRUE, '2024-01-22 08:00:00', 3.9, 6.0, 'Apache', 'ActiveMQ', '5.18.2', 'open'
+UNION ALL
 -- High vulnerabilities on high-value workstations
-('VULN004', 'CVE-2023-36884', 'ASSET004', 'DEV-JOHN-01', '10.2.1.15', 'Microsoft Office RCE', 'high', 8.3, 'CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H', '2024-01-18 12:00:00', TRUE, '2024-01-19 14:00:00', 1.8, 5.9, 'Microsoft', 'Office', '365', 'open'),
-('VULN005', 'CVE-2023-32409', 'ASSET005', 'SEC-SARAH-01', '10.2.1.25', 'macOS Kernel Privilege Escalation', 'high', 7.8, 'CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H', '2024-01-20 13:00:00', TRUE, '2024-01-21 16:00:00', 1.8, 5.9, 'Apple', 'macOS', '14.1', 'open'),
-
+SELECT 'VULN004', 'CVE-2023-36884', 'ASSET004', 'DEV-JOHN-01', '10.2.1.15', 'Microsoft Office RCE', 'high', 8.3, 'CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H', '2024-01-18 12:00:00', TRUE, '2024-01-19 14:00:00', 1.8, 5.9, 'Microsoft', 'Office', '365', 'open'
+UNION ALL
+SELECT 'VULN005', 'CVE-2023-32409', 'ASSET005', 'SEC-SARAH-01', '10.2.1.25', 'macOS Kernel Privilege Escalation', 'high', 7.8, 'CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H', '2024-01-20 13:00:00', TRUE, '2024-01-21 16:00:00', 1.8, 5.9, 'Apple', 'macOS', '14.1', 'open'
+UNION ALL
 -- Medium vulnerabilities on staging/dev systems
-('VULN006', 'CVE-2023-32784', 'ASSET006', 'staging-web-01', '10.3.1.10', 'Ubuntu Kernel Information Disclosure', 'medium', 5.5, 'CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N', '2024-01-15 14:00:00', TRUE, '2024-01-25 10:00:00', 1.8, 2.5, 'Ubuntu', 'Linux Kernel', '5.4.0', 'patched'),
-('VULN007', 'CVE-2023-25690', 'ASSET007', 'dev-db-01', '10.3.1.20', 'MySQL Privilege Escalation', 'medium', 6.5, 'CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H', '2024-01-16 15:00:00', TRUE, '2024-01-20 09:00:00', 2.8, 3.6, 'Oracle', 'MySQL', '8.0.32', 'open'),
-
+SELECT 'VULN006', 'CVE-2023-32784', 'ASSET006', 'staging-web-01', '10.3.1.10', 'Ubuntu Kernel Information Disclosure', 'medium', 5.5, 'CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N', '2024-01-15 14:00:00', TRUE, '2024-01-25 10:00:00', 1.8, 2.5, 'Ubuntu', 'Linux Kernel', '5.4.0', 'patched'
+UNION ALL
+SELECT 'VULN007', 'CVE-2023-25690', 'ASSET007', 'dev-db-01', '10.3.1.20', 'MySQL Privilege Escalation', 'medium', 6.5, 'CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H', '2024-01-16 15:00:00', TRUE, '2024-01-20 09:00:00', 2.8, 3.6, 'Oracle', 'MySQL', '8.0.32', 'open'
+UNION ALL
 -- Low priority vulnerabilities
-('VULN008', 'CVE-2023-12345', 'ASSET008', 'CAMERA-LOBBY-01', '10.4.1.10', 'IoT Firmware Weak Authentication', 'low', 4.3, 'CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N', '2024-01-10 16:00:00', FALSE, NULL, 2.8, 1.4, 'GenericIoT', 'Camera Firmware', '1.2.3', 'accepted_risk');
+SELECT 'VULN008', 'CVE-2023-12345', 'ASSET008', 'CAMERA-LOBBY-01', '10.4.1.10', 'IoT Firmware Weak Authentication', 'low', 4.3, 'CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N', '2024-01-10 16:00:00', FALSE, NULL, 2.8, 1.4, 'GenericIoT', 'Camera Firmware', '1.2.3', 'accepted_risk';
 
 -- =====================================================
 -- USER AUTHENTICATION LOGS - For anomaly detection
@@ -182,13 +203,16 @@ WHERE LOCATION IS NULL AND LOG_ID LIKE 'AUTH_%' AND LOG_ID NOT LIKE 'AUTH_ANOMAL
 INSERT INTO USER_AUTHENTICATION_LOGS (
     LOG_ID, TIMESTAMP, USER_ID, USERNAME, EMAIL, EVENT_TYPE, SOURCE_IP, USER_AGENT, 
     SUCCESS, FAILURE_REASON, SESSION_ID, MFA_USED
-) VALUES
+)
 -- Unusual weekend activity
-('AUTH_ANOMALY_001', '2024-01-21 02:30:15', 'USER_EMP001', 'john.smith', 'john.smith@company.com', 'login', '203.0.113.25', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', TRUE, NULL, 'SESS_ANOMALY_001', FALSE),
-('AUTH_ANOMALY_002', '2024-01-21 03:15:22', 'USER_EMP001', 'john.smith', 'john.smith@company.com', 'login', '203.0.113.25', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', TRUE, NULL, 'SESS_ANOMALY_002', FALSE),
+SELECT 'AUTH_ANOMALY_001', '2024-01-21 02:30:15', 'USER_EMP001', 'john.smith', 'john.smith@company.com', 'login', '203.0.113.25', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', TRUE, NULL, 'SESS_ANOMALY_001', FALSE
+UNION ALL
+SELECT 'AUTH_ANOMALY_002', '2024-01-21 03:15:22', 'USER_EMP001', 'john.smith', 'john.smith@company.com', 'login', '203.0.113.25', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', TRUE, NULL, 'SESS_ANOMALY_002', FALSE
+UNION ALL
 -- Failed login attempts from suspicious IP
-('AUTH_ANOMALY_003', '2024-01-24 14:22:10', 'USER_EMP002', 'sarah.chen', 'sarah.chen@company.com', 'failed_login', '203.0.113.50', 'curl/7.68.0', FALSE, 'Invalid credentials', NULL, FALSE),
-('AUTH_ANOMALY_004', '2024-01-24 14:22:25', 'USER_EMP002', 'sarah.chen', 'sarah.chen@company.com', 'failed_login', '203.0.113.50', 'curl/7.68.0', FALSE, 'Invalid credentials', NULL, FALSE);
+SELECT 'AUTH_ANOMALY_003', '2024-01-24 14:22:10', 'USER_EMP002', 'sarah.chen', 'sarah.chen@company.com', 'failed_login', '203.0.113.50', 'curl/7.68.0', FALSE, 'Invalid credentials', NULL, FALSE
+UNION ALL
+SELECT 'AUTH_ANOMALY_004', '2024-01-24 14:22:25', 'USER_EMP002', 'sarah.chen', 'sarah.chen@company.com', 'failed_login', '203.0.113.50', 'curl/7.68.0', FALSE, 'Invalid credentials', NULL, FALSE;
 
 -- Step 2: Update complex object and array columns separately
 UPDATE USER_AUTHENTICATION_LOGS SET 
@@ -219,8 +243,8 @@ WHERE LOG_ID = 'AUTH_ANOMALY_004';
 INSERT INTO USER_AUTHENTICATION_LOGS (
     LOG_ID, TIMESTAMP, USER_ID, USERNAME, EMAIL, EVENT_TYPE, SOURCE_IP, USER_AGENT, 
     SUCCESS, FAILURE_REASON, SESSION_ID, MFA_USED
-) VALUES
-('AUTH_ANOMALY_005', '2024-01-22 09:15:30', 'USER_EMP006', 'alex.turner', 'alex.turner@company.com', 'failed_login', '192.168.100.50', 'Mozilla/5.0 (Windows NT 10.0)', FALSE, 'Account disabled', NULL, FALSE);
+)
+SELECT 'AUTH_ANOMALY_005', '2024-01-22 09:15:30', 'USER_EMP006', 'alex.turner', 'alex.turner@company.com', 'failed_login', '192.168.100.50', 'Mozilla/5.0 (Windows NT 10.0)', FALSE, 'Account disabled', NULL, FALSE;
 
 -- Update complex columns for terminated employee
 UPDATE USER_AUTHENTICATION_LOGS SET 
@@ -298,7 +322,7 @@ WHERE EXTRACT(HOUR FROM ts.timestamp) BETWEEN 9 AND 18 -- Normal working hours
     AND UNIFORM(1, 100, RANDOM()) <= 60; -- 60% chance of GitHub activity
 
 -- Add anomalous GitHub activity for john.smith (correlates with suspicious logins)
-INSERT INTO GITHUB_ACTIVITY_LOGS VALUES
+INSERT INTO GITHUB_ACTIVITY_LOGS SELECT
 -- Massive code changes during suspicious login period
 ('GIT_ANOMALY_001', '2024-01-21 02:45:30', 'USER_EMP001', 'john.smith', 'john.smith@company.com', 'push', 'company/core-payment-system', 'main', 'deadbeef', '203.0.113.25', 250, 5000, 2000, 'Major refactoring of payment processing logic', TRUE, 'admin'),
 ('GIT_ANOMALY_002', '2024-01-21 03:20:15', 'USER_EMP001', 'john.smith', 'john.smith@company.com', 'push', 'company/user-authentication', 'feature/backdoor', 'cafebabe', '203.0.113.25', 15, 500, 50, 'Add debug authentication bypass', TRUE, 'admin'),
@@ -353,7 +377,7 @@ FROM (
 ) ts;
 
 -- Add malicious network traffic (matches threat intelligence)
-INSERT INTO NETWORK_SECURITY_LOGS VALUES
+INSERT INTO NETWORK_SECURITY_LOGS SELECT
 -- C2 communication (matches IOC001)
 ('NET_THREAT_001', '2024-01-24 14:30:15', '10.2.1.15', '203.0.113.50', 49152, 443, 'TCP', 2048, 15000, 20, 150, 300.5, 'ESTABLISHED', TRUE, 'c2_communication', 0.95, FALSE, OBJECT_CONSTRUCT('src_country', 'US', 'dest_country', 'RU', 'src_city', 'New York', 'dest_city', 'Moscow')),
 ('NET_THREAT_002', '2024-01-24 15:15:30', '10.1.1.20', '203.0.113.50', 52341, 8080, 'TCP', 512, 25000, 15, 200, 180.2, 'ESTABLISHED', TRUE, 'data_exfiltration', 0.89, FALSE, OBJECT_CONSTRUCT('src_country', 'US', 'dest_country', 'RU', 'src_city', 'New York', 'dest_city', 'Moscow')),
@@ -400,7 +424,7 @@ WHERE EXTRACT(HOUR FROM ts.timestamp) BETWEEN 8 AND 18 -- Business hours
     AND UNIFORM(1, 100, RANDOM()) <= 70; -- 70% chance of access
 
 -- Add GRC violations - terminated employees still accessing systems
-INSERT INTO ACCESS_CONTROL_LOGS VALUES
+INSERT INTO ACCESS_CONTROL_LOGS SELECT
 -- alex.turner (terminated 2024-01-15) still accessing AWS
 ('ACCESS_VIOLATION_001', '2024-01-18 10:30:00', 'USER_EMP006', 'alex.turner', 'aws_console', 'login', 'cloud_service', 'basic', '192.168.100.25', TRUE, 120, TRUE),
 ('ACCESS_VIOLATION_002', '2024-01-20 14:45:00', 'USER_EMP006', 'alex.turner', 'database_prod', 'login', 'database', 'basic', '192.168.100.25', TRUE, 45, TRUE),
@@ -413,7 +437,7 @@ INSERT INTO ACCESS_CONTROL_LOGS VALUES
 -- =====================================================
 -- SECURITY ALERTS - For AI enrichment demonstration
 -- =====================================================
-INSERT INTO SECURITY_ALERTS VALUES
+INSERT INTO SECURITY_ALERTS SELECT
 -- Critical alerts with unstructured text for AI analysis
 ('ALERT_001', '2024-01-24 14:35:00', 'anomalous_behavior', 'critical', 'Suspicious User Activity Detected', 
  'User john.smith exhibited highly unusual behavior pattern. Multiple failed login attempts from foreign IP address (203.0.113.25) followed by successful authentication and extensive GitHub activity including access to sensitive repositories. The user created a new repository and pushed large amounts of code during off-hours. This activity pattern is consistent with account compromise scenarios. Immediate investigation recommended as the user typically works standard business hours from New York office. The source IP has been flagged in our threat intelligence as associated with previous attack campaigns.', 
@@ -451,7 +475,7 @@ INSERT INTO SECURITY_ALERTS VALUES
 -- =====================================================
 -- ML PREDICTIONS - Sample model outputs
 -- =====================================================
-INSERT INTO ML_PREDICTIONS VALUES
+INSERT INTO ML_PREDICTIONS SELECT
 ('PRED_001', '2024-01-24 14:35:00', 'anomaly_detection_v2', '1.2', OBJECT_CONSTRUCT('user', 'john.smith', 'login_count', 15, 'unique_ips', 2, 'unique_countries', 2), 0.92, 0.95, 'anomaly', NULL, FALSE),
 ('PRED_002', '2024-01-23 08:50:00', 'threat_classification_v1', '1.0', OBJECT_CONSTRUCT('source_ip', '45.33.32.156', 'connection_attempts', 500, 'ports_targeted', [22, 23, 80, 443]), 0.87, 0.91, 'classification', NULL, FALSE),
 ('PRED_003', '2024-01-22 16:20:00', 'compliance_risk_v1', '1.1', OBJECT_CONSTRUCT('user', 'alex.turner', 'days_since_termination', 3, 'access_attempts', 1), 0.95, 0.98, 'risk_score', NULL, FALSE),
