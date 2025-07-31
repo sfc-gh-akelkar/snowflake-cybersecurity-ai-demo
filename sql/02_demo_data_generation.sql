@@ -27,34 +27,51 @@ INSERT INTO EMPLOYEE_DATA VALUES
 -- =====================================================
 -- ASSET INVENTORY - Critical for vulnerability prioritization
 -- =====================================================
-INSERT INTO ASSET_INVENTORY VALUES
+INSERT INTO ASSET_INVENTORY (
+    ASSET_ID, HOSTNAME, IP_ADDRESS, ASSET_TYPE, OS_TYPE, OS_VERSION, 
+    DEPARTMENT, OWNER, BUSINESS_CRITICALITY, DATA_CLASSIFICATION, 
+    LOCATION, ENVIRONMENT, COMPLIANCE_SCOPE, LAST_SCAN, PATCH_LEVEL, NETWORK_ZONE
+)
 -- Critical production servers
-('ASSET001', 'prod-db-01', '10.1.1.10', 'server', 'Linux', 'Ubuntu 20.04.6', 'Engineering', 'john.smith', 'critical', 'confidential', 'AWS-US-East-1', 'production', ['PCI', 'SOX'], '2024-01-20 08:00:00', 'current', 'DMZ'),
-('ASSET002', 'prod-web-01', '10.1.1.20', 'server', 'Linux', 'CentOS 8.5', 'Engineering', 'mike.rodriguez', 'critical', 'confidential', 'AWS-US-East-1', 'production', ['PCI'], '2024-01-19 08:00:00', 'current-1', 'DMZ'),
-('ASSET003', 'prod-api-01', '10.1.1.30', 'server', 'Linux', 'Ubuntu 22.04.3', 'Engineering', 'david.johnson', 'critical', 'restricted', 'AWS-US-East-1', 'production', ['PCI', 'HIPAA'], '2024-01-21 08:00:00', 'current', 'Internal'),
-
+SELECT 'ASSET001', 'prod-db-01', '10.1.1.10', 'server', 'Linux', 'Ubuntu 20.04.6', 'Engineering', 'john.smith', 'critical', 'confidential', 'AWS-US-East-1', 'production', ARRAY_CONSTRUCT('PCI', 'SOX'), '2024-01-20 08:00:00', 'current', 'DMZ'
+UNION ALL
+SELECT 'ASSET002', 'prod-web-01', '10.1.1.20', 'server', 'Linux', 'CentOS 8.5', 'Engineering', 'mike.rodriguez', 'critical', 'confidential', 'AWS-US-East-1', 'production', ARRAY_CONSTRUCT('PCI'), '2024-01-19 08:00:00', 'current-1', 'DMZ'
+UNION ALL
+SELECT 'ASSET003', 'prod-api-01', '10.1.1.30', 'server', 'Linux', 'Ubuntu 22.04.3', 'Engineering', 'david.johnson', 'critical', 'restricted', 'AWS-US-East-1', 'production', ARRAY_CONSTRUCT('PCI', 'HIPAA'), '2024-01-21 08:00:00', 'current', 'Internal'
+UNION ALL
 -- High-value workstations
-('ASSET004', 'DEV-JOHN-01', '10.2.1.15', 'workstation', 'Windows', 'Windows 11 Pro', 'Engineering', 'john.smith', 'high', 'internal', 'Office-NYC', 'development', [], '2024-01-18 10:00:00', 'current-2', 'Corporate'),
-('ASSET005', 'SEC-SARAH-01', '10.2.1.25', 'workstation', 'macOS', 'macOS 14.2', 'Security', 'sarah.chen', 'high', 'confidential', 'Office-NYC', 'development', ['SOX'], '2024-01-20 10:00:00', 'current', 'Corporate'),
-
+SELECT 'ASSET004', 'DEV-JOHN-01', '10.2.1.15', 'workstation', 'Windows', 'Windows 11 Pro', 'Engineering', 'john.smith', 'high', 'internal', 'Office-NYC', 'development', ARRAY_CONSTRUCT(), '2024-01-18 10:00:00', 'current-2', 'Corporate'
+UNION ALL
+SELECT 'ASSET005', 'SEC-SARAH-01', '10.2.1.25', 'workstation', 'macOS', 'macOS 14.2', 'Security', 'sarah.chen', 'high', 'confidential', 'Office-NYC', 'development', ARRAY_CONSTRUCT('SOX'), '2024-01-20 10:00:00', 'current', 'Corporate'
+UNION ALL
 -- Medium criticality systems
-('ASSET006', 'staging-web-01', '10.3.1.10', 'server', 'Linux', 'Ubuntu 18.04.6', 'Engineering', 'mike.rodriguez', 'medium', 'internal', 'AWS-US-West-2', 'staging', [], '2024-01-15 08:00:00', 'current-5', 'Internal'),
-('ASSET007', 'dev-db-01', '10.3.1.20', 'server', 'Linux', 'MySQL 8.0.34', 'Engineering', 'lisa.wang', 'medium', 'internal', 'AWS-US-West-2', 'development', [], '2024-01-16 08:00:00', 'current-3', 'Internal'),
-
+SELECT 'ASSET006', 'staging-web-01', '10.3.1.10', 'server', 'Linux', 'Ubuntu 18.04.6', 'Engineering', 'mike.rodriguez', 'medium', 'internal', 'AWS-US-West-2', 'staging', ARRAY_CONSTRUCT(), '2024-01-15 08:00:00', 'current-5', 'Internal'
+UNION ALL
+SELECT 'ASSET007', 'dev-db-01', '10.3.1.20', 'server', 'Linux', 'MySQL 8.0.34', 'Engineering', 'lisa.wang', 'medium', 'internal', 'AWS-US-West-2', 'development', ARRAY_CONSTRUCT(), '2024-01-16 08:00:00', 'current-3', 'Internal'
+UNION ALL
 -- IoT and mobile devices
-('ASSET008', 'CAMERA-LOBBY-01', '10.4.1.10', 'iot', 'Linux', 'Custom IoT OS', 'Facilities', 'facilities@company.com', 'low', 'internal', 'Office-NYC', 'production', [], '2024-01-10 08:00:00', 'current-10', 'IoT'),
-('ASSET009', 'MOBILE-CARLOS-01', '192.168.1.150', 'mobile', 'iOS', 'iOS 17.2.1', 'Finance', 'carlos.lopez', 'medium', 'confidential', 'Remote', 'production', ['SOX'], '2024-01-12 08:00:00', 'current-2', 'Mobile');
+SELECT 'ASSET008', 'CAMERA-LOBBY-01', '10.4.1.10', 'iot', 'Linux', 'Custom IoT OS', 'Facilities', 'facilities@company.com', 'low', 'internal', 'Office-NYC', 'production', ARRAY_CONSTRUCT(), '2024-01-10 08:00:00', 'current-10', 'IoT'
+UNION ALL
+SELECT 'ASSET009', 'MOBILE-CARLOS-01', '192.168.1.150', 'mobile', 'iOS', 'iOS 17.2.1', 'Finance', 'carlos.lopez', 'medium', 'confidential', 'Remote', 'production', ARRAY_CONSTRUCT('SOX'), '2024-01-12 08:00:00', 'current-2', 'Mobile';
 
 -- =====================================================
 -- THREAT INTELLIGENCE - IOCs for threat matching
 -- =====================================================
-INSERT INTO THREAT_INTELLIGENCE VALUES
+INSERT INTO THREAT_INTELLIGENCE (
+    IOC_ID, IOC_VALUE, IOC_TYPE, THREAT_TYPE, CONFIDENCE, SEVERITY, 
+    FIRST_SEEN, LAST_SEEN, SOURCE, TAGS, DESCRIPTION, 
+    MITRE_TACTICS, TARGET_SYSTEMS, EXPIRY_DATE
+)
 -- Critical threats
-('IOC001', '203.0.113.50', 'ip', 'c2_server', 'high', 'critical', '2024-01-01 00:00:00', '2024-01-25 15:30:00', 'external_feed', ['apt', 'c2', 'banking_trojan'], 'Known C2 server for banking trojan campaigns targeting financial institutions', ['T1071.001', 'T1041'], ['banking_software', 'web_browsers'], '2024-12-31 23:59:59'),
-('IOC002', 'malicious-site.badactor.com', 'domain', 'phishing', 'high', 'high', '2024-01-10 00:00:00', '2024-01-24 12:15:00', 'partner_intel', ['phishing', 'credential_theft'], 'Phishing domain mimicking company login portal', ['T1566.002'], ['corporate_portals'], '2024-12-31 23:59:59'),
-('IOC003', '45.33.32.156', 'ip', 'scanning', 'medium', 'medium', '2024-01-15 00:00:00', '2024-01-23 08:45:00', 'internal', ['reconnaissance', 'scanning'], 'Persistent scanner targeting SSH services', ['T1046'], ['ssh_services'], '2024-06-30 23:59:59'),
-('IOC004', 'crypto-miner.pool.com', 'domain', 'cryptomining', 'medium', 'medium', '2024-01-18 00:00:00', '2024-01-25 14:20:00', 'external_feed', ['cryptomining', 'malware'], 'Cryptocurrency mining pool used by malware', ['T1496'], ['all_systems'], '2024-12-31 23:59:59'),
-('IOC005', 'a1b2c3d4e5f6789012345678901234567890abcd', 'hash', 'malware', 'high', 'critical', '2024-01-12 00:00:00', '2024-01-25 16:00:00', 'external_feed', ['emotet', 'banking_trojan'], 'Emotet banking trojan variant', ['T1055', 'T1082'], ['windows_systems'], '2024-12-31 23:59:59');
+SELECT 'IOC001', '203.0.113.50', 'ip', 'c2_server', 'high', 'critical', '2024-01-01 00:00:00', '2024-01-25 15:30:00', 'external_feed', ARRAY_CONSTRUCT('apt', 'c2', 'banking_trojan'), 'Known C2 server for banking trojan campaigns targeting financial institutions', ARRAY_CONSTRUCT('T1071.001', 'T1041'), ARRAY_CONSTRUCT('banking_software', 'web_browsers'), '2024-12-31 23:59:59'
+UNION ALL
+SELECT 'IOC002', 'malicious-site.badactor.com', 'domain', 'phishing', 'high', 'high', '2024-01-10 00:00:00', '2024-01-24 12:15:00', 'partner_intel', ARRAY_CONSTRUCT('phishing', 'credential_theft'), 'Phishing domain mimicking company login portal', ARRAY_CONSTRUCT('T1566.002'), ARRAY_CONSTRUCT('corporate_portals'), '2024-12-31 23:59:59'
+UNION ALL
+SELECT 'IOC003', '45.33.32.156', 'ip', 'scanning', 'medium', 'medium', '2024-01-15 00:00:00', '2024-01-23 08:45:00', 'internal', ARRAY_CONSTRUCT('reconnaissance', 'scanning'), 'Persistent scanner targeting SSH services', ARRAY_CONSTRUCT('T1046'), ARRAY_CONSTRUCT('ssh_services'), '2024-06-30 23:59:59'
+UNION ALL
+SELECT 'IOC004', 'crypto-miner.pool.com', 'domain', 'cryptomining', 'medium', 'medium', '2024-01-18 00:00:00', '2024-01-25 14:20:00', 'external_feed', ARRAY_CONSTRUCT('cryptomining', 'malware'), 'Cryptocurrency mining pool used by malware', ARRAY_CONSTRUCT('T1496'), ARRAY_CONSTRUCT('all_systems'), '2024-12-31 23:59:59'
+UNION ALL
+SELECT 'IOC005', 'a1b2c3d4e5f6789012345678901234567890abcd', 'hash', 'malware', 'high', 'critical', '2024-01-12 00:00:00', '2024-01-25 16:00:00', 'external_feed', ARRAY_CONSTRUCT('emotet', 'banking_trojan'), 'Emotet banking trojan variant', ARRAY_CONSTRUCT('T1055', 'T1082'), ARRAY_CONSTRUCT('windows_systems'), '2024-12-31 23:59:59';
 
 -- =====================================================
 -- VULNERABILITY DATA - For AI risk prioritization
@@ -111,8 +128,8 @@ SELECT
     'SESS_' || UNIFORM(100000, 999999, RANDOM()) as SESSION_ID,
     OBJECT_CONSTRUCT('device_type', 'desktop', 'os', 'Windows 10', 'browser', 'Chrome') as DEVICE_INFO,
     CASE 
-        WHEN EXTRACT(HOUR FROM ts.hour_timestamp) BETWEEN 6 AND 18 THEN []
-        ELSE ['unusual_time']
+        WHEN EXTRACT(HOUR FROM ts.hour_timestamp) BETWEEN 6 AND 18 THEN ARRAY_CONSTRUCT()
+        ELSE ARRAY_CONSTRUCT('unusual_time')
     END as RISK_FACTORS,
     TRUE as MFA_USED
 FROM (
@@ -126,22 +143,26 @@ WHERE EXTRACT(HOUR FROM ts.hour_timestamp) BETWEEN 8 AND 17 -- Normal business h
     AND UNIFORM(1, 100, RANDOM()) <= 80; -- 80% chance of login during business hours
 
 -- Add anomalous login patterns for john.smith (weekend GitHub activity correlation)
-INSERT INTO USER_AUTHENTICATION_LOGS 
-SELECT * FROM VALUES
+INSERT INTO USER_AUTHENTICATION_LOGS (
+    LOG_ID, TIMESTAMP, USER_ID, USERNAME, EMAIL, EVENT_TYPE, SOURCE_IP, USER_AGENT, 
+    LOCATION, SUCCESS, FAILURE_REASON, SESSION_ID, DEVICE_INFO, RISK_FACTORS, MFA_USED
+)
 -- Unusual weekend activity
-('AUTH_ANOMALY_001', '2024-01-21 02:30:15', 'USER_EMP001', 'john.smith', 'john.smith@company.com', 'login', '203.0.113.25', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', OBJECT_CONSTRUCT('country', 'CN', 'region', 'Beijing', 'city', 'Beijing', 'lat', 39.9042, 'lon', 116.4074), TRUE, NULL, 'SESS_ANOMALY_001', OBJECT_CONSTRUCT('device_type', 'laptop', 'os', 'macOS', 'browser', 'Safari'), ARRAY_CONSTRUCT('unusual_time', 'suspicious_location', 'new_device'), FALSE),
-('AUTH_ANOMALY_002', '2024-01-21 03:15:22', 'USER_EMP001', 'john.smith', 'john.smith@company.com', 'login', '203.0.113.25', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', OBJECT_CONSTRUCT('country', 'CN', 'region', 'Beijing', 'city', 'Beijing', 'lat', 39.9042, 'lon', 116.4074), TRUE, NULL, 'SESS_ANOMALY_002', OBJECT_CONSTRUCT('device_type', 'laptop', 'os', 'macOS', 'browser', 'Safari'), ARRAY_CONSTRUCT('unusual_time', 'suspicious_location'), FALSE),
-
+SELECT 'AUTH_ANOMALY_001', '2024-01-21 02:30:15', 'USER_EMP001', 'john.smith', 'john.smith@company.com', 'login', '203.0.113.25', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', OBJECT_CONSTRUCT('country', 'CN', 'region', 'Beijing', 'city', 'Beijing', 'lat', 39.9042, 'lon', 116.4074), TRUE, NULL, 'SESS_ANOMALY_001', OBJECT_CONSTRUCT('device_type', 'laptop', 'os', 'macOS', 'browser', 'Safari'), ARRAY_CONSTRUCT('unusual_time', 'suspicious_location', 'new_device'), FALSE
+UNION ALL
+SELECT 'AUTH_ANOMALY_002', '2024-01-21 03:15:22', 'USER_EMP001', 'john.smith', 'john.smith@company.com', 'login', '203.0.113.25', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', OBJECT_CONSTRUCT('country', 'CN', 'region', 'Beijing', 'city', 'Beijing', 'lat', 39.9042, 'lon', 116.4074), TRUE, NULL, 'SESS_ANOMALY_002', OBJECT_CONSTRUCT('device_type', 'laptop', 'os', 'macOS', 'browser', 'Safari'), ARRAY_CONSTRUCT('unusual_time', 'suspicious_location'), FALSE
+UNION ALL
 -- Failed login attempts from suspicious IP
-('AUTH_ANOMALY_003', '2024-01-24 14:22:10', 'USER_EMP002', 'sarah.chen', 'sarah.chen@company.com', 'failed_login', '203.0.113.50', 'curl/7.68.0', OBJECT_CONSTRUCT('country', 'RU', 'region', 'Moscow', 'city', 'Moscow', 'lat', 55.7558, 'lon', 37.6176), FALSE, 'Invalid credentials', NULL, OBJECT_CONSTRUCT('device_type', 'automated', 'os', 'Linux', 'browser', 'curl'), ARRAY_CONSTRUCT('suspicious_location', 'automated_tool', 'brute_force'), FALSE),
-('AUTH_ANOMALY_004', '2024-01-24 14:22:25', 'USER_EMP002', 'sarah.chen', 'sarah.chen@company.com', 'failed_login', '203.0.113.50', 'curl/7.68.0', OBJECT_CONSTRUCT('country', 'RU', 'region', 'Moscow', 'city', 'Moscow', 'lat', 55.7558, 'lon', 37.6176), FALSE, 'Invalid credentials', NULL, OBJECT_CONSTRUCT('device_type', 'automated', 'os', 'Linux', 'browser', 'curl'), ARRAY_CONSTRUCT('suspicious_location', 'automated_tool', 'brute_force'), FALSE)
-AS t (LOG_ID, TIMESTAMP, USER_ID, USERNAME, EMAIL, EVENT_TYPE, SOURCE_IP, USER_AGENT, LOCATION, SUCCESS, FAILURE_REASON, SESSION_ID, DEVICE_INFO, RISK_FACTORS, MFA_USED);
+SELECT 'AUTH_ANOMALY_003', '2024-01-24 14:22:10', 'USER_EMP002', 'sarah.chen', 'sarah.chen@company.com', 'failed_login', '203.0.113.50', 'curl/7.68.0', OBJECT_CONSTRUCT('country', 'RU', 'region', 'Moscow', 'city', 'Moscow', 'lat', 55.7558, 'lon', 37.6176), FALSE, 'Invalid credentials', NULL, OBJECT_CONSTRUCT('device_type', 'automated', 'os', 'Linux', 'browser', 'curl'), ARRAY_CONSTRUCT('suspicious_location', 'automated_tool', 'brute_force'), FALSE
+UNION ALL
+SELECT 'AUTH_ANOMALY_004', '2024-01-24 14:22:25', 'USER_EMP002', 'sarah.chen', 'sarah.chen@company.com', 'failed_login', '203.0.113.50', 'curl/7.68.0', OBJECT_CONSTRUCT('country', 'RU', 'region', 'Moscow', 'city', 'Moscow', 'lat', 55.7558, 'lon', 37.6176), FALSE, 'Invalid credentials', NULL, OBJECT_CONSTRUCT('device_type', 'automated', 'os', 'Linux', 'browser', 'curl'), ARRAY_CONSTRUCT('suspicious_location', 'automated_tool', 'brute_force'), FALSE;
 
 -- Terminated employee still trying to access (GRC violation)
-INSERT INTO USER_AUTHENTICATION_LOGS 
-SELECT * FROM VALUES
-('AUTH_ANOMALY_005', '2024-01-22 09:15:30', 'USER_EMP006', 'alex.turner', 'alex.turner@company.com', 'failed_login', '192.168.100.50', 'Mozilla/5.0 (Windows NT 10.0)', OBJECT_CONSTRUCT('country', 'US', 'region', 'CA', 'city', 'Los Angeles', 'lat', 34.0522, 'lon', -118.2437), FALSE, 'Account disabled', NULL, OBJECT_CONSTRUCT('device_type', 'desktop', 'os', 'Windows 10', 'browser', 'Edge'), ARRAY_CONSTRUCT('account_disabled', 'terminated_user'), FALSE)
-AS t (LOG_ID, TIMESTAMP, USER_ID, USERNAME, EMAIL, EVENT_TYPE, SOURCE_IP, USER_AGENT, LOCATION, SUCCESS, FAILURE_REASON, SESSION_ID, DEVICE_INFO, RISK_FACTORS, MFA_USED);
+INSERT INTO USER_AUTHENTICATION_LOGS (
+    LOG_ID, TIMESTAMP, USER_ID, USERNAME, EMAIL, EVENT_TYPE, SOURCE_IP, USER_AGENT, 
+    LOCATION, SUCCESS, FAILURE_REASON, SESSION_ID, DEVICE_INFO, RISK_FACTORS, MFA_USED
+)
+SELECT 'AUTH_ANOMALY_005', '2024-01-22 09:15:30', 'USER_EMP006', 'alex.turner', 'alex.turner@company.com', 'failed_login', '192.168.100.50', 'Mozilla/5.0 (Windows NT 10.0)', OBJECT_CONSTRUCT('country', 'US', 'region', 'CA', 'city', 'Los Angeles', 'lat', 34.0522, 'lon', -118.2437), FALSE, 'Account disabled', NULL, OBJECT_CONSTRUCT('device_type', 'desktop', 'os', 'Windows 10', 'browser', 'Edge'), ARRAY_CONSTRUCT('account_disabled', 'terminated_user'), FALSE;
 
 -- =====================================================
 -- GITHUB ACTIVITY LOGS - For anomaly detection
