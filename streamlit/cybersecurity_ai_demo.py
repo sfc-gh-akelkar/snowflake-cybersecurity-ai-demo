@@ -1,6 +1,7 @@
 """
-Snowflake Cybersecurity AI/ML Demo
-Interactive Streamlit application showcasing AI/ML capabilities in cybersecurity
+Snowflake Cybersecurity AI/ML Demo - Streamlit in Snowflake
+Interactive application showcasing AI/ML capabilities in cybersecurity
+Designed to run natively within Snowflake's Streamlit environment
 """
 
 import streamlit as st
@@ -13,9 +14,10 @@ import json
 from datetime import datetime, timedelta
 import time
 
-# For actual Snowflake connectivity (uncomment when using real connection)
-# from snowflake.snowpark import Session
-# import snowflake.connector
+# Streamlit in Snowflake imports
+from snowflake.snowpark.context import get_active_session
+from snowflake.snowpark import functions as F
+from snowflake.snowpark import types as T
 
 # Page configuration
 st.set_page_config(
@@ -83,94 +85,223 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Mock data functions (replace with actual Snowflake queries in production)
+# Initialize Snowflake session for Streamlit in Snowflake
+@st.cache_resource
+def get_snowflake_session():
+    """Get the active Snowflake session for SiS"""
+    return get_active_session()
+
+# Data functions using real Snowflake queries
 @st.cache_data(ttl=300)
-def get_mock_anomaly_data():
-    """Mock data for anomaly detection demo"""
-    return pd.DataFrame({
-        'username': ['john.smith', 'sarah.chen', 'mike.rodriguez', 'john.smith', 'lisa.wang'],
-        'timestamp': pd.to_datetime(['2024-01-21 02:30:15', '2024-01-24 14:22:10', '2024-01-23 16:45:30', '2024-01-21 03:15:22', '2024-01-22 09:30:00']),
-        'current_country': ['CN', 'RU', 'US', 'CN', 'US'],
-        'current_hour': [2, 14, 16, 3, 9],
-        'activity_count': [15, 0, 3, 12, 2],
-        'lines_changed': [5000, 0, 150, 500, 80],
-        'sensitive_repo_access': [1, 0, 0, 1, 0],
-        'anomaly_score': [12.0, 7.0, 1.0, 9.0, 0.0],
-        'classification': ['HIGH_ANOMALY', 'MEDIUM_ANOMALY', 'NORMAL', 'HIGH_ANOMALY', 'NORMAL'],
-        'anomaly_indicators': [
-            ['unusual_hour', 'unusual_location', 'large_code_changes', 'sensitive_repo_access'],
-            ['suspicious_location'],
-            [],
-            ['unusual_hour', 'unusual_location', 'sensitive_repo_access'],
-            []
-        ]
-    })
+def get_anomaly_data():
+    """Get anomaly detection data from Snowflake"""
+    session = get_snowflake_session()
+    
+    # Use the view we created in our schema
+    query = """
+    SELECT 
+        USERNAME,
+        TIMESTAMP,
+        current_country,
+        current_hour,
+        activity_count,
+        lines_changed,
+        sensitive_repo_access,
+        ANOMALY_SCORE,
+        CLASSIFICATION,
+        ANOMALY_INDICATORS
+    FROM CYBERSECURITY_DEMO.SECURITY_AI.GITHUB_LOGIN_ANOMALY_DETECTION
+    ORDER BY ANOMALY_SCORE DESC
+    """
+    
+    try:
+        df = session.sql(query).to_pandas()
+        return df
+    except Exception as e:
+        st.error(f"Error loading anomaly data: {str(e)}")
+        # Fallback to sample data for demo purposes
+        return pd.DataFrame({
+            'USERNAME': ['john.smith', 'sarah.chen', 'mike.rodriguez', 'john.smith', 'lisa.wang'],
+            'TIMESTAMP': pd.to_datetime(['2024-01-21 02:30:15', '2024-01-24 14:22:10', '2024-01-23 16:45:30', '2024-01-21 03:15:22', '2024-01-22 09:30:00']),
+            'CURRENT_COUNTRY': ['CN', 'RU', 'US', 'CN', 'US'],
+            'CURRENT_HOUR': [2, 14, 16, 3, 9],
+            'ACTIVITY_COUNT': [15, 0, 3, 12, 2],
+            'LINES_CHANGED': [5000, 0, 150, 500, 80],
+            'SENSITIVE_REPO_ACCESS': [1, 0, 0, 1, 0],
+            'ANOMALY_SCORE': [12.0, 7.0, 1.0, 9.0, 0.0],
+            'CLASSIFICATION': ['HIGH_ANOMALY', 'MEDIUM_ANOMALY', 'NORMAL', 'HIGH_ANOMALY', 'NORMAL'],
+            'ANOMALY_INDICATORS': [
+                "['unusual_hour', 'unusual_location', 'large_code_changes', 'sensitive_repo_access']",
+                "['suspicious_location']",
+                "[]",
+                "['unusual_hour', 'unusual_location', 'sensitive_repo_access']",
+                "[]"
+            ]
+        })
 
 @st.cache_data(ttl=300)
-def get_mock_threat_data():
-    """Mock data for threat detection demo"""
-    return pd.DataFrame({
-        'event_type': ['NETWORK_THREAT', 'USER_ANOMALY', 'CODE_THREAT', 'NETWORK_THREAT', 'USER_ANOMALY'],
-        'timestamp': pd.to_datetime(['2024-01-24 14:30:15', '2024-01-21 02:30:15', '2024-01-21 02:45:30', '2024-01-23 08:45:22', '2024-01-24 14:22:10']),
-        'primary_asset': ['10.2.1.15', 'john.smith', 'john.smith', '45.33.32.156', 'sarah.chen'],
-        'secondary_asset': ['203.0.113.50', '203.0.113.25', 'company/core-payment-system', '10.1.1.10', '203.0.113.50'],
-        'threat_category': ['c2_communication', 'USER_COMPROMISE', 'CODE_MANIPULATION', 'port_scan', 'USER_COMPROMISE'],
-        'confidence_score': [0.95, 0.85, 0.75, 0.78, 0.85],
-        'related_events': [3, 2, 2, 0, 1],
-        'compound_threat_score': [1.25, 1.05, 0.95, 0.78, 0.95],
-        'campaign_classification': ['ADVANCED_PERSISTENT_THREAT', 'USER_COMPROMISE_CAMPAIGN', 'USER_COMPROMISE_CAMPAIGN', 'ISOLATED_INCIDENT', 'COORDINATED_ATTACK']
-    })
+def get_threat_data():
+    """Get threat detection data from Snowflake"""
+    session = get_snowflake_session()
+    
+    query = """
+    SELECT 
+        EVENT_TYPE,
+        TIMESTAMP,
+        PRIMARY_ASSET,
+        SECONDARY_ASSET,
+        THREAT_CATEGORY,
+        CONFIDENCE_SCORE,
+        RELATED_EVENTS,
+        COMPOUND_THREAT_SCORE,
+        CAMPAIGN_CLASSIFICATION
+    FROM CYBERSECURITY_DEMO.SECURITY_AI.COMPREHENSIVE_THREAT_ANALYSIS
+    ORDER BY COMPOUND_THREAT_SCORE DESC
+    """
+    
+    try:
+        df = session.sql(query).to_pandas()
+        return df
+    except Exception as e:
+        st.error(f"Error loading threat data: {str(e)}")
+        # Fallback to sample data
+        return pd.DataFrame({
+            'EVENT_TYPE': ['NETWORK_THREAT', 'USER_ANOMALY', 'CODE_THREAT', 'NETWORK_THREAT', 'USER_ANOMALY'],
+            'TIMESTAMP': pd.to_datetime(['2024-01-24 14:30:15', '2024-01-21 02:30:15', '2024-01-21 02:45:30', '2024-01-23 08:45:22', '2024-01-24 14:22:10']),
+            'PRIMARY_ASSET': ['10.2.1.15', 'john.smith', 'john.smith', '45.33.32.156', 'sarah.chen'],
+            'SECONDARY_ASSET': ['203.0.113.50', '203.0.113.25', 'company/core-payment-system', '10.1.1.10', '203.0.113.50'],
+            'THREAT_CATEGORY': ['c2_communication', 'USER_COMPROMISE', 'CODE_MANIPULATION', 'port_scan', 'USER_COMPROMISE'],
+            'CONFIDENCE_SCORE': [0.95, 0.85, 0.75, 0.78, 0.85],
+            'RELATED_EVENTS': [3, 2, 2, 0, 1],
+            'COMPOUND_THREAT_SCORE': [1.25, 1.05, 0.95, 0.78, 0.95],
+            'CAMPAIGN_CLASSIFICATION': ['ADVANCED_PERSISTENT_THREAT', 'USER_COMPROMISE_CAMPAIGN', 'USER_COMPROMISE_CAMPAIGN', 'ISOLATED_INCIDENT', 'COORDINATED_ATTACK']
+        })
 
 @st.cache_data(ttl=300)
-def get_mock_vulnerability_data():
-    """Mock data for vulnerability prioritization demo"""
-    return pd.DataFrame({
-        'cve_id': ['CVE-2023-4966', 'CVE-2023-46604', 'CVE-2023-44487', 'CVE-2023-36884', 'CVE-2023-32409'],
-        'vulnerability_name': ['Citrix NetScaler Buffer Overflow', 'Apache ActiveMQ RCE', 'HTTP/2 Rapid Reset Attack', 'Microsoft Office RCE', 'macOS Kernel Privilege Escalation'],
-        'cvss_score': [9.4, 10.0, 7.5, 8.3, 7.8],
-        'hostname': ['prod-db-01', 'prod-api-01', 'prod-web-01', 'DEV-JOHN-01', 'SEC-SARAH-01'],
-        'business_criticality': ['critical', 'critical', 'critical', 'high', 'high'],
-        'data_classification': ['confidential', 'restricted', 'confidential', 'internal', 'confidential'],
-        'environment': ['production', 'production', 'production', 'development', 'development'],
-        'ai_risk_score': [10.15, 10.50, 8.75, 6.85, 6.90],
-        'priority_classification': ['CRITICAL', 'CRITICAL', 'HIGH', 'MEDIUM', 'MEDIUM'],
-        'recommended_action': ['EMERGENCY_PATCH', 'EMERGENCY_PATCH', 'IMMEDIATE_PATCH', 'SCHEDULED_PATCH', 'SCHEDULED_PATCH'],
-        'patch_urgency': ['OVERDUE', 'URGENT', 'URGENT', 'SCHEDULED', 'SCHEDULED']
-    })
+def get_vulnerability_data():
+    """Get vulnerability prioritization data from Snowflake"""
+    session = get_snowflake_session()
+    
+    query = """
+    SELECT 
+        CVE_ID,
+        VULNERABILITY_NAME,
+        CVSS_SCORE,
+        HOSTNAME,
+        BUSINESS_CRITICALITY,
+        DATA_CLASSIFICATION,
+        ENVIRONMENT,
+        AI_RISK_SCORE,
+        PRIORITY_CLASSIFICATION,
+        RECOMMENDED_ACTION,
+        PATCH_URGENCY
+    FROM CYBERSECURITY_DEMO.SECURITY_AI.AI_VULNERABILITY_PRIORITIZATION
+    ORDER BY AI_RISK_SCORE DESC
+    """
+    
+    try:
+        df = session.sql(query).to_pandas()
+        return df
+    except Exception as e:
+        st.error(f"Error loading vulnerability data: {str(e)}")
+        # Fallback to sample data
+        return pd.DataFrame({
+            'CVE_ID': ['CVE-2023-4966', 'CVE-2023-46604', 'CVE-2023-44487', 'CVE-2023-36884', 'CVE-2023-32409'],
+            'VULNERABILITY_NAME': ['Citrix NetScaler Buffer Overflow', 'Apache ActiveMQ RCE', 'HTTP/2 Rapid Reset Attack', 'Microsoft Office RCE', 'macOS Kernel Privilege Escalation'],
+            'CVSS_SCORE': [9.4, 10.0, 7.5, 8.3, 7.8],
+            'HOSTNAME': ['prod-db-01', 'prod-api-01', 'prod-web-01', 'DEV-JOHN-01', 'SEC-SARAH-01'],
+            'BUSINESS_CRITICALITY': ['critical', 'critical', 'critical', 'high', 'high'],
+            'DATA_CLASSIFICATION': ['confidential', 'restricted', 'confidential', 'internal', 'confidential'],
+            'ENVIRONMENT': ['production', 'production', 'production', 'development', 'development'],
+            'AI_RISK_SCORE': [10.15, 10.50, 8.75, 6.85, 6.90],
+            'PRIORITY_CLASSIFICATION': ['CRITICAL', 'CRITICAL', 'HIGH', 'MEDIUM', 'MEDIUM'],
+            'RECOMMENDED_ACTION': ['EMERGENCY_PATCH', 'EMERGENCY_PATCH', 'IMMEDIATE_PATCH', 'SCHEDULED_PATCH', 'SCHEDULED_PATCH'],
+            'PATCH_URGENCY': ['OVERDUE', 'URGENT', 'URGENT', 'SCHEDULED', 'SCHEDULED']
+        })
 
 @st.cache_data(ttl=300)
-def get_mock_compliance_data():
-    """Mock data for GRC compliance demo"""
-    return pd.DataFrame({
-        'employee_id': ['EMP006', 'EMP007', 'EMP006', 'EMP007', 'EMP006'],
-        'username': ['alex.turner', 'emily.davis', 'alex.turner', 'emily.davis', 'alex.turner'],
-        'full_name': ['Alex Turner', 'Emily Davis', 'Alex Turner', 'Emily Davis', 'Alex Turner'],
-        'termination_date': pd.to_datetime(['2024-01-15', '2024-01-20', '2024-01-15', '2024-01-20', '2024-01-15']),
-        'resource': ['aws_console', 'jira', 'database_prod', 'aws_console', 'github'],
-        'violation_timestamp': pd.to_datetime(['2024-01-18 10:30:00', '2024-01-23 11:20:00', '2024-01-20 14:45:00', '2024-01-24 16:30:00', '2024-01-22 09:15:00']),
-        'days_overdue': [3, 3, 5, 4, 7],
-        'violation_severity': ['CRITICAL', 'MEDIUM', 'CRITICAL', 'CRITICAL', 'HIGH'],
-        'compliance_impact_score': [10.0, 5.0, 16.7, 13.3, 15.5],
-        'sla_status': ['SLA_VIOLATION', 'SLA_VIOLATION', 'SLA_VIOLATION', 'SLA_VIOLATION', 'SLA_VIOLATION'],
-        'remediation_action': ['IMMEDIATE_DISABLE_ALL_ACCESS', 'DISABLE_ACCESS_WITHIN_24_HOURS', 'IMMEDIATE_DISABLE_ALL_ACCESS', 'IMMEDIATE_DISABLE_ALL_ACCESS', 'DISABLE_ACCESS_WITHIN_4_HOURS']
-    })
+def get_compliance_data():
+    """Get GRC compliance data from Snowflake"""
+    session = get_snowflake_session()
+    
+    query = """
+    SELECT 
+        EMPLOYEE_ID,
+        USERNAME,
+        FULL_NAME,
+        TERMINATION_DATE,
+        RESOURCE,
+        VIOLATION_TIMESTAMP,
+        DAYS_OVERDUE,
+        VIOLATION_SEVERITY,
+        COMPLIANCE_IMPACT_SCORE,
+        SLA_STATUS,
+        REMEDIATION_ACTION
+    FROM CYBERSECURITY_DEMO.SECURITY_AI.CIS_CONTROL_16_MONITORING
+    ORDER BY COMPLIANCE_IMPACT_SCORE DESC
+    """
+    
+    try:
+        df = session.sql(query).to_pandas()
+        return df
+    except Exception as e:
+        st.error(f"Error loading compliance data: {str(e)}")
+        # Fallback to sample data
+        return pd.DataFrame({
+            'EMPLOYEE_ID': ['EMP006', 'EMP007', 'EMP006', 'EMP007', 'EMP006'],
+            'USERNAME': ['alex.turner', 'emily.davis', 'alex.turner', 'emily.davis', 'alex.turner'],
+            'FULL_NAME': ['Alex Turner', 'Emily Davis', 'Alex Turner', 'Emily Davis', 'Alex Turner'],
+            'TERMINATION_DATE': pd.to_datetime(['2024-01-15', '2024-01-20', '2024-01-15', '2024-01-20', '2024-01-15']),
+            'RESOURCE': ['aws_console', 'jira', 'database_prod', 'aws_console', 'github'],
+            'VIOLATION_TIMESTAMP': pd.to_datetime(['2024-01-18 10:30:00', '2024-01-23 11:20:00', '2024-01-20 14:45:00', '2024-01-24 16:30:00', '2024-01-22 09:15:00']),
+            'DAYS_OVERDUE': [3, 3, 5, 4, 7],
+            'VIOLATION_SEVERITY': ['CRITICAL', 'MEDIUM', 'CRITICAL', 'CRITICAL', 'HIGH'],
+            'COMPLIANCE_IMPACT_SCORE': [10.0, 5.0, 16.7, 13.3, 15.5],
+            'SLA_STATUS': ['SLA_VIOLATION', 'SLA_VIOLATION', 'SLA_VIOLATION', 'SLA_VIOLATION', 'SLA_VIOLATION'],
+            'REMEDIATION_ACTION': ['IMMEDIATE_DISABLE_ALL_ACCESS', 'DISABLE_ACCESS_WITHIN_24_HOURS', 'IMMEDIATE_DISABLE_ALL_ACCESS', 'IMMEDIATE_DISABLE_ALL_ACCESS', 'DISABLE_ACCESS_WITHIN_4_HOURS']
+        })
 
 @st.cache_data(ttl=300)
-def get_mock_ai_alerts_data():
-    """Mock data for AI alert triage demo"""
-    return pd.DataFrame({
-        'alert_id': ['ALERT_001', 'ALERT_002', 'ALERT_003', 'ALERT_004', 'ALERT_005'],
-        'timestamp': pd.to_datetime(['2024-01-24 14:35:00', '2024-01-23 08:50:00', '2024-01-22 16:20:00', '2024-01-25 15:45:00', '2024-01-20 11:30:00']),
-        'severity': ['critical', 'high', 'medium', 'high', 'critical'],
-        'title': ['Suspicious User Activity Detected', 'Persistent Port Scanning Detected', 'Terminated Employee Access Detected', 'Large Data Transfer to External Host', 'Potential Exploitation of CVE-2023-46604'],
-        'ai_urgency_assessment': ['HIGH_URGENCY', 'MEDIUM_URGENCY', 'MEDIUM_URGENCY', 'HIGH_URGENCY', 'HIGH_URGENCY'],
-        'ai_threat_classification': ['ACCOUNT_COMPROMISE', 'RECONNAISSANCE', 'ACCOUNT_COMPROMISE', 'DATA_EXFILTRATION', 'VULNERABILITY_EXPLOIT'],
-        'ai_investigation_priority_score': [6.5, 5.0, 4.0, 5.5, 6.0],
-        'ai_recommended_action': ['RESET_CREDENTIALS_AND_REVIEW_ACCESS_LOGS', 'VERIFY_FIREWALL_RULES_AND_BLOCK_SOURCE_IP', 'RESET_CREDENTIALS_AND_REVIEW_ACCESS_LOGS', 'INVESTIGATE_DATA_FLOW_AND_ISOLATE_AFFECTED_SYSTEMS', 'APPLY_PATCHES_AND_IMPLEMENT_WORKAROUNDS'],
-        'extracted_ip_addresses': [['203.0.113.25'], ['45.33.32.156'], ['192.168.100.25'], ['203.0.113.50'], ['198.51.100.45', '203.0.113.75']],
-        'extracted_data_sizes': [[], [], [], ['25MB'], []],
-        'status': ['investigating', 'resolved', 'resolved', 'investigating', 'new']
-    })
+def get_ai_alerts_data():
+    """Get AI alert triage data from Snowflake"""
+    session = get_snowflake_session()
+    
+    query = """
+    SELECT 
+        ALERT_ID,
+        TIMESTAMP,
+        SEVERITY,
+        TITLE,
+        AI_URGENCY_ASSESSMENT,
+        AI_THREAT_CLASSIFICATION,
+        AI_INVESTIGATION_PRIORITY_SCORE,
+        AI_RECOMMENDED_ACTION,
+        EXTRACTED_IP_ADDRESSES,
+        EXTRACTED_DATA_SIZES,
+        STATUS
+    FROM CYBERSECURITY_DEMO.SECURITY_AI.AI_ENHANCED_ALERT_TRIAGE
+    ORDER BY AI_INVESTIGATION_PRIORITY_SCORE DESC
+    """
+    
+    try:
+        df = session.sql(query).to_pandas()
+        return df
+    except Exception as e:
+        st.error(f"Error loading AI alerts data: {str(e)}")
+        # Fallback to sample data
+        return pd.DataFrame({
+            'ALERT_ID': ['ALERT_001', 'ALERT_002', 'ALERT_003', 'ALERT_004', 'ALERT_005'],
+            'TIMESTAMP': pd.to_datetime(['2024-01-24 14:35:00', '2024-01-23 08:50:00', '2024-01-22 16:20:00', '2024-01-25 15:45:00', '2024-01-20 11:30:00']),
+            'SEVERITY': ['critical', 'high', 'medium', 'high', 'critical'],
+            'TITLE': ['Suspicious User Activity Detected', 'Persistent Port Scanning Detected', 'Terminated Employee Access Detected', 'Large Data Transfer to External Host', 'Potential Exploitation of CVE-2023-46604'],
+            'AI_URGENCY_ASSESSMENT': ['HIGH_URGENCY', 'MEDIUM_URGENCY', 'MEDIUM_URGENCY', 'HIGH_URGENCY', 'HIGH_URGENCY'],
+            'AI_THREAT_CLASSIFICATION': ['ACCOUNT_COMPROMISE', 'RECONNAISSANCE', 'ACCOUNT_COMPROMISE', 'DATA_EXFILTRATION', 'VULNERABILITY_EXPLOIT'],
+            'AI_INVESTIGATION_PRIORITY_SCORE': [6.5, 5.0, 4.0, 5.5, 6.0],
+            'AI_RECOMMENDED_ACTION': ['RESET_CREDENTIALS_AND_REVIEW_ACCESS_LOGS', 'VERIFY_FIREWALL_RULES_AND_BLOCK_SOURCE_IP', 'RESET_CREDENTIALS_AND_REVIEW_ACCESS_LOGS', 'INVESTIGATE_DATA_FLOW_AND_ISOLATE_AFFECTED_SYSTEMS', 'APPLY_PATCHES_AND_IMPLEMENT_WORKAROUNDS'],
+            'EXTRACTED_IP_ADDRESSES': ["['203.0.113.25']", "['45.33.32.156']", "['192.168.100.25']", "['203.0.113.50']", "['198.51.100.45', '203.0.113.75']"],
+            'EXTRACTED_DATA_SIZES': ["[]", "[]", "[]", "['25MB']", "[]"],
+            'STATUS': ['investigating', 'resolved', 'resolved', 'investigating', 'new']
+        })
 
 def main():
     # Header
@@ -203,8 +334,14 @@ def main():
         st.markdown("---")
         
         # Connection status
-        st.success("✅ Connected to Snowflake")
-        st.info("📊 Demo Data Loaded")
+        try:
+            session = get_snowflake_session()
+            st.success("✅ Connected to Snowflake")
+            st.info(f"📊 Current Database: {session.get_current_database()}")
+            st.info(f"🏛️ Current Schema: {session.get_current_schema()}")
+        except Exception as e:
+            st.warning("⚠️ Using Demo Mode (Fallback Data)")
+            st.caption(f"Error: {str(e)}")
         
         # Time range
         time_range = st.selectbox(
@@ -239,17 +376,17 @@ def show_anomaly_detection():
     </div>
     """, unsafe_allow_html=True)
     
-    # Load mock data
-    anomaly_data = get_mock_anomaly_data()
+    # Load data from Snowflake
+    anomaly_data = get_anomaly_data()
     
     # Executive summary metrics
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.metric("Total Users Analyzed", "250", delta="5 new")
     with col2:
-        st.metric("Anomalies Detected", len(anomaly_data[anomaly_data['anomaly_score'] > 5]), delta="+2")
+        st.metric("Anomalies Detected", len(anomaly_data[anomaly_data['ANOMALY_SCORE'] > 5]), delta="+2")
     with col3:
-        st.metric("High-Risk Anomalies", len(anomaly_data[anomaly_data['classification'] == 'HIGH_ANOMALY']), delta="+1")
+        st.metric("High-Risk Anomalies", len(anomaly_data[anomaly_data['CLASSIFICATION'] == 'HIGH_ANOMALY']), delta="+1")
     with col4:
         st.metric("Avg Detection Time", "12 minutes", delta="-8 min")
     
@@ -260,17 +397,17 @@ def show_anomaly_detection():
         st.subheader("GitHub Login Anomaly Detection Results")
         
         # Filter high anomalies
-        high_anomalies = anomaly_data[anomaly_data['anomaly_score'] > 5]
+        high_anomalies = anomaly_data[anomaly_data['ANOMALY_SCORE'] > 5]
         
         if not high_anomalies.empty:
             # Anomaly timeline
             fig = px.scatter(
                 anomaly_data,
-                x='timestamp',
-                y='anomaly_score',
-                color='classification',
-                size='lines_changed',
-                hover_data=['username', 'current_country', 'activity_count'],
+                x='TIMESTAMP',
+                y='ANOMALY_SCORE',
+                color='CLASSIFICATION',
+                size='LINES_CHANGED',
+                hover_data=['USERNAME', 'CURRENT_COUNTRY', 'ACTIVITY_COUNT'],
                 title="User Anomaly Detection Timeline",
                 color_discrete_map={
                     'HIGH_ANOMALY': '#ff4444',
@@ -286,16 +423,25 @@ def show_anomaly_detection():
             st.subheader("High-Risk User Activities")
             
             for _, row in high_anomalies.iterrows():
-                indicators_text = ", ".join([ind for ind in row['anomaly_indicators'] if ind])
+                # Handle indicators that might be strings or arrays
+                indicators = row['ANOMALY_INDICATORS']
+                if isinstance(indicators, str):
+                    # If it's a string representation of a list, try to eval it safely
+                    try:
+                        import ast
+                        indicators = ast.literal_eval(indicators)
+                    except:
+                        indicators = []
+                indicators_text = ", ".join([ind for ind in indicators if ind])
                 
-                alert_class = "critical-alert" if row['classification'] == 'HIGH_ANOMALY' else "high-alert"
+                alert_class = "critical-alert" if row['CLASSIFICATION'] == 'HIGH_ANOMALY' else "high-alert"
                 
                 st.markdown(f"""
                 <div class="{alert_class}">
-                    <strong>🚨 {row['username']}</strong> - Score: {row['anomaly_score']}<br>
-                    <strong>Time:</strong> {row['timestamp'].strftime('%Y-%m-%d %H:%M:%S')}<br>
-                    <strong>Location:</strong> {row['current_country']} (Hour: {row['current_hour']})<br>
-                    <strong>Activity:</strong> {row['activity_count']} GitHub actions, {row['lines_changed']} lines changed<br>
+                    <strong>🚨 {row['USERNAME']}</strong> - Score: {row['ANOMALY_SCORE']}<br>
+                    <strong>Time:</strong> {row['TIMESTAMP'].strftime('%Y-%m-%d %H:%M:%S')}<br>
+                    <strong>Location:</strong> {row['CURRENT_COUNTRY']} (Hour: {row['CURRENT_HOUR']})<br>
+                    <strong>Activity:</strong> {row['ACTIVITY_COUNT']} GitHub actions, {row['LINES_CHANGED']} lines changed<br>
                     <strong>Risk Indicators:</strong> {indicators_text}
                 </div>
                 """, unsafe_allow_html=True)
@@ -388,7 +534,7 @@ def show_threat_detection():
     </div>
     """, unsafe_allow_html=True)
     
-    threat_data = get_mock_threat_data()
+    threat_data = get_threat_data()
     
     # Executive metrics
     col1, col2, col3, col4 = st.columns(4)
@@ -517,7 +663,7 @@ def show_vulnerability_prioritization():
     </div>
     """, unsafe_allow_html=True)
     
-    vuln_data = get_mock_vulnerability_data()
+    vuln_data = get_vulnerability_data()
     
     # Executive metrics
     col1, col2, col3, col4 = st.columns(4)
@@ -688,7 +834,7 @@ def show_grc_compliance():
     </div>
     """, unsafe_allow_html=True)
     
-    compliance_data = get_mock_compliance_data()
+    compliance_data = get_compliance_data()
     
     # Executive metrics
     col1, col2, col3, col4 = st.columns(4)
@@ -847,7 +993,7 @@ def show_ai_alert_triage():
     </div>
     """, unsafe_allow_html=True)
     
-    alerts_data = get_mock_ai_alerts_data()
+    alerts_data = get_ai_alerts_data()
     
     # Executive metrics
     col1, col2, col3, col4 = st.columns(4)

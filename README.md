@@ -73,10 +73,16 @@ cybersecurity_ai_demo/
    pip install -r requirements.txt
    ```
 
-3. **Run the Streamlit demo**
+3. **Run the demo**
+   
+   **For Standalone Streamlit:**
    ```bash
    streamlit run streamlit/cybersecurity_ai_demo.py
    ```
+   
+   **For Streamlit in Snowflake (SiS):**
+   - Use the `streamlit_app.py` file directly in Snowflake
+   - Upload to your Snowflake account and run as a Streamlit application
 
 4. **Access the application**
    - Open your browser to `http://localhost:8501`
@@ -105,6 +111,32 @@ For live data demonstration:
    ```
 
 4. **Update Streamlit app** to use live Snowflake connection
+
+### Streamlit in Snowflake (SiS) Deployment
+
+To deploy as a native Snowflake application:
+
+1. **Complete the Snowflake setup above** (schema, data, views)
+
+2. **Deploy Streamlit App in Snowflake**
+   - In Snowflake, go to **Data > Streamlit**
+   - Click **+ Streamlit App**
+   - Name: `Cybersecurity AI/ML Demo`
+   - Warehouse: Select appropriate warehouse
+   - Database/Schema: `CYBERSECURITY_DEMO.SECURITY_AI`
+   - Upload/paste the contents of `streamlit_app.py`
+   - Click **Create**
+
+3. **Access Your App**
+   - The app runs natively in Snowflake with built-in authentication
+   - Uses native session management - no external setup required
+   - Automatically connects to your data
+
+**Benefits of SiS Deployment:**
+- 🔐 Native Snowflake authentication and security
+- ⚡ Direct data access without network latency
+- 🎛️ Built-in resource management and scaling
+- 📱 Easy sharing within your Snowflake organization
 
 ## 🎬 Demo Scenarios
 
