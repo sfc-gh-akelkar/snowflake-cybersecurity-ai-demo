@@ -34,9 +34,9 @@ SELECT 'EMP008', 'carlos.lopez', 'carlos.lopez@company.com', 'Carlos Lopez', 'Fi
 -- =====================================================
 -- Step 1: Insert basic asset data without arrays
 INSERT INTO ASSET_INVENTORY (
-    ASSET_ID, HOSTNAME, IP_ADDRESS, ASSET_TYPE, OS_TYPE, OS_VERSION, 
-    DEPARTMENT, OWNER, BUSINESS_CRITICALITY, DATA_CLASSIFICATION, 
-    LOCATION, ENVIRONMENT, LAST_SCAN, PATCH_LEVEL, NETWORK_ZONE
+    ASSET_ID, HOSTNAME, IP_ADDRESS, ASSET_TYPE, OPERATING_SYSTEM, OS_VERSION, 
+    BUSINESS_UNIT, OWNER, BUSINESS_CRITICALITY, DATA_CLASSIFICATION, 
+    LOCATION, ENVIRONMENT, LAST_SCAN_DATE, PATCH_LEVEL, NETWORK_SEGMENT
 )
 -- Critical production servers
 SELECT 'ASSET001', 'prod-db-01', '10.1.1.10', 'server', 'Linux', 'Ubuntu 20.04.6', 'Engineering', 'john.smith', 'critical', 'confidential', 'AWS-US-East-1', 'production', '2024-01-20 08:00:00', 'current', 'DMZ'
