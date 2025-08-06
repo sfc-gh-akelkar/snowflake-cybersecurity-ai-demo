@@ -117,7 +117,7 @@ SELECT
 FROM recent_activity r
 ORDER BY ANOMALY_SCORE DESC;
 
--- 1B. Built-in Snowflake Anomaly Detection for Login Counts
+-- 1B. Statistical Anomaly Detection for Login Counts
 CREATE OR REPLACE VIEW LOGIN_COUNT_ANOMALY_DETECTION AS
 WITH daily_logins AS (
     SELECT 
@@ -129,29 +129,46 @@ WITH daily_logins AS (
         AND TIMESTAMP >= DATEADD(day, -30, CURRENT_TIMESTAMP())
     GROUP BY USERNAME, DATE_TRUNC('day', TIMESTAMP)
 ),
-anomaly_detection AS (
+user_baselines AS (
     SELECT 
         USERNAME,
-        login_date,
-        daily_login_count,
-        -- Using Snowflake's built-in anomaly detection
-        ANOMALY_DETECTION(daily_login_count) OVER (
-            PARTITION BY USERNAME 
-            ORDER BY login_date
-        ) as anomaly_result
+        AVG(daily_login_count) as avg_logins,
+        STDDEV(daily_login_count) as stddev_logins,
+        COUNT(*) as days_observed
     FROM daily_logins
+    GROUP BY USERNAME
+),
+anomaly_detection AS (
+    SELECT 
+        dl.USERNAME,
+        dl.login_date,
+        dl.daily_login_count,
+        ub.avg_logins,
+        ub.stddev_logins,
+        -- Calculate z-score (number of standard deviations from mean)
+        CASE 
+            WHEN ub.stddev_logins > 0 THEN 
+                ABS(dl.daily_login_count - ub.avg_logins) / ub.stddev_logins
+            ELSE 0
+        END as z_score,
+        -- Define bounds (mean ± 2 standard deviations)
+        ub.avg_logins - (2 * COALESCE(ub.stddev_logins, 0)) as expected_lower,
+        ub.avg_logins + (2 * COALESCE(ub.stddev_logins, 0)) as expected_upper
+    FROM daily_logins dl
+    JOIN user_baselines ub ON dl.USERNAME = ub.USERNAME
 )
 SELECT 
     USERNAME,
     login_date,
     daily_login_count,
-    anomaly_result:is_anomaly::BOOLEAN as is_anomaly,
-    anomaly_result:score::FLOAT as anomaly_score,
-    anomaly_result:lower_bound::FLOAT as expected_lower,
-    anomaly_result:upper_bound::FLOAT as expected_upper,
+    -- Anomaly if z-score > 2 (outside 2 standard deviations)
+    CASE WHEN z_score > 2 THEN TRUE ELSE FALSE END as is_anomaly,
+    z_score as anomaly_score,
+    expected_lower,
+    expected_upper,
     CASE 
-        WHEN anomaly_result:is_anomaly::BOOLEAN = TRUE AND daily_login_count > anomaly_result:upper_bound::FLOAT THEN 'EXCESSIVE_LOGINS'
-        WHEN anomaly_result:is_anomaly::BOOLEAN = TRUE AND daily_login_count < anomaly_result:lower_bound::FLOAT THEN 'INSUFFICIENT_LOGINS'
+        WHEN z_score > 2 AND daily_login_count > expected_upper THEN 'EXCESSIVE_LOGINS'
+        WHEN z_score > 2 AND daily_login_count < expected_lower THEN 'INSUFFICIENT_LOGINS'
         ELSE 'NORMAL'
     END as anomaly_type
 FROM anomaly_detection
