@@ -137,8 +137,7 @@ anomaly_detection AS (
         -- Using Snowflake's built-in anomaly detection
         ANOMALY_DETECTION(daily_login_count) OVER (
             PARTITION BY USERNAME 
-            ORDER BY login_date 
-            ROWS BETWEEN 14 PRECEDING AND CURRENT ROW
+            ORDER BY login_date
         ) as anomaly_result
     FROM daily_logins
 )
