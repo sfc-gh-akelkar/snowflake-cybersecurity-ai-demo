@@ -70,7 +70,7 @@ SELECT
         ELSE 0.0
     END +
     CASE 
-        WHEN r.current_country NOT IN (SELECT country FROM (SELECT EXPLODE(typical_countries) as country FROM user_baseline WHERE USERNAME = r.USERNAME)) THEN 7.0
+        WHEN r.current_country NOT IN (SELECT f.value::STRING as country FROM user_baseline ub, LATERAL FLATTEN(input => ub.typical_countries) f WHERE ub.USERNAME = r.USERNAME) THEN 7.0
         ELSE 0.0
     END +
     CASE 
@@ -89,17 +89,17 @@ SELECT
     -- Classification based on anomaly score
     CASE 
         WHEN (CASE WHEN r.current_hour NOT IN (SELECT login_hour FROM user_baseline WHERE USERNAME = r.USERNAME) THEN 5.0 ELSE 0.0 END +
-              CASE WHEN r.current_country NOT IN (SELECT country FROM (SELECT EXPLODE(typical_countries) as country FROM user_baseline WHERE USERNAME = r.USERNAME)) THEN 7.0 ELSE 0.0 END +
+              CASE WHEN r.current_country NOT IN (SELECT f.value::STRING as country FROM user_baseline ub, LATERAL FLATTEN(input => ub.typical_countries) f WHERE ub.USERNAME = r.USERNAME) THEN 7.0 ELSE 0.0 END +
               CASE WHEN r.current_dow IN (0, 6) AND r.activity_count > 5 THEN 4.0 ELSE 0.0 END +
               CASE WHEN r.lines_changed > 1000 THEN 3.0 ELSE 0.0 END +
               CASE WHEN r.sensitive_repo_access = 1 THEN 2.0 ELSE 0.0 END) >= 8.0 THEN 'HIGH_ANOMALY'
         WHEN (CASE WHEN r.current_hour NOT IN (SELECT login_hour FROM user_baseline WHERE USERNAME = r.USERNAME) THEN 5.0 ELSE 0.0 END +
-              CASE WHEN r.current_country NOT IN (SELECT country FROM (SELECT EXPLODE(typical_countries) as country FROM user_baseline WHERE USERNAME = r.USERNAME)) THEN 7.0 ELSE 0.0 END +
+              CASE WHEN r.current_country NOT IN (SELECT f.value::STRING as country FROM user_baseline ub, LATERAL FLATTEN(input => ub.typical_countries) f WHERE ub.USERNAME = r.USERNAME) THEN 7.0 ELSE 0.0 END +
               CASE WHEN r.current_dow IN (0, 6) AND r.activity_count > 5 THEN 4.0 ELSE 0.0 END +
               CASE WHEN r.lines_changed > 1000 THEN 3.0 ELSE 0.0 END +
               CASE WHEN r.sensitive_repo_access = 1 THEN 2.0 ELSE 0.0 END) >= 5.0 THEN 'MEDIUM_ANOMALY'
         WHEN (CASE WHEN r.current_hour NOT IN (SELECT login_hour FROM user_baseline WHERE USERNAME = r.USERNAME) THEN 5.0 ELSE 0.0 END +
-              CASE WHEN r.current_country NOT IN (SELECT country FROM (SELECT EXPLODE(typical_countries) as country FROM user_baseline WHERE USERNAME = r.USERNAME)) THEN 7.0 ELSE 0.0 END +
+              CASE WHEN r.current_country NOT IN (SELECT f.value::STRING as country FROM user_baseline ub, LATERAL FLATTEN(input => ub.typical_countries) f WHERE ub.USERNAME = r.USERNAME) THEN 7.0 ELSE 0.0 END +
               CASE WHEN r.current_dow IN (0, 6) AND r.activity_count > 5 THEN 4.0 ELSE 0.0 END +
               CASE WHEN r.lines_changed > 1000 THEN 3.0 ELSE 0.0 END +
               CASE WHEN r.sensitive_repo_access = 1 THEN 2.0 ELSE 0.0 END) >= 2.0 THEN 'LOW_ANOMALY'
@@ -109,7 +109,7 @@ SELECT
     -- Context for investigation
     ARRAY_CONSTRUCT(
         CASE WHEN r.current_hour NOT IN (SELECT login_hour FROM user_baseline WHERE USERNAME = r.USERNAME) THEN 'unusual_hour' END,
-        CASE WHEN r.current_country NOT IN (SELECT country FROM (SELECT EXPLODE(typical_countries) as country FROM user_baseline WHERE USERNAME = r.USERNAME)) THEN 'unusual_location' END,
+        CASE WHEN r.current_country NOT IN (SELECT f.value::STRING as country FROM user_baseline ub, LATERAL FLATTEN(input => ub.typical_countries) f WHERE ub.USERNAME = r.USERNAME) THEN 'unusual_location' END,
         CASE WHEN r.current_dow IN (0, 6) AND r.activity_count > 5 THEN 'weekend_activity' END,
         CASE WHEN r.lines_changed > 1000 THEN 'large_code_changes' END,
         CASE WHEN r.sensitive_repo_access = 1 THEN 'sensitive_repo_access' END
