@@ -17,8 +17,8 @@ WITH user_baseline AS (
     -- Establish baseline login patterns for each user (simplified)
     SELECT 
         USERNAME,
-        COLLECT_LIST(DISTINCT EXTRACT(HOUR FROM TIMESTAMP)) as typical_hours,
-        COLLECT_LIST(DISTINCT LOCATION:country::STRING) as typical_countries
+        ARRAY_AGG(DISTINCT EXTRACT(HOUR FROM TIMESTAMP)) as typical_hours,
+        ARRAY_AGG(DISTINCT LOCATION:country::STRING) as typical_countries
     FROM USER_AUTHENTICATION_LOGS 
     WHERE TIMESTAMP >= DATEADD(day, -30, CURRENT_TIMESTAMP())
         AND SUCCESS = TRUE
