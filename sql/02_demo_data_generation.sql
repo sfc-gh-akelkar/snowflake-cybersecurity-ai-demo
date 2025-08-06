@@ -378,17 +378,19 @@ FROM (
 ) ts;
 
 -- Add malicious network traffic (matches threat intelligence)
-INSERT INTO NETWORK_SECURITY_LOGS SELECT
+INSERT INTO NETWORK_SECURITY_LOGS 
 -- C2 communication (matches IOC001)
-('NET_THREAT_001', '2024-01-24 14:30:15', '10.2.1.15', '203.0.113.50', 49152, 443, 'TCP', 2048, 15000, 20, 150, 300.5, 'ESTABLISHED', TRUE, 'c2_communication', 0.95, FALSE, OBJECT_CONSTRUCT('src_country', 'US', 'dest_country', 'RU', 'src_city', 'New York', 'dest_city', 'Moscow')),
-('NET_THREAT_002', '2024-01-24 15:15:30', '10.1.1.20', '203.0.113.50', 52341, 8080, 'TCP', 512, 25000, 15, 200, 180.2, 'ESTABLISHED', TRUE, 'data_exfiltration', 0.89, FALSE, OBJECT_CONSTRUCT('src_country', 'US', 'dest_country', 'RU', 'src_city', 'New York', 'dest_city', 'Moscow')),
-
+SELECT 'NET_THREAT_001', '2024-01-24 14:30:15', '10.2.1.15', '203.0.113.50', 49152, 443, 'TCP', 2048, 15000, 20, 150, 300.5, 'ESTABLISHED', TRUE, 'c2_communication', 0.95, FALSE, OBJECT_CONSTRUCT('src_country', 'US', 'dest_country', 'RU', 'src_city', 'New York', 'dest_city', 'Moscow')
+UNION ALL
+SELECT 'NET_THREAT_002', '2024-01-24 15:15:30', '10.1.1.20', '203.0.113.50', 52341, 8080, 'TCP', 512, 25000, 15, 200, 180.2, 'ESTABLISHED', TRUE, 'data_exfiltration', 0.89, FALSE, OBJECT_CONSTRUCT('src_country', 'US', 'dest_country', 'RU', 'src_city', 'New York', 'dest_city', 'Moscow')
+UNION ALL
 -- Scanning activity (matches IOC003)
-('NET_THREAT_003', '2024-01-23 08:45:22', '45.33.32.156', '10.1.1.10', 54321, 22, 'TCP', 64, 0, 1, 1, 0.1, 'SYN_SENT', TRUE, 'port_scan', 0.78, TRUE, OBJECT_CONSTRUCT('src_country', 'Unknown', 'dest_country', 'US', 'src_city', 'Unknown', 'dest_city', 'New York')),
-('NET_THREAT_004', '2024-01-23 08:45:25', '45.33.32.156', '10.1.1.20', 54322, 22, 'TCP', 64, 0, 1, 1, 0.1, 'SYN_SENT', TRUE, 'port_scan', 0.78, TRUE, OBJECT_CONSTRUCT('src_country', 'Unknown', 'dest_country', 'US', 'src_city', 'Unknown', 'dest_city', 'New York')),
-
+SELECT 'NET_THREAT_003', '2024-01-23 08:45:22', '45.33.32.156', '10.1.1.10', 54321, 22, 'TCP', 64, 0, 1, 1, 0.1, 'SYN_SENT', TRUE, 'port_scan', 0.78, TRUE, OBJECT_CONSTRUCT('src_country', 'Unknown', 'dest_country', 'US', 'src_city', 'Unknown', 'dest_city', 'New York')
+UNION ALL
+SELECT 'NET_THREAT_004', '2024-01-23 08:45:25', '45.33.32.156', '10.1.1.20', 54322, 22, 'TCP', 64, 0, 1, 1, 0.1, 'SYN_SENT', TRUE, 'port_scan', 0.78, TRUE, OBJECT_CONSTRUCT('src_country', 'Unknown', 'dest_country', 'US', 'src_city', 'Unknown', 'dest_city', 'New York')
+UNION ALL
 -- Cryptomining communication (matches IOC004)
-('NET_THREAT_005', '2024-01-25 14:20:45', '10.2.1.35', '198.51.100.25', 45123, 4444, 'TCP', 1024, 8192, 50, 100, 600.0, 'ESTABLISHED', TRUE, 'cryptomining', 0.72, FALSE, OBJECT_CONSTRUCT('src_country', 'US', 'dest_country', 'NL', 'src_city', 'New York', 'dest_city', 'Amsterdam');
+SELECT 'NET_THREAT_005', '2024-01-25 14:20:45', '10.2.1.35', '198.51.100.25', 45123, 4444, 'TCP', 1024, 8192, 50, 100, 600.0, 'ESTABLISHED', TRUE, 'cryptomining', 0.72, FALSE, OBJECT_CONSTRUCT('src_country', 'US', 'dest_country', 'NL', 'src_city', 'New York', 'dest_city', 'Amsterdam');
 -- =====================================================
 -- ACCESS CONTROL LOGS - For GRC compliance violations
 -- =====================================================
