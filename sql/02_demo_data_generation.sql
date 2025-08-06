@@ -454,7 +454,7 @@ INSERT INTO ACCESS_CONTROL_LOGS SELECT
 
 -- emily.davis (terminated 2024-01-20) still accessing Jira
 ('ACCESS_VIOLATION_004', '2024-01-23 11:20:00', 'USER_EMP007', 'emily.davis', 'jira', 'login', 'project_management', 'basic', '172.16.50.10', TRUE, 60, TRUE),
-('ACCESS_VIOLATION_005', '2024-01-24 16:30:00', 'USER_EMP007', 'emily.davis', 'aws_console', 'login', 'cloud_service', 'basic', '172.16.50.10', TRUE, 30, TRUE;
+('ACCESS_VIOLATION_005', '2024-01-24 16:30:00', 'USER_EMP007', 'emily.davis', 'aws_console', 'login', 'cloud_service', 'basic', '172.16.50.10', TRUE, 30, TRUE);
 -- =====================================================
 -- SECURITY ALERTS - For AI enrichment demonstration
 -- =====================================================
