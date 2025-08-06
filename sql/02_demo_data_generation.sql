@@ -129,7 +129,7 @@ SELECT 'VULN008', 'CVE-2023-12345', 'ASSET008', 'CAMERA-LOBBY-01', '10.4.1.10', 
 INSERT INTO USER_AUTHENTICATION_LOGS 
 SELECT 
     'AUTH_' || ROW_NUMBER() OVER (ORDER BY ts.hour_timestamp, u.username) as LOG_ID,
-    ts.hour_timestamp + INTERVAL (UNIFORM(0, 3599, RANDOM()) || ' seconds') as TIMESTAMP,
+    DATEADD(second, UNIFORM(0, 3599, RANDOM()), ts.hour_timestamp) as TIMESTAMP,
     'USER_' || u.employee_id as USER_ID,
     u.username,
     u.email,
@@ -311,8 +311,8 @@ SELECT
         ELSE 'write'
     END as ACCESS_LEVEL
 FROM (
-    SELECT DATEADD(hour, -ROW_NUMBER() OVER (ORDER BY NULL), CURRENT_TIMESTAMP()) + 
-           INTERVAL (UNIFORM(0, 3599, RANDOM()) || ' seconds') as timestamp
+    SELECT DATEADD(second, UNIFORM(0, 3599, RANDOM()), 
+                  DATEADD(hour, -ROW_NUMBER() OVER (ORDER BY NULL), CURRENT_TIMESTAMP())) as timestamp
     FROM TABLE(GENERATOR(ROWCOUNT => 72)) -- 3 days
 ) ts
 CROSS JOIN (
