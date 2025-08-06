@@ -11,36 +11,32 @@ USE SCHEMA SECURITY_AI;
 -- Built-in anomaly detection using SQL
 -- =====================================================
 
--- 1A. GitHub Login Anomaly Detection
+-- 1A. GitHub Login Anomaly Detection (Simplified)
 CREATE OR REPLACE VIEW GITHUB_LOGIN_ANOMALY_DETECTION AS
 WITH user_baseline AS (
-    -- Establish baseline login patterns for each user
+    -- Establish baseline login patterns for each user (simplified)
     SELECT 
         USERNAME,
-        EXTRACT(HOUR FROM TIMESTAMP) as login_hour,
-        EXTRACT(DOW FROM TIMESTAMP) as day_of_week,
-        COUNT(*) as historical_logins,
-        ARRAY_AGG(DISTINCT LOCATION:country::STRING) as typical_countries,
-        AVG(ARRAY_SIZE(RISK_FACTORS)) as avg_risk_factors
+        COLLECT_LIST(DISTINCT EXTRACT(HOUR FROM TIMESTAMP)) as typical_hours,
+        COLLECT_LIST(DISTINCT LOCATION:country::STRING) as typical_countries
     FROM USER_AUTHENTICATION_LOGS 
     WHERE TIMESTAMP >= DATEADD(day, -30, CURRENT_TIMESTAMP())
         AND SUCCESS = TRUE
-    GROUP BY USERNAME, EXTRACT(HOUR FROM TIMESTAMP), EXTRACT(DOW FROM TIMESTAMP)
+        AND LOCATION:country::STRING IS NOT NULL
+    GROUP BY USERNAME
 ),
 recent_activity AS (
-    -- Analyze recent login activity
+    -- Analyze recent login activity (simplified)
     SELECT 
         u.USERNAME,
         u.TIMESTAMP,
-        u.LOCATION:country::STRING as current_country,
+        COALESCE(u.LOCATION:country::STRING, 'Unknown') as current_country,
         EXTRACT(HOUR FROM u.TIMESTAMP) as current_hour,
         EXTRACT(DOW FROM u.TIMESTAMP) as current_dow,
-        ARRAY_SIZE(u.RISK_FACTORS) as current_risk_factors,
-        u.SUCCESS,
-        -- GitHub activity correlation
-        g.activity_count,
-        g.lines_changed,
-        g.sensitive_repo_access
+        -- GitHub activity correlation (with null handling)
+        COALESCE(g.activity_count, 0) as activity_count,
+        COALESCE(g.lines_changed, 0) as lines_changed,
+        COALESCE(g.sensitive_repo_access, 0) as sensitive_repo_access
     FROM USER_AUTHENTICATION_LOGS u
     LEFT JOIN (
         SELECT 
@@ -54,67 +50,68 @@ recent_activity AS (
         GROUP BY USERNAME, DATE_TRUNC('hour', TIMESTAMP)
     ) g ON u.USERNAME = g.USERNAME AND DATE_TRUNC('hour', u.TIMESTAMP) = g.activity_hour
     WHERE u.TIMESTAMP >= DATEADD(day, -1, CURRENT_TIMESTAMP())
+        AND u.SUCCESS = TRUE
 )
 SELECT 
     r.USERNAME,
     r.TIMESTAMP,
     r.current_country,
     r.current_hour,
-    r.SUCCESS,
     r.activity_count,
     r.lines_changed,
     r.sensitive_repo_access,
-    -- Anomaly scoring
-    CASE 
-        WHEN r.current_hour NOT IN (SELECT login_hour FROM user_baseline WHERE USERNAME = r.USERNAME) THEN 5.0
+    -- Simplified anomaly scoring
+    (CASE 
+        WHEN NOT ARRAY_CONTAINS(r.current_hour::VARIANT, ub.typical_hours) THEN 5.0
         ELSE 0.0
     END +
     CASE 
-        WHEN r.current_country NOT IN (SELECT f.value::STRING as country FROM user_baseline ub, LATERAL FLATTEN(input => ub.typical_countries) f WHERE ub.USERNAME = r.USERNAME) THEN 7.0
+        WHEN NOT ARRAY_CONTAINS(r.current_country::VARIANT, ub.typical_countries) THEN 7.0
         ELSE 0.0
     END +
     CASE 
-        WHEN r.current_dow IN (0, 6) AND r.activity_count > 5 THEN 4.0  -- Weekend activity
+        WHEN r.current_dow IN (0, 6) AND r.activity_count > 5 THEN 4.0
         ELSE 0.0
     END +
     CASE 
-        WHEN r.lines_changed > 1000 THEN 3.0  -- Large code changes
+        WHEN r.lines_changed > 1000 THEN 3.0
         ELSE 0.0
     END +
     CASE 
-        WHEN r.sensitive_repo_access = 1 THEN 2.0  -- Sensitive repository access
+        WHEN r.sensitive_repo_access = 1 THEN 2.0
         ELSE 0.0
-    END as ANOMALY_SCORE,
+    END) as ANOMALY_SCORE,
     
-    -- Classification based on anomaly score
+    -- Simplified classification
     CASE 
-        WHEN (CASE WHEN r.current_hour NOT IN (SELECT login_hour FROM user_baseline WHERE USERNAME = r.USERNAME) THEN 5.0 ELSE 0.0 END +
-              CASE WHEN r.current_country NOT IN (SELECT f.value::STRING as country FROM user_baseline ub, LATERAL FLATTEN(input => ub.typical_countries) f WHERE ub.USERNAME = r.USERNAME) THEN 7.0 ELSE 0.0 END +
+        WHEN (CASE WHEN NOT ARRAY_CONTAINS(r.current_hour::VARIANT, ub.typical_hours) THEN 5.0 ELSE 0.0 END +
+              CASE WHEN NOT ARRAY_CONTAINS(r.current_country::VARIANT, ub.typical_countries) THEN 7.0 ELSE 0.0 END +
               CASE WHEN r.current_dow IN (0, 6) AND r.activity_count > 5 THEN 4.0 ELSE 0.0 END +
               CASE WHEN r.lines_changed > 1000 THEN 3.0 ELSE 0.0 END +
               CASE WHEN r.sensitive_repo_access = 1 THEN 2.0 ELSE 0.0 END) >= 8.0 THEN 'HIGH_ANOMALY'
-        WHEN (CASE WHEN r.current_hour NOT IN (SELECT login_hour FROM user_baseline WHERE USERNAME = r.USERNAME) THEN 5.0 ELSE 0.0 END +
-              CASE WHEN r.current_country NOT IN (SELECT f.value::STRING as country FROM user_baseline ub, LATERAL FLATTEN(input => ub.typical_countries) f WHERE ub.USERNAME = r.USERNAME) THEN 7.0 ELSE 0.0 END +
+        WHEN (CASE WHEN NOT ARRAY_CONTAINS(r.current_hour::VARIANT, ub.typical_hours) THEN 5.0 ELSE 0.0 END +
+              CASE WHEN NOT ARRAY_CONTAINS(r.current_country::VARIANT, ub.typical_countries) THEN 7.0 ELSE 0.0 END +
               CASE WHEN r.current_dow IN (0, 6) AND r.activity_count > 5 THEN 4.0 ELSE 0.0 END +
               CASE WHEN r.lines_changed > 1000 THEN 3.0 ELSE 0.0 END +
               CASE WHEN r.sensitive_repo_access = 1 THEN 2.0 ELSE 0.0 END) >= 5.0 THEN 'MEDIUM_ANOMALY'
-        WHEN (CASE WHEN r.current_hour NOT IN (SELECT login_hour FROM user_baseline WHERE USERNAME = r.USERNAME) THEN 5.0 ELSE 0.0 END +
-              CASE WHEN r.current_country NOT IN (SELECT f.value::STRING as country FROM user_baseline ub, LATERAL FLATTEN(input => ub.typical_countries) f WHERE ub.USERNAME = r.USERNAME) THEN 7.0 ELSE 0.0 END +
+        WHEN (CASE WHEN NOT ARRAY_CONTAINS(r.current_hour::VARIANT, ub.typical_hours) THEN 5.0 ELSE 0.0 END +
+              CASE WHEN NOT ARRAY_CONTAINS(r.current_country::VARIANT, ub.typical_countries) THEN 7.0 ELSE 0.0 END +
               CASE WHEN r.current_dow IN (0, 6) AND r.activity_count > 5 THEN 4.0 ELSE 0.0 END +
               CASE WHEN r.lines_changed > 1000 THEN 3.0 ELSE 0.0 END +
               CASE WHEN r.sensitive_repo_access = 1 THEN 2.0 ELSE 0.0 END) >= 2.0 THEN 'LOW_ANOMALY'
         ELSE 'NORMAL'
     END as CLASSIFICATION,
     
-    -- Context for investigation
-    ARRAY_CONSTRUCT(
-        CASE WHEN r.current_hour NOT IN (SELECT login_hour FROM user_baseline WHERE USERNAME = r.USERNAME) THEN 'unusual_hour' END,
-        CASE WHEN r.current_country NOT IN (SELECT f.value::STRING as country FROM user_baseline ub, LATERAL FLATTEN(input => ub.typical_countries) f WHERE ub.USERNAME = r.USERNAME) THEN 'unusual_location' END,
+    -- Simplified anomaly indicators (as string to avoid array issues)
+    CONCAT_WS(', ',
+        CASE WHEN NOT ARRAY_CONTAINS(r.current_hour::VARIANT, ub.typical_hours) THEN 'unusual_hour' END,
+        CASE WHEN NOT ARRAY_CONTAINS(r.current_country::VARIANT, ub.typical_countries) THEN 'unusual_location' END,
         CASE WHEN r.current_dow IN (0, 6) AND r.activity_count > 5 THEN 'weekend_activity' END,
         CASE WHEN r.lines_changed > 1000 THEN 'large_code_changes' END,
         CASE WHEN r.sensitive_repo_access = 1 THEN 'sensitive_repo_access' END
     ) as ANOMALY_INDICATORS
 FROM recent_activity r
+LEFT JOIN user_baseline ub ON r.USERNAME = ub.USERNAME
 ORDER BY ANOMALY_SCORE DESC;
 
 -- 1B. Statistical Anomaly Detection for Login Counts
