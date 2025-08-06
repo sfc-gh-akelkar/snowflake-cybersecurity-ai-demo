@@ -446,15 +446,18 @@ WHERE EXTRACT(HOUR FROM ts.timestamp) BETWEEN 8 AND 18 -- Business hours
     AND UNIFORM(1, 100, RANDOM()) <= 70; -- 70% chance of access
 
 -- Add GRC violations - terminated employees still accessing systems
-INSERT INTO ACCESS_CONTROL_LOGS SELECT
+INSERT INTO ACCESS_CONTROL_LOGS 
 -- alex.turner (terminated 2024-01-15) still accessing AWS
-('ACCESS_VIOLATION_001', '2024-01-18 10:30:00', 'USER_EMP006', 'alex.turner', 'aws_console', 'login', 'cloud_service', 'basic', '192.168.100.25', TRUE, 120, TRUE),
-('ACCESS_VIOLATION_002', '2024-01-20 14:45:00', 'USER_EMP006', 'alex.turner', 'database_prod', 'login', 'database', 'basic', '192.168.100.25', TRUE, 45, TRUE),
-('ACCESS_VIOLATION_003', '2024-01-22 09:15:00', 'USER_EMP006', 'alex.turner', 'github', 'login', 'code_repository', 'basic', '192.168.100.25', TRUE, 90, TRUE),
-
+SELECT 'ACCESS_VIOLATION_001', '2024-01-18 10:30:00', 'USER_EMP006', 'alex.turner', 'aws_console', 'login', 'cloud_service', 'basic', '192.168.100.25', TRUE, 120, TRUE
+UNION ALL
+SELECT 'ACCESS_VIOLATION_002', '2024-01-20 14:45:00', 'USER_EMP006', 'alex.turner', 'database_prod', 'login', 'database', 'basic', '192.168.100.25', TRUE, 45, TRUE
+UNION ALL
+SELECT 'ACCESS_VIOLATION_003', '2024-01-22 09:15:00', 'USER_EMP006', 'alex.turner', 'github', 'login', 'code_repository', 'basic', '192.168.100.25', TRUE, 90, TRUE
+UNION ALL
 -- emily.davis (terminated 2024-01-20) still accessing Jira
-('ACCESS_VIOLATION_004', '2024-01-23 11:20:00', 'USER_EMP007', 'emily.davis', 'jira', 'login', 'project_management', 'basic', '172.16.50.10', TRUE, 60, TRUE),
-('ACCESS_VIOLATION_005', '2024-01-24 16:30:00', 'USER_EMP007', 'emily.davis', 'aws_console', 'login', 'cloud_service', 'basic', '172.16.50.10', TRUE, 30, TRUE);
+SELECT 'ACCESS_VIOLATION_004', '2024-01-23 11:20:00', 'USER_EMP007', 'emily.davis', 'jira', 'login', 'project_management', 'basic', '172.16.50.10', TRUE, 60, TRUE
+UNION ALL
+SELECT 'ACCESS_VIOLATION_005', '2024-01-24 16:30:00', 'USER_EMP007', 'emily.davis', 'aws_console', 'login', 'cloud_service', 'basic', '172.16.50.10', TRUE, 30, TRUE;
 -- =====================================================
 -- SECURITY ALERTS - For AI enrichment demonstration
 -- =====================================================
