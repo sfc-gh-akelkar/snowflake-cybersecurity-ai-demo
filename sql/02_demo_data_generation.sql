@@ -461,40 +461,40 @@ SELECT 'ACCESS_VIOLATION_005', '2024-01-24 16:30:00', 'USER_EMP007', 'emily.davi
 -- =====================================================
 -- SECURITY ALERTS - For AI enrichment demonstration
 -- =====================================================
-INSERT INTO SECURITY_ALERTS SELECT
+INSERT INTO SECURITY_ALERTS 
 -- Critical alerts with unstructured text for AI analysis
-('ALERT_001', '2024-01-24 14:35:00', 'anomalous_behavior', 'critical', 'Suspicious User Activity Detected', 
+SELECT 'ALERT_001', '2024-01-24 14:35:00', 'anomalous_behavior', 'critical', 'Suspicious User Activity Detected', 
  'User john.smith exhibited highly unusual behavior pattern. Multiple failed login attempts from foreign IP address (203.0.113.25) followed by successful authentication and extensive GitHub activity including access to sensitive repositories. The user created a new repository and pushed large amounts of code during off-hours. This activity pattern is consistent with account compromise scenarios. Immediate investigation recommended as the user typically works standard business hours from New York office. The source IP has been flagged in our threat intelligence as associated with previous attack campaigns.', 
  'User authentication logs show failed attempts at 14:22 from IP 203.0.113.25 (Russia), followed by successful login at 14:30. GitHub logs show repository creation and 10,000+ lines of code pushed between 02:45-03:25 AM EST. Source IP matches known C2 infrastructure.',
  ['DEV-JOHN-01', '10.2.1.15'], ['john.smith'], 'investigating', 'sarah.chen', NULL, FALSE, 
  ['Contacted user - claims no knowledge of activity', 'Disabled account pending investigation', 'Initiated forensic imaging of workstation'], 
- ['Block source IP', 'Reset user credentials', 'Review code changes'], 0.92, TRUE),
-
-('ALERT_002', '2024-01-23 08:50:00', 'network_scanning', 'high', 'Persistent Port Scanning Detected', 
+ ['Block source IP', 'Reset user credentials', 'Review code changes'], 0.92, TRUE
+UNION ALL
+SELECT 'ALERT_002', '2024-01-23 08:50:00', 'network_scanning', 'high', 'Persistent Port Scanning Detected', 
  'Automated scanning activity detected from external IP address 45.33.32.156 targeting multiple production systems. The scanning appears to be systematic, targeting SSH services (port 22) across our production network range. This represents a reconnaissance attempt that could be preparatory to a more serious attack. The source IP has conducted over 500 connection attempts in the past hour, all blocked by our firewall. Security team should investigate potential vulnerabilities in SSH configurations and consider additional hardening measures.',
  'Firewall logs show 500+ SYN packets from 45.33.32.156 to ports 22, 23, 80, 443 across 10.1.1.0/24 network. All connections blocked. Geolocation shows source as hosting provider commonly used for malicious activity.',
  ['ASSET001', 'ASSET002', 'ASSET003'], [], 'resolved', 'sarah.chen', 45, FALSE,
  ['Confirmed all scans blocked by firewall', 'Added source IP to permanent blocklist', 'Reviewed SSH configurations - no vulnerabilities found'],
- ['IP blocked', 'Monitoring enhanced'], 0.87, TRUE),
-
-('ALERT_003', '2024-01-22 16:20:00', 'compliance_violation', 'medium', 'Terminated Employee Access Detected', 
+ ['IP blocked', 'Monitoring enhanced'], 0.87, TRUE
+UNION ALL
+SELECT 'ALERT_003', '2024-01-22 16:20:00', 'compliance_violation', 'medium', 'Terminated Employee Access Detected', 
  'System detected that terminated employee alex.turner (terminated 2024-01-15) successfully accessed AWS console on 2024-01-18. This represents a violation of CIS Control 16 (Account Monitoring and Control) which requires prompt removal of access for terminated employees. The access occurred 3 days after termination date, indicating a gap in our offboarding process. HR records confirm termination effective 2024-01-15. IT should verify all systems have been properly updated and access revoked.',
  'HR system shows employee termination effective 2024-01-15. AWS CloudTrail logs show successful console login on 2024-01-18 10:30:00 from IP 192.168.100.25. Session lasted 120 minutes with read access to S3 buckets.',
  ['aws_console'], ['alex.turner'], 'resolved', 'security_compliance', 30, FALSE,
  ['Confirmed employee termination in HR system', 'Disabled all remaining AWS access', 'Updated offboarding checklist'],
- ['Account disabled', 'Process improvement'], 0.95, TRUE),
-
-('ALERT_004', '2024-01-25 15:45:00', 'data_exfiltration', 'high', 'Large Data Transfer to External Host', 
+ ['Account disabled', 'Process improvement'], 0.95, TRUE
+UNION ALL
+SELECT 'ALERT_004', '2024-01-25 15:45:00', 'data_exfiltration', 'high', 'Large Data Transfer to External Host', 
  'Unusual large data transfer detected from production web server (prod-web-01) to external IP address 203.0.113.50. Transfer size of 25MB occurred over encrypted connection (port 443) during business hours. The destination IP is flagged in our threat intelligence feeds as known command and control infrastructure. This activity pattern is consistent with data exfiltration attempts. The timing coincides with other suspicious activities from the john.smith account.',
  'Network monitoring detected 25MB outbound transfer from 10.1.1.20 to 203.0.113.50:443 at 15:15:30. Duration 180 seconds. Destination IP matches IOC database entry for C2 infrastructure.',
  ['ASSET002'], ['john.smith'], 'investigating', 'incident_response', NULL, FALSE,
  ['Isolated affected server', 'Captured network traffic for analysis'],
- ['Server isolation', 'Forensic analysis initiated'], 0.89, TRUE),
-
-('ALERT_005', '2024-01-20 11:30:00', 'vulnerability_exploit', 'critical', 'Potential Exploitation of CVE-2023-46604', 
+ ['Server isolation', 'Forensic analysis initiated'], 0.89, TRUE
+UNION ALL
+SELECT 'ALERT_005', '2024-01-20 11:30:00', 'vulnerability_exploit', 'critical', 'Potential Exploitation of CVE-2023-46604', 
  'Security monitoring detected network traffic patterns consistent with exploitation attempts targeting CVE-2023-46604 (Apache ActiveMQ RCE vulnerability). The affected system prod-api-01 hosts critical API services and contains sensitive customer data. Multiple connection attempts were observed from various source IPs attempting to exploit the deserialization vulnerability. System administrators should immediately apply available patches and implement additional monitoring for this critical vulnerability.',
  'IDS detected multiple HTTP POST requests to /admin/activemq.jsp with suspicious payload patterns. Source IPs include 198.51.100.45, 203.0.113.75. Payload analysis shows attempted Java object deserialization attack vectors.',
- ['ASSET003'], [], 'new', 'vulnerability_management', NULL, FALSE, [], [], 0.94, FALSE);
+ ['ASSET003'], [], 'new', 'vulnerability_management', NULL, FALSE, [], [], 0.94, FALSE;
 -- =====================================================
 -- ML PREDICTIONS - Sample model outputs
 -- =====================================================
