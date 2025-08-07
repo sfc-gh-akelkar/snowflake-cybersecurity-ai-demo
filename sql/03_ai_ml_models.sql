@@ -267,6 +267,7 @@ WITH transaction_features AS (
             ORDER BY ft.TIMESTAMP 
             ROWS BETWEEN 100 PRECEDING AND 1 PRECEDING
         ) as avg_historical_amount
+    FROM FINANCIAL_TRANSACTIONS ft
 )
 SELECT 
     *,
