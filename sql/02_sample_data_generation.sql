@@ -223,13 +223,15 @@ FROM (
 ) txn_gen;
 
 -- Suspicious transactions
-INSERT INTO FINANCIAL_TRANSACTIONS VALUES
-('TXN_FRAUD_001', DATEADD(hour, -2, CURRENT_TIMESTAMP()), 'USER_1234', 'ACC_567890', 'transfer', 9999.99, 'USD', 'CRYPTO_EXCHANGE', 
- OBJECT_CONSTRUCT('country', 'RU', 'city', 'Moscow'), 'FP_UNKNOWN', '203.0.113.45', TRUE, 0.95),
-('TXN_FRAUD_002', DATEADD(hour, -1, CURRENT_TIMESTAMP()), 'USER_5678', 'ACC_123456', 'withdrawal', 5000.00, 'USD', 'ATM_FOREIGN',
- OBJECT_CONSTRUCT('country', 'CN', 'city', 'Shanghai'), 'FP_SUSPICIOUS', '185.220.100.240', TRUE, 0.88),
-('TXN_FRAUD_003', DATEADD(minute, -30, CURRENT_TIMESTAMP()), 'USER_9999', 'ACC_999999', 'purchase', 15000.00, 'USD', 'LUXURY_GOODS',
- OBJECT_CONSTRUCT('country', 'US', 'city', 'Miami'), 'FP_NEW_DEVICE', '198.51.100.150', TRUE, 0.92);
+INSERT INTO FINANCIAL_TRANSACTIONS 
+SELECT 'TXN_FRAUD_001', DATEADD(hour, -2, CURRENT_TIMESTAMP()), 'USER_1234', 'ACC_567890', 'transfer', 9999.99, 'USD', 'CRYPTO_EXCHANGE', 
+ OBJECT_CONSTRUCT('country', 'RU', 'city', 'Moscow'), 'FP_UNKNOWN', '203.0.113.45', TRUE, 0.95
+UNION ALL
+SELECT 'TXN_FRAUD_002', DATEADD(hour, -1, CURRENT_TIMESTAMP()), 'USER_5678', 'ACC_123456', 'withdrawal', 5000.00, 'USD', 'ATM_FOREIGN',
+ OBJECT_CONSTRUCT('country', 'CN', 'city', 'Shanghai'), 'FP_SUSPICIOUS', '185.220.100.240', TRUE, 0.88
+UNION ALL
+SELECT 'TXN_FRAUD_003', DATEADD(minute, -30, CURRENT_TIMESTAMP()), 'USER_9999', 'ACC_999999', 'purchase', 15000.00, 'USD', 'LUXURY_GOODS',
+ OBJECT_CONSTRUCT('country', 'US', 'city', 'Miami'), 'FP_NEW_DEVICE', '198.51.100.150', TRUE, 0.92;
 
 -- =====================================================
 -- 8. DATA ACCESS LOGS (For Insider Threat Detection)
