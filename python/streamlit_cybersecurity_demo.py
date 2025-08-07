@@ -321,19 +321,12 @@ elif current_section == "anomaly":
             st.plotly_chart(fig, use_container_width=True)
         
         with col2:
-            # Geographic distribution (SiS-compatible bar chart)
-            country_counts = anomaly_data['COUNTRY'].value_counts().reset_index()
-            country_counts.columns = ['Country', 'Count']
-            fig = px.bar(
-                country_counts,
-                x='Country',
-                y='Count',
-                title="Anomalies by Country",
-                color='Count',
-                color_continuous_scale='Reds'
-            )
-            fig.update_layout(height=400)
-            st.plotly_chart(fig, use_container_width=True)
+            # Geographic distribution (Native Streamlit - 100% SiS compatible)
+            st.subheader("🌍 Anomalies by Country")
+            country_counts = anomaly_data['COUNTRY'].value_counts()
+            
+            # Use native Streamlit bar chart (most reliable in SiS)
+            st.bar_chart(country_counts, height=400)
         
         # Detailed table
         st.subheader("🔍 Detailed Anomaly Analysis")
