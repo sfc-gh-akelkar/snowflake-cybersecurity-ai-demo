@@ -1,24 +1,26 @@
 -- =====================================================
--- SNOWFLAKE CYBERSECURITY AI/ML DEMO SCHEMA
--- Solution Engineering Demo for Security Data Cloud
+-- SNOWFLAKE CYBERSECURITY DEMO - DATABASE SCHEMA
+-- Complete schema for cybersecurity AI/ML use cases
 -- =====================================================
 
 -- Create database and schema
-CREATE OR REPLACE DATABASE CYBERSECURITY_DEMO;
+CREATE DATABASE IF NOT EXISTS CYBERSECURITY_DEMO;
 USE DATABASE CYBERSECURITY_DEMO;
-CREATE OR REPLACE SCHEMA SECURITY_AI;
+CREATE SCHEMA IF NOT EXISTS SECURITY_AI;
 USE SCHEMA SECURITY_AI;
 
 -- =====================================================
--- USER AUTHENTICATION & ACTIVITY LOGS
+-- CORE SECURITY TABLES
 -- =====================================================
+
+-- 1. User Authentication Logs - Core for anomaly detection
 CREATE OR REPLACE TABLE USER_AUTHENTICATION_LOGS (
     LOG_ID STRING PRIMARY KEY,
     TIMESTAMP TIMESTAMP_NTZ,
     USER_ID STRING,
     USERNAME STRING,
     EMAIL STRING,
-    EVENT_TYPE STRING, -- login, logout, failed_login, mfa_challenge
+    EVENT_TYPE STRING, -- login, logout, failed_login
     SOURCE_IP STRING,
     USER_AGENT STRING,
     LOCATION OBJECT, -- {country, region, city, lat, lon}
@@ -26,307 +28,154 @@ CREATE OR REPLACE TABLE USER_AUTHENTICATION_LOGS (
     FAILURE_REASON STRING,
     SESSION_ID STRING,
     DEVICE_INFO OBJECT, -- {device_type, os, browser}
-    RISK_FACTORS ARRAY, -- [suspicious_location, unusual_time, etc.]
-    MFA_USED BOOLEAN DEFAULT FALSE
+    RISK_FACTORS ARRAY, -- [unusual_location, unusual_time, etc.]
+    MFA_USED BOOLEAN
 );
 
--- =====================================================
--- GITHUB ACTIVITY LOGS
--- =====================================================
-CREATE OR REPLACE TABLE GITHUB_ACTIVITY_LOGS (
-    EVENT_ID STRING PRIMARY KEY,
-    TIMESTAMP TIMESTAMP_NTZ,
-    USER_ID STRING,
-    USERNAME STRING,
-    EMAIL STRING,
-    ACTION STRING, -- push, pull, clone, create_repo, delete_repo, etc.
-    REPOSITORY STRING,
-    BRANCH STRING,
-    COMMIT_HASH STRING,
-    SOURCE_IP STRING,
-    FILES_CHANGED INT,
-    LINES_ADDED INT,
-    LINES_DELETED INT,
-    COMMIT_MESSAGE STRING,
-    IS_SENSITIVE_REPO BOOLEAN DEFAULT FALSE,
-    ACCESS_LEVEL STRING -- admin, write, read
-);
-
--- =====================================================
--- NETWORK SECURITY LOGS
--- =====================================================
+-- 2. Network Security Logs - For threat hunting
 CREATE OR REPLACE TABLE NETWORK_SECURITY_LOGS (
     LOG_ID STRING PRIMARY KEY,
     TIMESTAMP TIMESTAMP_NTZ,
     SOURCE_IP STRING,
     DEST_IP STRING,
-    SOURCE_PORT INT,
-    DEST_PORT INT,
+    SOURCE_PORT INTEGER,
+    DEST_PORT INTEGER,
     PROTOCOL STRING,
-    BYTES_IN BIGINT,
-    BYTES_OUT BIGINT,
-    PACKETS_IN INT,
-    PACKETS_OUT INT,
-    DURATION_SECONDS FLOAT,
-    CONNECTION_STATE STRING,
-    THREAT_DETECTED BOOLEAN DEFAULT FALSE,
-    THREAT_TYPE STRING,
-    CONFIDENCE_SCORE FLOAT,
-    BLOCKED BOOLEAN DEFAULT FALSE,
-    GEO_INFO OBJECT -- {src_country, dest_country, src_city, dest_city}
+    BYTES_TRANSFERRED INTEGER,
+    ACTION STRING, -- allow, block, drop
+    RULE_NAME STRING,
+    THREAT_CATEGORY STRING,
+    SEVERITY STRING -- low, medium, high, critical
 );
 
--- =====================================================
--- THREAT INTELLIGENCE DATA
--- =====================================================
-CREATE OR REPLACE TABLE THREAT_INTELLIGENCE (
-    IOC_ID STRING PRIMARY KEY,
-    IOC_VALUE STRING,
-    IOC_TYPE STRING, -- ip, domain, url, hash, email
-    THREAT_TYPE STRING, -- malware, phishing, botnet, c2, etc.
-    CONFIDENCE_LEVEL STRING, -- low, medium, high, critical
-    SEVERITY STRING, -- low, medium, high, critical
-    FIRST_SEEN TIMESTAMP_NTZ,
-    LAST_SEEN TIMESTAMP_NTZ,
-    SOURCE STRING, -- internal, external_feed, partner
-    TAGS ARRAY,
-    DESCRIPTION TEXT,
-    MITRE_TECHNIQUES ARRAY,
-    AFFECTED_PRODUCTS ARRAY,
-    EXPIRY_DATE TIMESTAMP_NTZ
-);
-
--- =====================================================
--- VULNERABILITY DATA
--- =====================================================
-CREATE OR REPLACE TABLE VULNERABILITY_DATA (
+-- 3. Vulnerability Scan Results - For prioritization
+CREATE OR REPLACE TABLE VULNERABILITY_SCANS (
     VULN_ID STRING PRIMARY KEY,
-    CVE_ID STRING,
+    SCAN_DATE TIMESTAMP_NTZ,
     ASSET_ID STRING,
-    HOSTNAME STRING,
-    IP_ADDRESS STRING,
-    VULNERABILITY_NAME STRING,
-    SEVERITY STRING, -- critical, high, medium, low
+    ASSET_NAME STRING,
+    CVE_ID STRING,
     CVSS_SCORE FLOAT,
-    CVSS_VECTOR STRING,
-    DISCOVERY_DATE TIMESTAMP_NTZ,
-    PATCH_AVAILABLE BOOLEAN,
-    PATCH_DATE TIMESTAMP_NTZ,
+    SEVERITY STRING,
+    DESCRIPTION STRING,
     EXPLOITABILITY_SCORE FLOAT,
     IMPACT_SCORE FLOAT,
-    VENDOR STRING,
-    PRODUCT STRING,
-    VERSION STRING,
-    STATUS STRING -- open, patched, accepted_risk, false_positive
+    STATUS STRING, -- open, patched, accepted_risk
+    FIRST_DETECTED TIMESTAMP_NTZ,
+    LAST_SEEN TIMESTAMP_NTZ
 );
 
--- =====================================================
--- ASSET INVENTORY
--- =====================================================
-CREATE OR REPLACE TABLE ASSET_INVENTORY (
-    ASSET_ID STRING PRIMARY KEY,
-    HOSTNAME STRING,
+-- 4. Security Incidents - For threat prioritization
+CREATE OR REPLACE TABLE SECURITY_INCIDENTS (
+    INCIDENT_ID STRING PRIMARY KEY,
+    CREATED_AT TIMESTAMP_NTZ,
+    TITLE STRING,
+    DESCRIPTION STRING,
+    SEVERITY STRING,
+    STATUS STRING, -- open, investigating, resolved, closed
+    ASSIGNED_TO STRING,
+    AFFECTED_SYSTEMS ARRAY,
+    INDICATORS_OF_COMPROMISE ARRAY,
+    ESTIMATED_IMPACT_SCORE FLOAT,
+    ACTUAL_IMPACT_SCORE FLOAT,
+    RESOLUTION_TIME_HOURS INTEGER
+);
+
+-- 5. Financial Transactions - For fraud detection
+CREATE OR REPLACE TABLE FINANCIAL_TRANSACTIONS (
+    TRANSACTION_ID STRING PRIMARY KEY,
+    TIMESTAMP TIMESTAMP_NTZ,
+    USER_ID STRING,
+    ACCOUNT_ID STRING,
+    TRANSACTION_TYPE STRING, -- transfer, withdrawal, deposit, purchase
+    AMOUNT DECIMAL(15,2),
+    CURRENCY STRING,
+    MERCHANT STRING,
+    LOCATION OBJECT,
+    DEVICE_FINGERPRINT STRING,
     IP_ADDRESS STRING,
-    ASSET_TYPE STRING, -- server, workstation, mobile, iot
-    OPERATING_SYSTEM STRING,
-    OS_VERSION STRING,
-    BUSINESS_UNIT STRING,
-    OWNER STRING,
-    BUSINESS_CRITICALITY STRING, -- critical, high, medium, low
-    DATA_CLASSIFICATION STRING, -- public, internal, confidential, restricted
-    LOCATION STRING,
-    ENVIRONMENT STRING, -- production, staging, development
-    COMPLIANCE_SCOPE ARRAY, -- [PCI, HIPAA, SOX, etc.]
-    LAST_SCAN_DATE TIMESTAMP_NTZ,
-    PATCH_LEVEL STRING,
-    NETWORK_SEGMENT STRING
+    IS_SUSPICIOUS BOOLEAN,
+    FRAUD_SCORE FLOAT
 );
 
--- =====================================================
--- HR/EMPLOYEE DATA
--- =====================================================
+-- 6. Threat Intelligence Feed - Marketplace integration demo
+CREATE OR REPLACE TABLE THREAT_INTEL_FEED (
+    FEED_ID STRING PRIMARY KEY,
+    TIMESTAMP TIMESTAMP_NTZ,
+    INDICATOR_TYPE STRING, -- ip, domain, hash, url
+    INDICATOR_VALUE STRING,
+    THREAT_TYPE STRING, -- malware, botnet, phishing, apt
+    SEVERITY STRING,
+    CONFIDENCE_SCORE FLOAT,
+    DESCRIPTION STRING,
+    SOURCE STRING, -- commercial_feed, open_source, internal
+    TAGS ARRAY
+);
+
+-- 7. Employee Data - For context and insider threat detection
 CREATE OR REPLACE TABLE EMPLOYEE_DATA (
     EMPLOYEE_ID STRING PRIMARY KEY,
     USERNAME STRING,
     EMAIL STRING,
-    FULL_NAME STRING,
     DEPARTMENT STRING,
-    JOB_TITLE STRING,
+    ROLE STRING,
     MANAGER_ID STRING,
     HIRE_DATE DATE,
-    TERMINATION_DATE DATE,
-    EMPLOYMENT_STATUS STRING, -- active, terminated, suspended
-    SECURITY_CLEARANCE_LEVEL STRING,
-    ACCESS_LEVEL STRING, -- basic, elevated, admin
-    LAST_BACKGROUND_CHECK DATE,
-    RISK_SCORE FLOAT DEFAULT 0.0
+    SECURITY_CLEARANCE STRING,
+    ACCESS_LEVEL STRING,
+    STATUS STRING -- active, terminated, suspended
 );
 
--- =====================================================
--- ACCESS CONTROL LOGS
--- =====================================================
-CREATE OR REPLACE TABLE ACCESS_CONTROL_LOGS (
+-- 8. Data Access Logs - For insider threat and data exfiltration
+CREATE OR REPLACE TABLE DATA_ACCESS_LOGS (
     ACCESS_ID STRING PRIMARY KEY,
     TIMESTAMP TIMESTAMP_NTZ,
     USER_ID STRING,
     USERNAME STRING,
-    RESOURCE STRING, -- aws_console, database, application
-    ACTION STRING, -- login, logout, access_granted, access_denied
-    RESOURCE_TYPE STRING,
-    PRIVILEGE_LEVEL STRING,
+    RESOURCE_TYPE STRING, -- database, file_share, application
+    RESOURCE_NAME STRING,
+    ACTION STRING, -- read, write, delete, download
+    DATA_CLASSIFICATION STRING, -- public, internal, confidential, restricted
+    BYTES_ACCESSED INTEGER,
     SOURCE_IP STRING,
-    SUCCESS BOOLEAN,
-    SESSION_DURATION_MINUTES INT,
-    UNUSUAL_ACCESS BOOLEAN DEFAULT FALSE
+    SUCCESS BOOLEAN
 );
 
 -- =====================================================
--- SECURITY ALERTS
+-- PERFORMANCE OPTIMIZATION
 -- =====================================================
-CREATE OR REPLACE TABLE SECURITY_ALERTS (
-    ALERT_ID STRING PRIMARY KEY,
-    TIMESTAMP TIMESTAMP_NTZ,
-    ALERT_TYPE STRING,
-    SEVERITY STRING, -- critical, high, medium, low, info
-    TITLE STRING,
-    DESCRIPTION TEXT,
-    RAW_LOG_DATA TEXT,
-    AFFECTED_ASSETS ARRAY,
-    RELATED_USERS ARRAY,
-    STATUS STRING, -- new, investigating, resolved, false_positive
-    ASSIGNED_TO STRING,
-    RESOLUTION_TIME_MINUTES INT,
-    FALSE_POSITIVE BOOLEAN DEFAULT FALSE,
-    INVESTIGATION_NOTES ARRAY,
-    REMEDIATION_ACTIONS ARRAY,
-    CONFIDENCE_SCORE FLOAT,
-    AUTOMATED_RESPONSE BOOLEAN DEFAULT FALSE
+
+-- Add clustering keys for better query performance
+ALTER TABLE USER_AUTHENTICATION_LOGS CLUSTER BY (DATE(TIMESTAMP), USERNAME);
+ALTER TABLE NETWORK_SECURITY_LOGS CLUSTER BY (DATE(TIMESTAMP), SOURCE_IP);
+ALTER TABLE VULNERABILITY_SCANS CLUSTER BY (SCAN_DATE, SEVERITY);
+ALTER TABLE SECURITY_INCIDENTS CLUSTER BY (CREATED_AT, SEVERITY);
+ALTER TABLE FINANCIAL_TRANSACTIONS CLUSTER BY (DATE(TIMESTAMP), USER_ID);
+
+-- =====================================================
+-- TAGS FOR DATA GOVERNANCE
+-- =====================================================
+
+-- Add tags for data classification and governance
+ALTER TABLE USER_AUTHENTICATION_LOGS SET TAG (
+    'DATA_CLASSIFICATION' = 'CONFIDENTIAL',
+    'RETENTION_POLICY' = '7_YEARS',
+    'DATA_OWNER' = 'SECURITY_TEAM'
+);
+
+ALTER TABLE FINANCIAL_TRANSACTIONS SET TAG (
+    'DATA_CLASSIFICATION' = 'RESTRICTED',
+    'RETENTION_POLICY' = '10_YEARS',
+    'DATA_OWNER' = 'FINANCE_TEAM'
 );
 
 -- =====================================================
--- COMPLIANCE AUDIT TRAIL
--- =====================================================
-CREATE OR REPLACE TABLE COMPLIANCE_AUDIT_TRAIL (
-    AUDIT_ID STRING PRIMARY KEY,
-    TIMESTAMP TIMESTAMP_NTZ,
-    CONTROL_ID STRING, -- e.g., CIS_16, SOX_404, PCI_8.1
-    CONTROL_DESCRIPTION STRING,
-    COMPLIANCE_STATUS STRING, -- compliant, non_compliant, needs_review
-    EVIDENCE_COLLECTED ARRAY,
-    AUTOMATED_CHECK BOOLEAN,
-    RESPONSIBLE_PARTY STRING,
-    REMEDIATION_REQUIRED BOOLEAN,
-    DUE_DATE DATE,
-    RISK_LEVEL STRING
-);
-
--- =====================================================
--- ML MODEL PREDICTIONS
--- =====================================================
-CREATE OR REPLACE TABLE ML_PREDICTIONS (
-    PREDICTION_ID STRING PRIMARY KEY,
-    TIMESTAMP TIMESTAMP_NTZ,
-    MODEL_NAME STRING,
-    MODEL_VERSION STRING,
-    INPUT_DATA OBJECT,
-    PREDICTION_VALUE FLOAT,
-    CONFIDENCE_SCORE FLOAT,
-    PREDICTION_TYPE STRING, -- anomaly, risk_score, classification
-    ACTUAL_VALUE FLOAT, -- for model accuracy tracking
-    FEEDBACK_PROVIDED BOOLEAN DEFAULT FALSE
-);
-
--- =====================================================
--- PERFORMANCE OPTIMIZATIONS
+-- INITIAL INDEXES AND CONSTRAINTS
 -- =====================================================
 
--- Add search optimization for faster queries
-ALTER TABLE USER_AUTHENTICATION_LOGS ADD SEARCH OPTIMIZATION;
-ALTER TABLE GITHUB_ACTIVITY_LOGS ADD SEARCH OPTIMIZATION;
-ALTER TABLE NETWORK_SECURITY_LOGS ADD SEARCH OPTIMIZATION;
-ALTER TABLE SECURITY_ALERTS ADD SEARCH OPTIMIZATION;
-
--- Create time-based clustering for better performance
-ALTER TABLE USER_AUTHENTICATION_LOGS CLUSTER BY (DATE_TRUNC('day', TIMESTAMP));
-ALTER TABLE GITHUB_ACTIVITY_LOGS CLUSTER BY (DATE_TRUNC('day', TIMESTAMP));
-ALTER TABLE NETWORK_SECURITY_LOGS CLUSTER BY (DATE_TRUNC('day', TIMESTAMP));
-
--- =====================================================
--- VIEWS FOR COMMON ANALYTICS
--- =====================================================
-
--- Real-time user activity summary
-CREATE OR REPLACE VIEW USER_ACTIVITY_SUMMARY AS
-SELECT 
-    USERNAME,
-    COUNT(*) as total_logins_24h,
-    COUNT(DISTINCT SOURCE_IP) as unique_ips_24h,
-    COUNT(DISTINCT LOCATION:country::STRING) as unique_countries_24h,
-    COUNT(CASE WHEN SUCCESS = FALSE THEN 1 END) as failed_logins_24h,
-    MAX(TIMESTAMP) as last_activity,
-    ARRAY_AGG(DISTINCT CASE WHEN ARRAY_SIZE(RISK_FACTORS) > 0 THEN RISK_FACTORS END) as risk_indicators
-FROM USER_AUTHENTICATION_LOGS 
-WHERE TIMESTAMP >= DATEADD(hour, -24, CURRENT_TIMESTAMP())
-GROUP BY USERNAME;
-
--- Threat intelligence matches
-CREATE OR REPLACE VIEW ACTIVE_THREAT_MATCHES AS
-SELECT 
-    n.TIMESTAMP,
-    n.SOURCE_IP,
-    n.DEST_IP,
-    t.IOC_VALUE,
-    t.THREAT_TYPE,
-    t.CONFIDENCE_LEVEL,
-    t.SEVERITY,
-    'NETWORK_MATCH' as MATCH_TYPE
-FROM NETWORK_SECURITY_LOGS n
-JOIN THREAT_INTELLIGENCE t ON n.DEST_IP = t.IOC_VALUE
-WHERE t.EXPIRY_DATE > CURRENT_TIMESTAMP()
-    AND n.TIMESTAMP >= DATEADD(hour, -24, CURRENT_TIMESTAMP())
-ORDER BY n.TIMESTAMP DESC, t.CONFIDENCE_LEVEL DESC;
-
--- High-risk vulnerability summary
-CREATE OR REPLACE VIEW HIGH_RISK_VULNERABILITIES AS
-SELECT 
-    v.CVE_ID,
-    v.VULNERABILITY_NAME,
-    v.CVSS_SCORE,
-    a.BUSINESS_CRITICALITY,
-    a.DATA_CLASSIFICATION,
-    COUNT(*) as affected_assets,
-    MAX(v.DISCOVERY_DATE) as latest_discovery,
-    CASE 
-        WHEN a.BUSINESS_CRITICALITY = 'critical' AND v.CVSS_SCORE >= 9.0 THEN 10.0
-        WHEN a.BUSINESS_CRITICALITY = 'critical' AND v.CVSS_SCORE >= 7.0 THEN 9.0
-        WHEN a.BUSINESS_CRITICALITY = 'high' AND v.CVSS_SCORE >= 9.0 THEN 9.0
-        WHEN a.BUSINESS_CRITICALITY = 'high' AND v.CVSS_SCORE >= 7.0 THEN 8.0
-        ELSE v.CVSS_SCORE
-    END as ai_risk_score
-FROM VULNERABILITY_DATA v
-JOIN ASSET_INVENTORY a ON v.ASSET_ID = a.ASSET_ID
-WHERE v.STATUS = 'open'
-    AND v.CVSS_SCORE >= 7.0
-GROUP BY v.CVE_ID, v.VULNERABILITY_NAME, v.CVSS_SCORE, a.BUSINESS_CRITICALITY, a.DATA_CLASSIFICATION
-ORDER BY ai_risk_score DESC;
-
--- Compliance violations
-CREATE OR REPLACE VIEW COMPLIANCE_VIOLATIONS AS
-SELECT 
-    e.EMPLOYEE_ID,
-    e.USERNAME,
-    e.TERMINATION_DATE,
-    MAX(a.TIMESTAMP) as last_access,
-    DATEDIFF(day, e.TERMINATION_DATE, MAX(a.TIMESTAMP)) as days_overdue,
-    a.RESOURCE,
-    'CIS_16' as control_violated
-FROM EMPLOYEE_DATA e
-JOIN ACCESS_CONTROL_LOGS a ON e.USERNAME = a.USERNAME
-WHERE e.EMPLOYMENT_STATUS = 'terminated'
-    AND a.TIMESTAMP > e.TERMINATION_DATE
-    AND a.SUCCESS = TRUE
-GROUP BY e.EMPLOYEE_ID, e.USERNAME, e.TERMINATION_DATE, a.RESOURCE
-HAVING days_overdue > 0
-ORDER BY days_overdue DESC;
+-- Create search optimization for threat hunting queries
+ALTER TABLE NETWORK_SECURITY_LOGS ADD SEARCH OPTIMIZATION ON EQUALITY(SOURCE_IP, DEST_IP);
+ALTER TABLE USER_AUTHENTICATION_LOGS ADD SEARCH OPTIMIZATION ON EQUALITY(USERNAME, SOURCE_IP);
+ALTER TABLE THREAT_INTEL_FEED ADD SEARCH OPTIMIZATION ON EQUALITY(INDICATOR_VALUE);
 
 COMMIT;

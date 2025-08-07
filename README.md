@@ -1,327 +1,298 @@
 # 🛡️ Snowflake Cybersecurity AI/ML Demo
 
-A comprehensive demonstration showcasing Snowflake's AI and machine learning capabilities in cybersecurity, featuring real-world use cases for security data lakes, threat detection, and automated compliance.
+A comprehensive demonstration of Snowflake's cybersecurity capabilities featuring AI/ML-powered threat detection, cost-effective security data platform, and advanced analytics.
 
-## 🚀 Overview
+![Snowflake Security](https://img.shields.io/badge/Snowflake-Security%20Platform-blue?style=for-the-badge&logo=snowflake)
+![AI/ML](https://img.shields.io/badge/AI%2FML-Powered-green?style=for-the-badge)
+![Streamlit](https://img.shields.io/badge/Streamlit-Interactive-red?style=for-the-badge&logo=streamlit)
 
-This demo presents five critical cybersecurity AI/ML use cases:
+## 🌟 Overview
 
-1. **🔍 Anomaly Detection** - Detect compromised accounts and insider threats
-2. **🎯 Threat Detection & Response** - Correlate threats across multiple data sources  
-3. **⚠️ Vulnerability Prioritization** - AI-enhanced risk scoring beyond CVSS
-4. **📋 GRC & Compliance** - Automated compliance monitoring and evidence collection
-5. **🤖 AI Alert Triage** - Intelligent alert classification using Snowflake Cortex
+This repository demonstrates how Snowflake transforms cybersecurity operations through:
 
-## 📁 Project Structure
+- **Cost-Effective Security Data Platform**: 99%+ cost reduction vs traditional SIEMs
+- **AI/ML-Powered Analytics**: Real-time threat detection and prioritization
+- **High-Performance Threat Hunting**: SQL-based investigation at scale
+- **Interactive Security Applications**: Native Streamlit in Snowflake apps
+
+## 🎯 Use Cases Demonstrated
+
+### General Capabilities
+- ✅ **Cost-Effective Security Data Platform** - Pay-per-use storage & compute
+- ✅ **Threat Hunting & IR Automation** - High-performance SQL search
+- ✅ **Application Development** - Low-code Python with Streamlit
+- ✅ **Open Security Data Lake** - Marketplace integration & data sharing
+
+### AI/ML Cybersecurity Use Cases
+- ✅ **Anomaly Detection** - Behavioral analysis with statistical modeling
+- ✅ **Threat Prioritization** - ML-based incident scoring & classification
+- ✅ **Vulnerability Management** - Enhanced CVSS with contextual analysis
+- ✅ **Fraud Detection** - Real-time transaction risk scoring
+- ✅ **Root Cause Analysis** - Event correlation & pattern recognition
+- ✅ **Security Chatbot** - Natural language security queries
+
+## 🏗️ Architecture
 
 ```
-cybersecurity_ai_demo/
-├── sql/                           # Database schema and queries
-│   ├── 01_cybersecurity_schema.sql    # Complete database schema
-│   ├── 02_demo_data_generation.sql    # Realistic sample data
-│   └── 03_ai_ml_use_cases.sql        # AI/ML implementations
-├── streamlit/                     # Interactive demo application
-│   └── cybersecurity_ai_demo.py      # Main Streamlit app
-├── requirements.txt               # Python dependencies
-├── DEMO_GUIDE.md                 # Comprehensive demo script
-└── README.md                     # This file
+┌─────────────────────────────────────────────────────────────────┐
+│                    Streamlit in Snowflake                      │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐│
+│  │ Executive   │ │ Anomaly     │ │ Threat      │ │ Security    ││
+│  │ Dashboard   │ │ Detection   │ │ Hunting     │ │ Chatbot     ││
+│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘│
+└─────────────────────────────────────────────────────────────────┘
+                                  │
+┌─────────────────────────────────────────────────────────────────┐
+│                     AI/ML Analytics Layer                      │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐│
+│  │ Anomaly     │ │ Threat      │ │ Vulnerability│ │ Fraud       ││
+│  │ Scoring     │ │ Priority    │ │ Ranking     │ │ Detection   ││
+│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘│
+└─────────────────────────────────────────────────────────────────┘
+                                  │
+┌─────────────────────────────────────────────────────────────────┐
+│                   Security Data Platform                       │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐│
+│  │ Auth Logs   │ │ Network     │ │ Vulns       │ │ Transactions││
+│  │             │ │ Security    │ │             │ │             ││
+│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘│
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-## 🎯 Key Features
+## 📁 Repository Structure
 
-### **Unified Security Data Lake**
-- Eliminate data silos across security tools
-- Petabyte-scale analytics with subsecond performance
-- Cost-effective storage starting at $23/TB/month
+```
+📦 snowflake-cybersecurity-demo
+├── 📄 README.md                           # This file
+├── 📄 deployment_guide.md                 # Detailed setup instructions
+├── 📄 01_cybersecurity_schema.sql         # Database schema & tables
+├── 📄 02_sample_data_generation.sql       # Realistic sample data
+├── 📄 03_ai_ml_models.sql                 # AI/ML models & views
+└── 📄 streamlit_cybersecurity_demo.py     # Main Streamlit application
+```
 
-### **AI-Powered Analytics** 
-- Built-in anomaly detection using SQL functions
-- Multi-source threat correlation
-- Business context-aware vulnerability prioritization
-- Snowflake Cortex for unstructured data analysis
-
-### **Real-World Use Cases**
-- **GitHub Login Anomaly**: Detect account compromises through behavioral analysis
-- **APT Campaign Detection**: Correlate network, user, and code activities
-- **Smart Patch Prioritization**: AI considers business criticality, not just CVSS scores
-- **CIS Control 16 Automation**: Real-time compliance violation detection
-- **Alert Triage Intelligence**: 30-second classification vs 12-minute manual review
-
-### **Interactive Demo Experience**
-- Executive dashboards with key metrics
-- Technical deep-dives with SQL demonstrations
-- Real-time visualizations and timeline analysis
-- AI insights and business impact calculations
-
-## 🛠️ Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.8+ 
-- Snowflake account (optional for demo mode)
-- Basic understanding of SQL and cybersecurity concepts
+- Snowflake account with `ACCOUNTADMIN` privileges
+- Streamlit in Snowflake enabled
+- Basic familiarity with SQL and Snowflake
 
-### Installation
+### 1. Setup Database Schema
+```sql
+-- Execute in Snowflake worksheet
+@01_cybersecurity_schema.sql
+```
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd cybersecurity_ai_demo
-   ```
+### 2. Load Sample Data
+```sql
+-- Execute in Snowflake worksheet  
+@02_sample_data_generation.sql
+```
 
-2. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+### 3. Deploy AI/ML Models
+```sql
+-- Execute in Snowflake worksheet
+@03_ai_ml_models.sql
+```
 
-3. **Run the demo**
-   
-   **For Standalone Streamlit:**
-   ```bash
-   streamlit run streamlit/cybersecurity_ai_demo.py
-   ```
-   
-   **For Streamlit in Snowflake (SiS):**
-   - Use the `streamlit_app.py` file directly in Snowflake
-   - Upload to your Snowflake account and run as a Streamlit application
-
-4. **Access the application**
-   - Open your browser to `http://localhost:8501`
-   - Select use cases from the sidebar
-   - Explore interactive visualizations and SQL examples
-
-### Snowflake Setup (Optional)
-
-For live data demonstration:
-
-1. **Execute schema creation**
-   ```sql
-   -- In Snowflake, run:
-   USE ROLE SYSADMIN;
-   @sql/01_cybersecurity_schema.sql
-   ```
-
-2. **Load sample data**
-   ```sql
-   @sql/02_demo_data_generation.sql
-   ```
-
-3. **Create AI/ML views**
-   ```sql
-   @sql/03_ai_ml_use_cases.sql
-   ```
-
-4. **Update Streamlit app** to use live Snowflake connection
-
-### Streamlit in Snowflake (SiS) Deployment
-
-To deploy as a native Snowflake application:
-
-1. **Complete the Snowflake setup above** (schema, data, views)
-
-2. **Deploy Streamlit App in Snowflake**
-   - In Snowflake, go to **Data > Streamlit**
-   - Click **+ Streamlit App**
-   - Name: `Cybersecurity AI/ML Demo`
-   - Warehouse: Select appropriate warehouse
-   - Database/Schema: `CYBERSECURITY_DEMO.SECURITY_AI`
-   - Upload/paste the contents of `streamlit_app.py`
-   - Click **Create**
-
-3. **Access Your App**
-   - The app runs natively in Snowflake with built-in authentication
-   - Uses native session management - no external setup required
-   - Automatically connects to your data
-
-**Benefits of SiS Deployment:**
-- 🔐 Native Snowflake authentication and security
-- ⚡ Direct data access without network latency
-- 🎛️ Built-in resource management and scaling
-- 📱 Easy sharing within your Snowflake organization
+### 4. Launch Streamlit App
+1. Navigate to **Snowflake UI → Streamlit**
+2. Create new Streamlit app
+3. Upload `streamlit_cybersecurity_demo.py`
+4. Set context: `CYBERSECURITY_DEMO.SECURITY_AI`
+5. Run the application
 
 ## 🎬 Demo Scenarios
 
-### **Scenario 1: Compromised Developer Account**
-- **Setup**: User 'john.smith' logs in from Beijing at 2:30 AM
-- **Detection**: AI anomaly score of 12.0 (threshold: 8.0)
-- **Investigation**: 5,000+ lines of code changed, sensitive repo access
-- **Impact**: Prevented supply chain attack worth $2.4M
+### Executive Dashboard (5 minutes)
+Perfect for C-level presentations focusing on:
+- Real-time security metrics
+- Cost savings vs traditional SIEM
+- ROI and business value
 
-### **Scenario 2: Advanced Persistent Threat**
-- **Setup**: Multi-stage attack across network, user, and code systems
-- **Detection**: Threat correlation engine identifies APT campaign
-- **Investigation**: Timeline from initial compromise to data exfiltration
-- **Impact**: Real-time detection vs traditional 200+ day dwell time
+### Technical Deep Dive (30 minutes)
+Comprehensive tour including:
+- AI/ML anomaly detection algorithms
+- Threat hunting capabilities
+- Custom security analytics
+- Performance benchmarks
 
-### **Scenario 3: Compliance Violation**
-- **Setup**: Terminated employee still accessing AWS console
-- **Detection**: Automated CIS Control 16 monitoring
-- **Investigation**: 3-day delay in access revocation
-- **Impact**: Prevented compliance audit finding
+### Interactive Workshop (60+ minutes)
+Hands-on exploration featuring:
+- Custom threat hunting queries
+- Live incident investigation
+- AI model explanations
+- Q&A and customization
 
-## 📊 Business Impact
+## 📊 Key Metrics & Value Propositions
 
-### **Quantified Benefits**
-- **Threat Detection Speed**: 10x faster (4 hours → 24 minutes)
-- **Alert Triage Efficiency**: 96% time reduction (12 min → 30 sec)
-- **Compliance Automation**: 95% time reduction (2 weeks → 2 hours)
-- **Cost Savings**: 60-80% reduction vs traditional SIEM storage
-- **Risk Reduction**: $2.4M average data breach prevention
+| Metric | Traditional SIEM | Snowflake Security Platform |
+|--------|------------------|----------------------------|
+| **Storage Cost** | $50,000+ per TB/year | $240 per TB/year |
+| **Query Performance** | 30-60 seconds | <2 seconds |
+| **Data Retention** | 90 days typical | 7+ years affordable |
+| **Scaling** | Manual, expensive | Auto-scaling, elastic |
+| **Total Cost Savings** | Baseline | **99.5% reduction** |
 
-### **ROI Metrics**
-- **Implementation Cost**: Snowflake platform + professional services
-- **Operational Savings**: Analyst time + infrastructure costs  
-- **Risk Avoidance**: Prevented breach costs + compliance fines
-- **Typical ROI**: 300% return within 18 months
+## 🔍 Sample Queries
 
-## 🎤 Demo Talking Points
+### Threat Hunting
+```sql
+-- Detect lateral movement patterns
+SELECT 
+    ual.username,
+    ual.source_ip,
+    COUNT(DISTINCT dal.resource_name) as resources_accessed,
+    SUM(dal.bytes_accessed) as total_bytes
+FROM USER_AUTHENTICATION_LOGS ual
+JOIN DATA_ACCESS_LOGS dal ON ual.username = dal.username
+WHERE ual.timestamp >= DATEADD(hour, -24, CURRENT_TIMESTAMP())
+    AND dal.data_classification = 'restricted'
+GROUP BY ual.username, ual.source_ip
+HAVING COUNT(DISTINCT dal.resource_name) > 5
+ORDER BY total_bytes DESC;
+```
 
-### **For CISOs**
-- "Detect threats 10x faster with AI-powered analytics"
-- "Eliminate SIEM data limits - analyze everything for $23/TB/month"
-- "Automate compliance evidence collection"
-- "Augment your team with AI to address talent shortage"
+### Anomaly Detection
+```sql
+-- Real-time login anomaly scoring
+SELECT 
+    username,
+    timestamp,
+    anomaly_score,
+    risk_level,
+    anomaly_indicators
+FROM LOGIN_ANOMALY_DETECTION
+WHERE risk_level IN ('CRITICAL', 'HIGH')
+    AND timestamp >= DATEADD(hour, -24, CURRENT_TIMESTAMP())
+ORDER BY anomaly_score DESC;
+```
 
-### **For Security Architects**
-- "Unified security data lake eliminates tool silos"
-- "Petabyte-scale queries in subseconds"
-- "SQL-native machine learning - no separate platforms"
-- "200+ native connectors for seamless integration"
+## 🛠️ Customization
 
-### **For SOC Managers**
-- "Reduce alert fatigue by 60% with intelligent triage"
-- "92% threat detection accuracy with AI correlation"
-- "Automated investigation playbooks"
-- "Real-time performance dashboards"
+### Adding New Data Sources
+1. Extend schema in `01_cybersecurity_schema.sql`
+2. Add sample data in `02_sample_data_generation.sql`
+3. Create analytics views in `03_ai_ml_models.sql`
+4. Update Streamlit app visualizations
 
-## 🔧 Technical Architecture
+### Custom AI/ML Models
+```sql
+-- Example: Custom fraud detection model
+CREATE OR REPLACE VIEW CUSTOM_FRAUD_MODEL AS
+SELECT 
+    transaction_id,
+    -- Your custom ML algorithm here
+    (risk_factor_1 * 0.4 + risk_factor_2 * 0.6) as custom_score
+FROM financial_transactions;
+```
 
-### **Data Layer**
-- **Structured Data**: Authentication logs, network flows, vulnerability scans
-- **Semi-Structured**: JSON security events, API responses
-- **Unstructured**: Security alert descriptions, incident reports
+## 🔧 Performance Optimization
 
-### **Analytics Layer**
-- **SQL Functions**: Built-in anomaly detection, window functions
-- **Snowpark**: Python-based ML models for complex analysis
-- **Cortex AI**: LLM functions for text analysis and entity extraction
+### Clustering Keys
+```sql
+-- Optimize time-series queries
+ALTER TABLE USER_AUTHENTICATION_LOGS 
+CLUSTER BY (DATE(TIMESTAMP), USERNAME);
+```
 
-### **Presentation Layer**
-- **Streamlit**: Interactive dashboards and visualizations
-- **SQL Worksheets**: Ad-hoc analysis and investigation
-- **APIs**: Integration with existing security tools
+### Search Optimization
+```sql
+-- Accelerate text searches
+ALTER TABLE NETWORK_SECURITY_LOGS 
+ADD SEARCH OPTIMIZATION ON EQUALITY(SOURCE_IP, DEST_IP);
+```
 
-### **AI/ML Capabilities**
+### Materialized Views
+```sql
+-- Pre-compute expensive aggregations
+CREATE MATERIALIZED VIEW HOURLY_SECURITY_METRICS AS
+SELECT 
+    DATE_TRUNC('hour', timestamp) as hour,
+    COUNT(*) as total_events,
+    SUM(CASE WHEN risk_level = 'CRITICAL' THEN 1 ELSE 0 END) as critical_events
+FROM LOGIN_ANOMALY_DETECTION
+GROUP BY 1;
+```
 
-1. **Built-in Anomaly Detection**
-   ```sql
-   SELECT ANOMALY_DETECTION(login_count) OVER (
-       PARTITION BY user_id ORDER BY date
-   ) FROM user_activity;
-   ```
+## 🎯 Demo Tips
 
-2. **Multi-Source Correlation**
-   ```sql
-   WITH threat_events AS (
-       SELECT * FROM network_threats
-       UNION ALL SELECT * FROM user_anomalies  
-       UNION ALL SELECT * FROM code_threats
-   ) SELECT * FROM threat_events ORDER BY risk_score DESC;
-   ```
+### For Sales Teams
+- Focus on cost savings and ROI metrics
+- Emphasize ease of use and SQL familiarity
+- Highlight marketplace and partner integrations
+- Show real-time performance comparisons
 
-3. **AI Risk Scoring**
-   ```sql
-   SELECT cvss_score * 0.4 + business_criticality * 0.3 + 
-          threat_intel_score * 0.3 AS ai_risk_score
-   FROM vulnerabilities;
-   ```
+### For Technical Teams
+- Deep dive into AI/ML algorithms
+- Demonstrate query performance at scale
+- Show integration possibilities
+- Discuss architecture and scaling
 
-4. **Cortex Text Analysis**
-   ```sql
-   SELECT SNOWFLAKE.CORTEX.SENTIMENT(alert_description),
-          SNOWFLAKE.CORTEX.EXTRACT_ANSWER(text, 'What IPs are mentioned?')
-   FROM security_alerts;
-   ```
+### For Security Teams
+- Focus on threat hunting capabilities
+- Show incident response workflows
+- Demonstrate compliance reporting
+- Highlight detection accuracy
 
-## 🎯 Use Case Deep Dives
+## 🤝 Contributing
 
-### **Anomaly Detection**
-- **Challenge**: Manual user behavior analysis takes hours
-- **Solution**: AI baseline modeling with SQL functions
-- **Outcome**: 92% accuracy, 12-minute detection time
-- **Business Value**: $2.4M breach prevention per incident
+We welcome contributions! Please:
 
-### **Threat Correlation**
-- **Challenge**: Siloed security tools miss coordinated attacks
-- **Solution**: Multi-source event correlation in real-time
-- **Outcome**: APT campaign detection in minutes vs months
-- **Business Value**: Supply chain attack prevention
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-### **Vulnerability Prioritization**
-- **Challenge**: CVSS scores ignore business context
-- **Solution**: AI risk scoring with asset criticality
-- **Outcome**: 70% reduction in vulnerability backlog
-- **Business Value**: Focused patching on critical assets
+### Contribution Ideas
+- Additional AI/ML models
+- New visualization components
+- Integration with security tools
+- Performance optimizations
+- Documentation improvements
 
-### **GRC Automation**
-- **Challenge**: Manual compliance monitoring is error-prone
-- **Solution**: Automated evidence collection and reporting
-- **Outcome**: 95% compliance score improvement
-- **Business Value**: Audit preparation time reduced 95%
+## 📚 Resources
 
-### **Alert Triage**
-- **Challenge**: Analyst alert fatigue and false positives
-- **Solution**: Cortex AI for intelligent classification
-- **Outcome**: 60% reduction in alert volume
-- **Business Value**: Analyst productivity increased 240%
+### Snowflake Documentation
+- [Security Overview](https://docs.snowflake.com/en/user-guide/security.html)
+- [Machine Learning](https://docs.snowflake.com/en/user-guide/ml-functions.html)
+- [Streamlit in Snowflake](https://docs.snowflake.com/en/developer-guide/streamlit/about-streamlit.html)
 
-## 🚀 Getting Started with Your Data
+### Learning Resources
+- [Snowflake Security Fundamentals](https://learn.snowflake.com/courses/course-v1:snowflake+ESS-SFS+2023/about)
+- [SQL for Security Analytics](https://learn.snowflake.com/courses/course-v1:snowflake+ESS-DASH+2023/about)
 
-### **Phase 1: Data Integration (Week 1)**
-1. **Identify data sources**: SIEM, firewalls, endpoints, cloud logs
-2. **Design schema**: Structured and semi-structured data models
-3. **Set up ingestion**: Snowpipe for real-time, batch for historical
-4. **Validate data quality**: Completeness, accuracy, timeliness
-
-### **Phase 2: Use Case Implementation (Weeks 2-3)**
-1. **Select priority use cases**: Based on business impact
-2. **Develop AI models**: Anomaly detection, correlation rules
-3. **Create dashboards**: Executive and operational views
-4. **Test and validate**: Accuracy metrics and performance
-
-### **Phase 3: Production Deployment (Week 4)**
-1. **User training**: SQL skills, dashboard navigation
-2. **Integration setup**: APIs, alerts, workflows
-3. **Performance tuning**: Query optimization, clustering
-4. **Monitoring setup**: SLAs, data freshness, model accuracy
-
-## 🤝 Support and Resources
-
-### **Documentation**
-- [Snowflake Security Data Cloud](https://docs.snowflake.com/en/user-guide/security-data-cloud)
-- [Cortex AI Functions](https://docs.snowflake.com/en/user-guide/snowflake-cortex)
-- [Anomaly Detection Reference](https://docs.snowflake.com/en/sql-reference/functions/anomaly_detection)
-
-### **Professional Services**
-- Security data lake architecture design
-- Custom AI/ML model development  
-- Dashboard and integration development
-- Team training and enablement
-
-### **Community**
+### Community
 - [Snowflake Community](https://community.snowflake.com/)
-- [Security Data Cloud Quickstart](https://quickstarts.snowflake.com/)
-- [Sample Code Repository](https://github.com/Snowflake-Labs)
+- [Security User Group](https://www.snowflake.com/user-groups/)
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙋‍♀️ Support
+
+### Issues & Questions
+- Create an [Issue](../../issues) for bugs or feature requests
+- Join our [Discussions](../../discussions) for questions and ideas
+
+### Professional Services
+For custom implementations or production deployments:
+- Contact your Snowflake account team
+- Engage Snowflake Professional Services
+- Partner with certified Snowflake consultants
+
+## 🌟 Acknowledgments
+
+- Snowflake Security Team for platform capabilities
+- Community contributors for feedback and improvements
+- Beta testers for validation and testing
 
 ---
 
-## 🎉 Ready to Transform Your Security Operations?
+**Ready to revolutionize your cybersecurity operations?**  
+🚀 [Deploy this demo](deployment_guide.md) and experience the power of Snowflake's security data platform!
 
-This demo showcases the future of cybersecurity analytics - unified, intelligent, and cost-effective. Snowflake doesn't just store your security data; it transforms how you defend your organization.
-
-**Next Steps:**
-1. **Run the demo** with your team
-2. **Schedule a POC** discussion with Snowflake
-3. **Design your architecture** for maximum impact
-4. **Start your security transformation** today
-
-*Built with ❤️ for the cybersecurity community by Snowflake Solution Engineering*
+[![Deploy to Snowflake](https://img.shields.io/badge/Deploy%20to-Snowflake-blue?style=for-the-badge&logo=snowflake)](deployment_guide.md)
