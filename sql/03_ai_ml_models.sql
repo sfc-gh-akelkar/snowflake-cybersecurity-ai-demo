@@ -381,11 +381,10 @@ WITH user_risk_factors AS (
          WHERE dal.USERNAME = ed.USERNAME 
          AND dal.TIMESTAMP >= DATEADD(day, -30, CURRENT_TIMESTAMP())) as total_data_accessed_30d,
         
-        -- Average baseline data access
-        (SELECT AVG(SUM(dal2.BYTES_ACCESSED)) FROM DATA_ACCESS_LOGS dal2 
+        -- Average baseline data access (simplified for demo)
+        (SELECT AVG(dal2.BYTES_ACCESSED) FROM DATA_ACCESS_LOGS dal2 
          WHERE dal2.USERNAME = ed.USERNAME 
-         AND dal2.TIMESTAMP BETWEEN DATEADD(day, -90, CURRENT_TIMESTAMP()) AND DATEADD(day, -30, CURRENT_TIMESTAMP())
-         GROUP BY DATE(dal2.TIMESTAMP)) as avg_daily_data_access,
+         AND dal2.TIMESTAMP BETWEEN DATEADD(day, -90, CURRENT_TIMESTAMP()) AND DATEADD(day, -30, CURRENT_TIMESTAMP())) as avg_daily_data_access,
         
         -- Off-hours activity
         (SELECT COUNT(*) FROM DATA_ACCESS_LOGS dal3
