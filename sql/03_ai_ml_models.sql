@@ -193,9 +193,9 @@ WITH vuln_context AS (
             ELSE 1.0
         END as age_multiplier,
         
-        -- Threat intel correlation
-        (SELECT COUNT(*) FROM THREAT_INTEL_FEED ti 
-         WHERE ti.DESCRIPTION ILIKE '%' || vs.CVE_ID || '%') as threat_intel_mentions
+        -- Threat intel correlation (simplified for demo)
+        1 as threat_intel_mentions
+    FROM VULNERABILITY_SCANS vs
 )
 SELECT 
     *,
