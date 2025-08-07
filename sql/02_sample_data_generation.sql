@@ -28,13 +28,18 @@ INSERT INTO EMPLOYEE_DATA VALUES
 -- 2. THREAT INTELLIGENCE FEED (Marketplace Data Simulation)
 -- =====================================================
 
-INSERT INTO THREAT_INTEL_FEED VALUES
-('TI001', DATEADD(day, -1, CURRENT_TIMESTAMP()), 'ip', '185.220.100.240', 'botnet', 'high', 0.95, 'Known Emotet C2 server', 'commercial_feed', ARRAY_CONSTRUCT('emotet', 'banking_trojan', 'c2')),
-('TI002', DATEADD(day, -1, CURRENT_TIMESTAMP()), 'ip', '203.0.113.45', 'apt', 'critical', 0.98, 'APT29 infrastructure', 'government_feed', ARRAY_CONSTRUCT('apt29', 'cozy_bear', 'russia')),
-('TI003', DATEADD(hour, -6, CURRENT_TIMESTAMP()), 'domain', 'evil-phishing-site.com', 'phishing', 'medium', 0.85, 'Credential harvesting campaign', 'open_source', ARRAY_CONSTRUCT('phishing', 'credential_theft')),
-('TI004', DATEADD(hour, -12, CURRENT_TIMESTAMP()), 'hash', 'a1b2c3d4e5f6789012345678901234567890abcd', 'malware', 'high', 0.92, 'Ransomware payload', 'commercial_feed', ARRAY_CONSTRUCT('ransomware', 'encryption')),
-('TI005', DATEADD(hour, -3, CURRENT_TIMESTAMP()), 'ip', '198.51.100.150', 'scanning', 'low', 0.70, 'Automated vulnerability scanner', 'internal', ARRAY_CONSTRUCT('scanning', 'reconnaissance')),
-('TI006', DATEADD(day, -2, CURRENT_TIMESTAMP()), 'domain', 'fake-bank-login.net', 'phishing', 'high', 0.89, 'Banking credential phishing', 'commercial_feed', ARRAY_CONSTRUCT('banking', 'phishing', 'financial'));
+INSERT INTO THREAT_INTEL_FEED 
+SELECT 'TI001', DATEADD(day, -1, CURRENT_TIMESTAMP()), 'ip', '185.220.100.240', 'botnet', 'high', 0.95, 'Known Emotet C2 server', 'commercial_feed', ARRAY_CONSTRUCT('emotet', 'banking_trojan', 'c2')
+UNION ALL
+SELECT 'TI002', DATEADD(day, -1, CURRENT_TIMESTAMP()), 'ip', '203.0.113.45', 'apt', 'critical', 0.98, 'APT29 infrastructure', 'government_feed', ARRAY_CONSTRUCT('apt29', 'cozy_bear', 'russia')
+UNION ALL
+SELECT 'TI003', DATEADD(hour, -6, CURRENT_TIMESTAMP()), 'domain', 'evil-phishing-site.com', 'phishing', 'medium', 0.85, 'Credential harvesting campaign', 'open_source', ARRAY_CONSTRUCT('phishing', 'credential_theft')
+UNION ALL
+SELECT 'TI004', DATEADD(hour, -12, CURRENT_TIMESTAMP()), 'hash', 'a1b2c3d4e5f6789012345678901234567890abcd', 'malware', 'high', 0.92, 'Ransomware payload', 'commercial_feed', ARRAY_CONSTRUCT('ransomware', 'encryption')
+UNION ALL
+SELECT 'TI005', DATEADD(hour, -3, CURRENT_TIMESTAMP()), 'ip', '198.51.100.150', 'scanning', 'low', 0.70, 'Automated vulnerability scanner', 'internal', ARRAY_CONSTRUCT('scanning', 'reconnaissance')
+UNION ALL
+SELECT 'TI006', DATEADD(day, -2, CURRENT_TIMESTAMP()), 'domain', 'fake-bank-login.net', 'phishing', 'high', 0.89, 'Banking credential phishing', 'commercial_feed', ARRAY_CONSTRUCT('banking', 'phishing', 'financial');
 
 -- =====================================================
 -- 3. USER AUTHENTICATION LOGS (With Anomalies for ML)
@@ -80,24 +85,24 @@ CROSS JOIN (SELECT * FROM TABLE(GENERATOR(ROWCOUNT => 30))) seq
 WHERE emp.STATUS = 'active';
 
 -- Recent anomalous activities (last 7 days)
-INSERT INTO USER_AUTHENTICATION_LOGS VALUES
+INSERT INTO USER_AUTHENTICATION_LOGS 
 -- Suspicious login from known threat IP
-('AUTH_ANOMALY_001', DATEADD(hour, -2, CURRENT_TIMESTAMP()), 'EMP001', 'john.smith', 'john.smith@company.com', 'login', '203.0.113.45', 'Mozilla/5.0 (Linux)', 
+SELECT 'AUTH_ANOMALY_001', DATEADD(hour, -2, CURRENT_TIMESTAMP()), 'EMP001', 'john.smith', 'john.smith@company.com', 'login', '203.0.113.45', 'Mozilla/5.0 (Linux)', 
  OBJECT_CONSTRUCT('country', 'RU', 'region', 'Moscow', 'city', 'Moscow', 'lat', 55.7558, 'lon', 37.6176), 
  TRUE, NULL, 'SESS_THREAT_001', OBJECT_CONSTRUCT('device_type', 'unknown', 'os', 'Linux', 'browser', 'Unknown'), 
- ARRAY_CONSTRUCT('threat_intel_match', 'unusual_location', 'unusual_device'), FALSE),
-
+ ARRAY_CONSTRUCT('threat_intel_match', 'unusual_location', 'unusual_device'), FALSE
+UNION ALL
 -- After-hours access by terminated employee
-('AUTH_ANOMALY_002', DATEADD(hour, -6, CURRENT_TIMESTAMP()), 'EMP009', 'james.wilson', 'james.wilson@company.com', 'login', '10.0.0.45', 'curl/7.68.0',
+SELECT 'AUTH_ANOMALY_002', DATEADD(hour, -6, CURRENT_TIMESTAMP()), 'EMP009', 'james.wilson', 'james.wilson@company.com', 'login', '10.0.0.45', 'curl/7.68.0',
  OBJECT_CONSTRUCT('country', 'US', 'region', 'CA', 'city', 'San Francisco', 'lat', 37.7749, 'lon', -122.4194),
  TRUE, NULL, 'SESS_TERMINATED_001', OBJECT_CONSTRUCT('device_type', 'server', 'os', 'Linux', 'browser', 'CLI'),
- ARRAY_CONSTRUCT('terminated_employee', 'unusual_time', 'unusual_user_agent'), FALSE),
-
+ ARRAY_CONSTRUCT('terminated_employee', 'unusual_time', 'unusual_user_agent'), FALSE
+UNION ALL
 -- Multiple failed login attempts
-('AUTH_ANOMALY_003', DATEADD(hour, -1, CURRENT_TIMESTAMP()), 'EMP003', 'mike.rodriguez', 'mike.rodriguez@company.com', 'failed_login', '185.220.100.240', 'automated_scanner',
+SELECT 'AUTH_ANOMALY_003', DATEADD(hour, -1, CURRENT_TIMESTAMP()), 'EMP003', 'mike.rodriguez', 'mike.rodriguez@company.com', 'failed_login', '185.220.100.240', 'automated_scanner',
  OBJECT_CONSTRUCT('country', 'DE', 'region', 'Bavaria', 'city', 'Munich', 'lat', 48.1351, 'lon', 11.5820),
  FALSE, 'Invalid credentials', 'SESS_BRUTE_001', OBJECT_CONSTRUCT('device_type', 'bot', 'os', 'Unknown', 'browser', 'Bot'),
- ARRAY_CONSTRUCT('brute_force_attempt', 'threat_intel_match', 'unusual_location'), FALSE);
+ ARRAY_CONSTRUCT('brute_force_attempt', 'threat_intel_match', 'unusual_location'), FALSE;
 
 -- =====================================================
 -- 4. NETWORK SECURITY LOGS (Threat Hunting Data)
@@ -153,21 +158,21 @@ INSERT INTO VULNERABILITY_SCANS VALUES
 -- 6. SECURITY INCIDENTS (For Threat Prioritization)
 -- =====================================================
 
-INSERT INTO SECURITY_INCIDENTS VALUES
-('INC_001', DATEADD(hour, -4, CURRENT_TIMESTAMP()), 'Suspicious Login from Threat Actor IP', 'User john.smith logged in from known APT29 infrastructure IP', 'critical', 'investigating', 'sarah.chen', 
- ARRAY_CONSTRUCT('web-server-01', 'employee-laptop-john'), ARRAY_CONSTRUCT('203.0.113.45', 'unusual_login_pattern'), 9.5, NULL, NULL),
-
-('INC_002', DATEADD(hour, -8, CURRENT_TIMESTAMP()), 'Terminated Employee Access Attempt', 'Former employee james.wilson attempted system access after termination', 'high', 'open', 'jennifer.davis',
- ARRAY_CONSTRUCT('hr-system', 'file-server-01'), ARRAY_CONSTRUCT('terminated_employee_access', 'off_hours_activity'), 8.0, NULL, NULL),
-
-('INC_003', DATEADD(day, -1, CURRENT_TIMESTAMP()), 'Potential Data Exfiltration', 'Large data transfer detected from internal server to external IP', 'high', 'resolved', 'sarah.chen',
- ARRAY_CONSTRUCT('database-server-01'), ARRAY_CONSTRUCT('large_data_transfer', 'external_communication'), 7.5, 6.0, 24),
-
-('INC_004', DATEADD(day, -2, CURRENT_TIMESTAMP()), 'Vulnerability Exploitation Attempt', 'Attempted exploitation of Log4j vulnerability on web server', 'medium', 'closed', 'david.kim',
- ARRAY_CONSTRUCT('web-server-01'), ARRAY_CONSTRUCT('CVE-2021-44228', 'exploitation_attempt'), 6.0, 2.0, 4),
-
-('INC_005', DATEADD(hour, -12, CURRENT_TIMESTAMP()), 'Ransomware Indicators Detected', 'Multiple file encryption activities detected on file server', 'critical', 'investigating', 'jennifer.davis',
- ARRAY_CONSTRUCT('file-server-01', 'backup-server-01'), ARRAY_CONSTRUCT('file_encryption', 'ransom_note', 'lateral_movement'), 9.8, NULL, NULL);
+INSERT INTO SECURITY_INCIDENTS 
+SELECT 'INC_001', DATEADD(hour, -4, CURRENT_TIMESTAMP()), 'Suspicious Login from Threat Actor IP', 'User john.smith logged in from known APT29 infrastructure IP', 'critical', 'investigating', 'sarah.chen', 
+ ARRAY_CONSTRUCT('web-server-01', 'employee-laptop-john'), ARRAY_CONSTRUCT('203.0.113.45', 'unusual_login_pattern'), 9.5, NULL, NULL
+UNION ALL
+SELECT 'INC_002', DATEADD(hour, -8, CURRENT_TIMESTAMP()), 'Terminated Employee Access Attempt', 'Former employee james.wilson attempted system access after termination', 'high', 'open', 'jennifer.davis',
+ ARRAY_CONSTRUCT('hr-system', 'file-server-01'), ARRAY_CONSTRUCT('terminated_employee_access', 'off_hours_activity'), 8.0, NULL, NULL
+UNION ALL
+SELECT 'INC_003', DATEADD(day, -1, CURRENT_TIMESTAMP()), 'Potential Data Exfiltration', 'Large data transfer detected from internal server to external IP', 'high', 'resolved', 'sarah.chen',
+ ARRAY_CONSTRUCT('database-server-01'), ARRAY_CONSTRUCT('large_data_transfer', 'external_communication'), 7.5, 6.0, 24
+UNION ALL
+SELECT 'INC_004', DATEADD(day, -2, CURRENT_TIMESTAMP()), 'Vulnerability Exploitation Attempt', 'Attempted exploitation of Log4j vulnerability on web server', 'medium', 'closed', 'david.kim',
+ ARRAY_CONSTRUCT('web-server-01'), ARRAY_CONSTRUCT('CVE-2021-44228', 'exploitation_attempt'), 6.0, 2.0, 4
+UNION ALL
+SELECT 'INC_005', DATEADD(hour, -12, CURRENT_TIMESTAMP()), 'Ransomware Indicators Detected', 'Multiple file encryption activities detected on file server', 'critical', 'investigating', 'jennifer.davis',
+ ARRAY_CONSTRUCT('file-server-01', 'backup-server-01'), ARRAY_CONSTRUCT('file_encryption', 'ransom_note', 'lateral_movement'), 9.8, NULL, NULL;
 
 -- =====================================================
 -- 7. FINANCIAL TRANSACTIONS (For Fraud Detection)
