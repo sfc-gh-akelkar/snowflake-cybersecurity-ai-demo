@@ -120,8 +120,8 @@ SELECT 'AUTH_ANOMALY_003', DATEADD(hour, -1, CURRENT_TIMESTAMP()), 'EMP003', 'mi
 -- Generate normal network traffic
 INSERT INTO NETWORK_SECURITY_LOGS
 SELECT 
-    'NET_' || ROW_NUMBER() OVER (ORDER BY seq.value) as LOG_ID,
-    DATEADD(minute, -seq.value * 5, CURRENT_TIMESTAMP()) as TIMESTAMP,
+    'NET_' || ROW_NUMBER() OVER (ORDER BY net_gen.row_num) as LOG_ID,
+    DATEADD(minute, -net_gen.row_num * 5, CURRENT_TIMESTAMP()) as TIMESTAMP,
     '192.168.' || UNIFORM(1, 254, RANDOM()) || '.' || UNIFORM(1, 254, RANDOM()) as SOURCE_IP,
     CASE UNIFORM(1, 4, RANDOM())
         WHEN 1 THEN '8.8.8.8'
@@ -148,7 +148,7 @@ FROM (
     CROSS JOIN EMPLOYEE_DATA e2
     CROSS JOIN EMPLOYEE_DATA e3
     LIMIT 10000
-);
+) net_gen;
 
 -- Suspicious network activities
 INSERT INTO NETWORK_SECURITY_LOGS VALUES
@@ -196,8 +196,8 @@ SELECT 'INC_005', DATEADD(hour, -12, CURRENT_TIMESTAMP()), 'Ransomware Indicator
 -- Normal transactions
 INSERT INTO FINANCIAL_TRANSACTIONS
 SELECT 
-    'TXN_' || ROW_NUMBER() OVER (ORDER BY seq.value) as TRANSACTION_ID,
-    DATEADD(hour, -seq.value, CURRENT_TIMESTAMP()) as TIMESTAMP,
+    'TXN_' || ROW_NUMBER() OVER (ORDER BY txn_gen.row_num) as TRANSACTION_ID,
+    DATEADD(hour, -txn_gen.row_num, CURRENT_TIMESTAMP()) as TIMESTAMP,
     'USER_' || UNIFORM(1000, 9999, RANDOM()) as USER_ID,
     'ACC_' || UNIFORM(100000, 999999, RANDOM()) as ACCOUNT_ID,
     CASE UNIFORM(1, 4, RANDOM())
@@ -220,7 +220,7 @@ FROM (
     CROSS JOIN EMPLOYEE_DATA e2
     CROSS JOIN EMPLOYEE_DATA e3
     LIMIT 5000
-);
+) txn_gen;
 
 -- Suspicious transactions
 INSERT INTO FINANCIAL_TRANSACTIONS VALUES
@@ -238,8 +238,8 @@ INSERT INTO FINANCIAL_TRANSACTIONS VALUES
 -- Normal data access patterns
 INSERT INTO DATA_ACCESS_LOGS
 SELECT 
-    'DA_' || ROW_NUMBER() OVER (ORDER BY emp.EMPLOYEE_ID, seq.value) as ACCESS_ID,
-    DATEADD(hour, -seq.value, CURRENT_TIMESTAMP()) as TIMESTAMP,
+    'DA_' || ROW_NUMBER() OVER (ORDER BY emp.EMPLOYEE_ID, seq.seq_num) as ACCESS_ID,
+    DATEADD(hour, -seq.seq_num, CURRENT_TIMESTAMP()) as TIMESTAMP,
     emp.EMPLOYEE_ID as USER_ID,
     emp.USERNAME,
     CASE UNIFORM(1, 3, RANDOM())
