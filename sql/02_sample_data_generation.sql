@@ -49,9 +49,11 @@ SELECT 'TI006', DATEADD(day, -2, CURRENT_TIMESTAMP()), 'domain', 'fake-bank-logi
 INSERT INTO USER_AUTHENTICATION_LOGS 
 SELECT 
     'AUTH_' || ROW_NUMBER() OVER (ORDER BY emp.EMPLOYEE_ID, days.day_offset) as LOG_ID,
-    DATEADD(day, -days.day_offset, CURRENT_TIMESTAMP()) - 
-    UNIFORM(8, 18, RANDOM()) * INTERVAL '1 HOUR' - 
-    UNIFORM(0, 59, RANDOM()) * INTERVAL '1 MINUTE' as TIMESTAMP,
+    DATEADD(minute, -UNIFORM(0, 59, RANDOM()), 
+        DATEADD(hour, -UNIFORM(8, 18, RANDOM()), 
+            DATEADD(day, -days.day_offset, CURRENT_TIMESTAMP())
+        )
+    ) as TIMESTAMP,
     emp.EMPLOYEE_ID as USER_ID,
     emp.USERNAME,
     emp.EMAIL,
