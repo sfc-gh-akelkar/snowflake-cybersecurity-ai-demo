@@ -282,36 +282,55 @@ elif current_section == "anomaly":
             threat_intel_hits = anomaly_data['THREAT_INTEL_MATCH'].sum()
             st.metric("Threat Intel Matches", threat_intel_hits)
         
+        # Risk Level Distribution
+        st.subheader("📊 Risk Level Distribution")
+        risk_counts = anomaly_data['RISK_LEVEL'].value_counts()
+        
+        risk_cols = st.columns(len(risk_counts))
+        colors = {'CRITICAL': '🔴', 'HIGH': '🟠', 'MEDIUM': '🟡', 'LOW': '🟢'}
+        
+        for i, (risk_level, count) in enumerate(risk_counts.items()):
+            with risk_cols[i]:
+                percentage = (count / len(anomaly_data)) * 100
+                st.metric(
+                    label=f"{colors.get(risk_level, '⚪')} {risk_level}",
+                    value=count,
+                    delta=f"{percentage:.1f}%"
+                )
+        
         # Visualization
         col1, col2 = st.columns(2)
         
         with col1:
-            # Anomaly score scatter plot
-            fig = px.scatter(
-                anomaly_data,
+            # Anomaly score line chart (SiS-compatible)
+            fig = px.line(
+                anomaly_data.sort_values('TIMESTAMP'),
                 x='TIMESTAMP',
                 y='ANOMALY_SCORE',
                 color='RISK_LEVEL',
-                size='ANOMALY_SCORE',
-                hover_data=['USERNAME', 'COUNTRY', 'SOURCE_IP'],
                 title="Anomaly Scores Over Time",
                 color_discrete_map={
                     'CRITICAL': '#ff4444',
                     'HIGH': '#ff8800',
                     'MEDIUM': '#ffcc00', 
                     'LOW': '#88cc88'
-                }
+                },
+                markers=True
             )
             fig.update_layout(height=400)
             st.plotly_chart(fig, use_container_width=True)
         
         with col2:
-            # Geographic distribution
-            country_counts = anomaly_data['COUNTRY'].value_counts()
-            fig = px.pie(
-                values=country_counts.values,
-                names=country_counts.index,
-                title="Anomalies by Country"
+            # Geographic distribution (SiS-compatible bar chart)
+            country_counts = anomaly_data['COUNTRY'].value_counts().reset_index()
+            country_counts.columns = ['Country', 'Count']
+            fig = px.bar(
+                country_counts,
+                x='Country',
+                y='Count',
+                title="Anomalies by Country",
+                color='Count',
+                color_continuous_scale='Reds'
             )
             fig.update_layout(height=400)
             st.plotly_chart(fig, use_container_width=True)
