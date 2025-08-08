@@ -1278,7 +1278,7 @@ elif current_section == "chatbot":
     # Clear chat button
     if st.button("🗑️ Clear Chat History"):
         st.session_state.chat_history = []
-        st.experimental_rerun()
+        st.rerun()
 
 elif current_section == "performance":
     st.title("📊 Cost & Performance Analytics")
