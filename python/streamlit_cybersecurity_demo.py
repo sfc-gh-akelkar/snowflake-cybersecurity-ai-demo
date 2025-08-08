@@ -1415,11 +1415,37 @@ elif current_section == "performance":
         cost_df,
         x='Month',
         y=['Traditional SIEM', 'Snowflake'],
-        title="Monthly Storage Cost Comparison",
+        title="Monthly Total Cost Comparison (Storage + Compute)",
         labels={'value': 'Monthly Cost ($)', 'variable': 'Platform'}
+    )
+    
+    # Ensure the Snowflake line is visible by setting a minimum y-axis range
+    fig.update_layout(
+        yaxis=dict(rangemode='tozero'),
+        showlegend=True
     )
     fig.update_layout(height=400)
     st.plotly_chart(fig, use_container_width=True)
+    
+    # Show key cost comparison points
+    st.markdown("**Key Cost Comparisons:**")
+    comparison_data = pd.DataFrame({
+        'Time Period': ['6 Months', '1 Year', '2 Years', '3 Years'],
+        'Data Volume': ['3 TB', '6 TB', '12 TB', '18 TB'],
+        'Traditional SIEM': [f"${cost_df.iloc[5]['Traditional SIEM']:,.0f}", 
+                           f"${cost_df.iloc[11]['Traditional SIEM']:,.0f}",
+                           f"${cost_df.iloc[23]['Traditional SIEM']:,.0f}",
+                           f"${cost_df.iloc[35]['Traditional SIEM']:,.0f}"],
+        'Snowflake': [f"${cost_df.iloc[5]['Snowflake']:,.0f}", 
+                     f"${cost_df.iloc[11]['Snowflake']:,.0f}",
+                     f"${cost_df.iloc[23]['Snowflake']:,.0f}",
+                     f"${cost_df.iloc[35]['Snowflake']:,.0f}"],
+        'Monthly Savings': [f"${cost_df.iloc[5]['Traditional SIEM'] - cost_df.iloc[5]['Snowflake']:,.0f}",
+                          f"${cost_df.iloc[11]['Traditional SIEM'] - cost_df.iloc[11]['Snowflake']:,.0f}",
+                          f"${cost_df.iloc[23]['Traditional SIEM'] - cost_df.iloc[23]['Snowflake']:,.0f}",
+                          f"${cost_df.iloc[35]['Traditional SIEM'] - cost_df.iloc[35]['Snowflake']:,.0f}"]
+    })
+    st.dataframe(comparison_data, use_container_width=True)
     
     # ROI calculation
     st.subheader("💵 Return on Investment")
