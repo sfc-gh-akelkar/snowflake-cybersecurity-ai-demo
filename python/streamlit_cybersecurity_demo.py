@@ -177,6 +177,58 @@ Need details on any specific transaction?"""
 
 Would you like me to show the network flow analysis?"""
     
+    elif ("anomaly" in question_lower or "anomalies" in question_lower) and ("sarah chen" in question_lower or "sarah.chen" in question_lower):
+        return """**Anomaly Analysis for User: Sarah Chen**
+
+**🚨 CRITICAL RISK SCORE: 95/100**
+
+**Detected Anomalies:**
+1. **Unusual Login Location** - Login from Moscow, Russia (203.0.113.45)
+   - User's typical locations: San Francisco, New York
+   - ⚠️ IP matches known APT29 infrastructure
+
+2. **Off-Hours Activity** - Login at 2:47 AM PST on Sunday
+   - User's normal hours: 9 AM - 6 PM, Monday-Friday
+   - Accessed sensitive GitHub repositories during this session
+
+3. **Data Access Pattern** - Downloaded 15GB of source code
+   - 300% above user's normal download volume
+   - Included proprietary algorithms and customer data schemas
+
+**AI Correlation:**
+- **Threat Intelligence Match**: Source IP linked to state-sponsored actors
+- **Behavioral Model**: Activity deviates 4.2 standard deviations from baseline
+- **Risk Multiplier**: Combination of location + timing + volume = Critical
+
+**Recommended Actions:**
+1. Immediately disable user account
+2. Reset all authentication credentials
+3. Review all accessed resources in last 48 hours
+4. Initiate incident response protocol
+5. Contact user via alternate communication channel
+
+**Investigation Status:** 🔴 **ACTIVE INCIDENT - P0 CRITICAL**
+
+Would you like me to show the detailed timeline or generate the incident response checklist?"""
+    
+    elif ("anomaly" in question_lower or "anomalies" in question_lower) and any(user in question_lower for user in ["user", "john", "alex", "james"]):
+        return """**User Anomaly Analysis**
+
+I can provide detailed anomaly analysis for specific users. Here are some recent high-risk cases:
+
+**Current High-Risk Users:**
+1. **Sarah Chen** - Critical anomaly score (95/100) - Foreign login + off-hours access
+2. **James Wilson** - Terminated employee still accessing systems
+3. **Alex Brown** - Unusual data download patterns
+
+**Analysis Available:**
+- Behavioral pattern analysis
+- Threat intelligence correlation
+- Risk scoring methodology
+- Recommended remediation actions
+
+Please specify which user you'd like me to analyze, or ask about "Sarah Chen" for our most critical current case."""
+    
     else:
         return f"""I understand you're asking about: "{user_question}"
 
@@ -1222,6 +1274,7 @@ elif current_section == "chatbot":
         "Show me all critical security incidents from today",
         "What are the top 5 vulnerabilities I should patch first?",
         "Which users have the highest insider threat scores?",
+        "Explain the anomaly detected for user Sarah Chen",
         "Find all login attempts from Russia or China", 
         "Show me suspicious financial transactions above $5000",
         "What network security events happened in the last hour?"
