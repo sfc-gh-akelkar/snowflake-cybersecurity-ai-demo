@@ -72,6 +72,126 @@ def create_metric_card(title, value, delta=None, delta_color="normal"):
     </div>
     """, unsafe_allow_html=True)
 
+def generate_ai_response(user_question):
+    """Generate AI response for chatbot (simplified implementation)"""
+    
+    question_lower = user_question.lower()
+    
+    if "critical" in question_lower and "incident" in question_lower:
+        return """I found the current critical security incidents:
+
+**P0 Critical Incidents:**
+1. **Suspicious Login from Threat Actor IP** - User john.smith logged in from known APT29 infrastructure
+2. **Ransomware Indicators Detected** - Multiple file encryption activities on file server
+
+**Recommended Actions:**
+- Immediately isolate affected systems
+- Reset user credentials
+- Activate incident response team
+
+Would you like me to show the detailed incident analysis?"""
+    
+    elif "vulnerabilit" in question_lower and ("top" in question_lower or "patch" in question_lower):
+        return """Here are the top 5 vulnerabilities requiring immediate attention:
+
+**Patch Immediately:**
+1. **CVE-2021-44228** (Log4j) - CVSS 10.0 - web-server-01
+2. **CVE-2022-22965** (Spring) - CVSS 9.8 - api-server-01
+3. **CVE-2021-26855** (Exchange) - CVSS 7.2 - backup-server-01
+
+**AI Recommendations:**
+- These vulnerabilities have known exploits in the wild
+- Assets are internet-facing with high exposure
+- Patch deployment estimated: 2-4 hours
+
+Would you like me to generate patch deployment scripts?"""
+    
+    elif "insider threat" in question_lower:
+        return """Users with highest insider threat scores:
+
+**High Risk (Score > 70):**
+1. **james.wilson** (Score: 100) - Terminated employee with recent access attempts
+2. **alex.brown** (Score: 45) - Unusual data access patterns, off-hours activity
+
+**Key Risk Factors:**
+- Terminated employee access attempts
+- Large data downloads outside business hours
+- Multiple login anomalies
+
+**Recommended Actions:**
+- Disable access for terminated employees
+- Review data access permissions
+- Monitor off-hours activities
+
+Need more details on any specific user?"""
+    
+    elif any(country in question_lower for country in ["russia", "china", "ru", "cn"]):
+        return """Found login attempts from Russia and China:
+
+**Recent Foreign Login Attempts:**
+- **john.smith** - 203.0.113.45 (Russia) - 2 hours ago ⚠️ **THREAT INTEL MATCH**
+- **sarah.chen** - Multiple IPs (Russia) - Last 24 hours
+- **alex.brown** - 185.220.100.240 (China) - Failed attempts
+
+**Threat Intelligence Correlation:**
+- IPs match known APT infrastructure
+- Unusual access patterns detected
+- Recommended: Immediate credential reset
+
+Would you like me to show the detailed forensic timeline?"""
+    
+    elif "transaction" in question_lower and ("suspicious" in question_lower or "5000" in question_lower):
+        return """Suspicious financial transactions above $5000:
+
+**High Risk Transactions:**
+1. **$9,999.99** - User_1234 to crypto exchange (Russia) - Fraud Score: 0.95
+2. **$15,000.00** - User_9999 luxury goods (Miami) - New device - Fraud Score: 0.92
+3. **$5,000.00** - User_5678 ATM withdrawal (China) - Fraud Score: 0.88
+
+**Risk Indicators:**
+- Foreign transaction locations
+- Unusual amounts for user patterns
+- New/unknown device fingerprints
+
+**Actions Taken:**
+- Transactions flagged for review
+- Account holders notified
+- Additional verification required
+
+Need details on any specific transaction?"""
+    
+    elif "network" in question_lower and ("hour" in question_lower or "last" in question_lower):
+        return """Network security events from the last hour:
+
+**Threat Events Detected:**
+1. **Blocked C2 Communication** - 192.168.1.100 → 203.0.113.45 (APT infrastructure)
+2. **Botnet Activity** - 192.168.1.150 → 185.220.100.240 (Emotet C2)
+3. **Data Exfiltration** - Large transfer 10.0.0.45 → external IP
+
+**Actions Taken:**
+- Malicious traffic blocked by firewall
+- Affected systems isolated
+- Security team notified
+
+**Status:** 🔴 Active monitoring in progress
+
+Would you like me to show the network flow analysis?"""
+    
+    else:
+        return f"""I understand you're asking about: "{user_question}"
+
+I can help you with:
+- 🚨 Security incidents and alerts
+- 🔓 Vulnerability management
+- 🕵️ Threat hunting queries  
+- 💰 Fraud detection analysis
+- 👥 Insider threat assessment
+- 🌐 Network security events
+
+Please try rephrasing your question or ask about any of these security topics. For complex analysis, I can also generate SQL queries to investigate your security data.
+
+What specific security information would you like me to help you find?"""
+
 # =====================================================
 # SIDEBAR NAVIGATION
 # =====================================================
@@ -1095,36 +1215,56 @@ elif current_section == "chatbot":
     st.subheader("💬 Ask the Security AI")
     
     # Sample questions
-    st.markdown("**Try asking questions like:**")
+    st.markdown("**Try these sample questions:**")
+    st.markdown("*Click any button below to automatically ask the Security AI*")
+    
     sample_questions = [
         "Show me all critical security incidents from today",
         "What are the top 5 vulnerabilities I should patch first?",
         "Which users have the highest insider threat scores?",
-        "Find all login attempts from Russia or China",
+        "Find all login attempts from Russia or China", 
         "Show me suspicious financial transactions above $5000",
         "What network security events happened in the last hour?"
     ]
     
+    # Organize sample questions in columns for better layout
+    col1, col2 = st.columns(2)
+    
     for i, question in enumerate(sample_questions):
-        if st.button(f"💡 {question}", key=f"sample_{i}"):
-            st.session_state.user_input = question
+        # Alternate between columns
+        with col1 if i % 2 == 0 else col2:
+            if st.button(f"💡 {question}", key=f"sample_{i}", use_container_width=True):
+                # Add user message to history
+                st.session_state.chat_history.append({"role": "user", "content": question})
+                
+                # Generate AI response
+                ai_response = generate_ai_response(question)
+                
+                # Add AI response to history
+                st.session_state.chat_history.append({"role": "assistant", "content": ai_response})
+                
+                # Rerun to show the updated chat
+                st.rerun()
     
-    # Chat input
-    user_input = st.text_input("Ask a security question:", key="chat_input")
+    st.markdown("---")  # Visual separator
     
-    if st.button("Send", type="primary") or user_input:
-        if user_input:
-            # Add user message to history
-            st.session_state.chat_history.append({"role": "user", "content": user_input})
-            
-            # Generate AI response (simplified - in real implementation would use LLM)
-            ai_response = generate_ai_response(user_input)
-            
-            # Add AI response to history
-            st.session_state.chat_history.append({"role": "assistant", "content": ai_response})
-            
-            # Clear input
-            st.session_state.chat_input = ""
+    # Chat input using form for proper state management
+    with st.form(key="chat_form", clear_on_submit=True):
+        user_input = st.text_input("Ask a security question:", key="chat_input")
+        submitted = st.form_submit_button("Send", type="primary")
+    
+    if submitted and user_input:
+        # Add user message to history
+        st.session_state.chat_history.append({"role": "user", "content": user_input})
+        
+        # Generate AI response (simplified - in real implementation would use LLM)
+        ai_response = generate_ai_response(user_input)
+        
+        # Add AI response to history
+        st.session_state.chat_history.append({"role": "assistant", "content": ai_response})
+        
+        # Rerun to show the updated chat
+        st.rerun()
     
     # Display chat history
     st.subheader("💬 Conversation History")
@@ -1253,126 +1393,6 @@ elif current_section == "performance":
 # =====================================================
 # HELPER FUNCTIONS
 # =====================================================
-
-def generate_ai_response(user_question):
-    """Generate AI response for chatbot (simplified implementation)"""
-    
-    question_lower = user_question.lower()
-    
-    if "critical" in question_lower and "incident" in question_lower:
-        return """I found the current critical security incidents:
-
-**P0 Critical Incidents:**
-1. **Suspicious Login from Threat Actor IP** - User john.smith logged in from known APT29 infrastructure
-2. **Ransomware Indicators Detected** - Multiple file encryption activities on file server
-
-**Recommended Actions:**
-- Immediately isolate affected systems
-- Reset user credentials
-- Activate incident response team
-
-Would you like me to show the detailed incident analysis?"""
-    
-    elif "vulnerabilit" in question_lower and ("top" in question_lower or "patch" in question_lower):
-        return """Here are the top 5 vulnerabilities requiring immediate attention:
-
-**Patch Immediately:**
-1. **CVE-2021-44228** (Log4j) - CVSS 10.0 - web-server-01
-2. **CVE-2022-22965** (Spring) - CVSS 9.8 - api-server-01
-3. **CVE-2021-26855** (Exchange) - CVSS 7.2 - backup-server-01
-
-**AI Recommendations:**
-- These vulnerabilities have known exploits in the wild
-- Assets are internet-facing with high exposure
-- Patch deployment estimated: 2-4 hours
-
-Would you like me to generate patch deployment scripts?"""
-    
-    elif "insider threat" in question_lower:
-        return """Users with highest insider threat scores:
-
-**High Risk (Score > 70):**
-1. **james.wilson** (Score: 100) - Terminated employee with recent access attempts
-2. **alex.brown** (Score: 45) - Unusual data access patterns, off-hours activity
-
-**Key Risk Factors:**
-- Terminated employee access attempts
-- Large data downloads outside business hours
-- Multiple login anomalies
-
-**Recommended Actions:**
-- Disable access for terminated employees
-- Review data access permissions
-- Monitor off-hours activities
-
-Need more details on any specific user?"""
-    
-    elif any(country in question_lower for country in ["russia", "china", "ru", "cn"]):
-        return """Found login attempts from Russia and China:
-
-**Recent Foreign Login Attempts:**
-- **john.smith** - 203.0.113.45 (Russia) - 2 hours ago ⚠️ **THREAT INTEL MATCH**
-- **sarah.chen** - Multiple IPs (Russia) - Last 24 hours
-- **alex.brown** - 185.220.100.240 (China) - Failed attempts
-
-**Threat Intelligence Correlation:**
-- IPs match known APT infrastructure
-- Unusual access patterns detected
-- Recommended: Immediate credential reset
-
-Would you like me to show the detailed forensic timeline?"""
-    
-    elif "transaction" in question_lower and ("suspicious" in question_lower or "5000" in question_lower):
-        return """Suspicious financial transactions above $5000:
-
-**High Risk Transactions:**
-1. **$9,999.99** - User_1234 to crypto exchange (Russia) - Fraud Score: 0.95
-2. **$15,000.00** - User_9999 luxury goods (Miami) - New device - Fraud Score: 0.92
-3. **$5,000.00** - User_5678 ATM withdrawal (China) - Fraud Score: 0.88
-
-**Risk Indicators:**
-- Foreign transaction locations
-- Unusual amounts for user patterns
-- New/unknown device fingerprints
-
-**Actions Taken:**
-- Transactions flagged for review
-- Account holders notified
-- Additional verification required
-
-Need details on any specific transaction?"""
-    
-    elif "network" in question_lower and ("hour" in question_lower or "last" in question_lower):
-        return """Network security events from the last hour:
-
-**Threat Events Detected:**
-1. **Blocked C2 Communication** - 192.168.1.100 → 203.0.113.45 (APT infrastructure)
-2. **Botnet Activity** - 192.168.1.150 → 185.220.100.240 (Emotet C2)
-3. **Data Exfiltration** - Large transfer 10.0.0.45 → external IP
-
-**Actions Taken:**
-- Malicious traffic blocked by firewall
-- Affected systems isolated
-- Security team notified
-
-**Status:** 🔴 Active monitoring in progress
-
-Would you like me to show the network flow analysis?"""
-    
-    else:
-        return f"""I understand you're asking about: "{user_question}"
-
-I can help you with:
-- 🚨 Security incidents and alerts
-- 🔓 Vulnerability management
-- 🕵️ Threat hunting queries  
-- 💰 Fraud detection analysis
-- 👥 Insider threat assessment
-- 🌐 Network security events
-
-Please try rephrasing your question or ask about any of these security topics. For complex analysis, I can also generate SQL queries to investigate your security data.
-
-What specific security information would you like me to help you find?"""
 
 # =====================================================
 # FOOTER
