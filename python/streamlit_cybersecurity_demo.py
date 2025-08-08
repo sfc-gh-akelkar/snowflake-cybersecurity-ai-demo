@@ -1359,11 +1359,12 @@ elif current_section == "performance":
         st.success("**✅ Cost-Effective & Scalable**")
         st.markdown("""
         - **$240** per TB/year storage
+        - **$360** per TB/year compute (estimated)
         - **7+ years** retention affordable
-        - **No ingest tax** - pay for storage only
+        - **No ingest tax** - pay for usage only
         - **SQL-based** high-performance search
         - **Standard SQL** - no vendor lock-in
-        - **Auto-scaling** compute
+        - **Auto-scaling** compute - pay per second
         """)
     
     # Performance metrics
@@ -1394,8 +1395,14 @@ elif current_section == "performance":
     months = list(range(1, 37))  # 3 years
     data_tb = [i * 0.5 for i in months]  # 0.5 TB growth per month
     
-    traditional_cost = [tb * 50000 / 12 for tb in data_tb]  # $50k per TB/year
-    snowflake_cost = [tb * 240 / 12 for tb in data_tb]  # $240 per TB/year
+    # Traditional SIEM: $4,167/month per TB ($50k/year)
+    traditional_cost = [tb * 4167 for tb in data_tb]  # $50k per TB/year = $4,167/month per TB
+    
+    # Snowflake: $20/month per TB ($240/year) for storage + compute estimate
+    # Adding realistic compute costs for processing
+    snowflake_storage_cost = [tb * 20 for tb in data_tb]  # $240 per TB/year = $20/month per TB
+    snowflake_compute_cost = [tb * 30 for tb in data_tb]  # Estimated compute for queries/processing
+    snowflake_cost = [storage + compute for storage, compute in zip(snowflake_storage_cost, snowflake_compute_cost)]
     
     cost_df = pd.DataFrame({
         'Month': months,
@@ -1420,11 +1427,12 @@ elif current_section == "performance":
     col1, col2, col3, col4 = st.columns(4)
     
     total_savings_3yr = sum(traditional_cost) - sum(snowflake_cost)
+    cost_reduction_pct = (total_savings_3yr / sum(traditional_cost)) * 100
     
     with col1:
         st.metric("3-Year Savings", f"${total_savings_3yr:,.0f}")
     with col2:
-        st.metric("Cost Reduction", "99.5%")
+        st.metric("Cost Reduction", f"{cost_reduction_pct:.0f}%")
     with col3:
         st.metric("Performance Gain", "20x faster")
     with col4:
