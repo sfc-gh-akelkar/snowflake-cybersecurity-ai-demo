@@ -1,17 +1,17 @@
 """
-🛡️ SNOWFLAKE CYBERSECURITY AI/ML DEMO
-=====================================
+🛡️ SNOWFLAKE CYBERSECURITY ANALYTICS DEMO
+==========================================
 Comprehensive Streamlit in Snowflake application demonstrating
-cybersecurity capabilities and AI/ML use cases.
+cybersecurity capabilities and advanced analytics use cases.
 
 Use Cases Demonstrated:
 - Cost-Effective Security Data Platform
 - Threat Hunting & IR Automation  
-- AI/ML Anomaly Detection
-- Threat Prioritization
+- Advanced Anomaly Detection
+- Intelligent Threat Prioritization
 - Vulnerability Management
 - Fraud Detection
-- Security Chatbot with LLM
+- Security Chatbot Interface
 """
 
 import streamlit as st
@@ -28,7 +28,7 @@ from snowflake.snowpark.context import get_active_session
 
 # Configure Streamlit page
 st.set_page_config(
-    page_title="🛡️ Snowflake Cybersecurity AI/ML Demo",
+    page_title="🛡️ Snowflake Cybersecurity Analytics Demo",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -99,7 +99,7 @@ Would you like me to show the detailed incident analysis?"""
 2. **CVE-2022-22965** (Spring) - CVSS 9.8 - api-server-01
 3. **CVE-2021-26855** (Exchange) - CVSS 7.2 - backup-server-01
 
-**AI Recommendations:**
+**Intelligent Recommendations:**
 - These vulnerabilities have known exploits in the wild
 - Assets are internet-facing with high exposure
 - Patch deployment estimated: 2-4 hours
@@ -195,9 +195,9 @@ Would you like me to show the network flow analysis?"""
    - 300% above user's normal download volume
    - Included proprietary algorithms and customer data schemas
 
-**AI Correlation:**
+**Analytics Correlation:**
 - **Threat Intelligence Match**: Source IP linked to state-sponsored actors
-- **Behavioral Model**: Activity deviates 4.2 standard deviations from baseline
+- **Behavioral Analysis**: Activity deviates 4.2 standard deviations from baseline
 - **Risk Multiplier**: Combination of location + timing + volume = Critical
 
 **Recommended Actions:**
@@ -249,7 +249,7 @@ What specific security information would you like me to help you find?"""
 # =====================================================
 
 st.sidebar.title("🛡️ Cybersecurity Demo")
-st.sidebar.markdown("**Snowflake AI/ML Platform**")
+st.sidebar.markdown("**Snowflake Analytics Platform**")
 
 demo_sections = {
     "🏠 Executive Dashboard": "dashboard",
@@ -281,7 +281,7 @@ st.sidebar.info("""
 
 if current_section == "dashboard":
     st.title("🏠 Executive Security Dashboard")
-    st.markdown("**Real-time cybersecurity metrics powered by Snowflake AI/ML**")
+    st.markdown("**Real-time cybersecurity metrics powered by Snowflake Analytics**")
     
     # Get dashboard summary data
     summary_data = run_query("SELECT * FROM SECURITY_DASHBOARD_SUMMARY")
@@ -401,8 +401,8 @@ if current_section == "dashboard":
             st.plotly_chart(fig, use_container_width=True)
 
 elif current_section == "anomaly":
-    st.title("🔍 AI-Powered Anomaly Detection")
-    st.markdown("**Machine learning models detecting suspicious user behavior patterns**")
+    st.title("🔍 Anomaly Detection")
+    st.markdown("**Advanced analytics detecting suspicious user behavior patterns**")
     
     # Filter controls
     col1, col2, col3 = st.columns(3)
@@ -529,8 +529,8 @@ elif current_section == "anomaly":
         st.info("No anomalies found for the selected criteria.")
 
 elif current_section == "threats":
-    st.title("⚠️ AI-Driven Threat Prioritization")
-    st.markdown("**Machine learning algorithms ranking threats by impact and context**")
+    st.title("⚠️ Threat Prioritization")
+    st.markdown("**Intelligent algorithms ranking threats by impact and context**")
     
     # Get threat prioritization data
     threat_data = run_query("""
@@ -639,7 +639,7 @@ elif current_section == "threats":
         )
 
 elif current_section == "vulnerabilities":
-    st.title("🔓 AI-Enhanced Vulnerability Management")
+    st.title("🔓 Vulnerability Management")
     st.markdown("**Smart vulnerability prioritization using CVSS, context, and threat intelligence**")
     
     # Get vulnerability data
@@ -692,7 +692,7 @@ elif current_section == "vulnerabilities":
                 color='AI_RECOMMENDATION',
                 size='THREAT_INTEL_MENTIONS',
                 hover_data=['CVE_ID', 'ASSET_NAME'],
-                title="CVSS Score vs AI Priority Score",
+                title="CVSS Score vs Enhanced Priority Score",
                 color_discrete_map={
                     'PATCH_IMMEDIATELY': '#ff4444',
                     'PATCH_THIS_WEEK': '#ff8800',
@@ -709,7 +709,7 @@ elif current_section == "vulnerabilities":
             fig = px.pie(
                 values=rec_counts.values,
                 names=rec_counts.index,
-                title="AI Patch Recommendations"
+                title="Intelligent Patch Recommendations"
             )
             fig.update_layout(height=400)
             st.plotly_chart(fig, use_container_width=True)
@@ -724,7 +724,7 @@ elif current_section == "vulnerabilities":
             display_vulns,
             column_config={
                 "ENHANCED_PRIORITY_SCORE": st.column_config.ProgressColumn(
-                    "AI Priority Score",
+                    "Enhanced Priority Score",
                     min_value=0,
                     max_value=100,
                 ),
@@ -734,7 +734,7 @@ elif current_section == "vulnerabilities":
                     max_value=10,
                 ),
                 "AI_RECOMMENDATION": st.column_config.SelectboxColumn(
-                    "AI Recommendation",
+                    "Intelligent Recommendation",
                     options=["PATCH_IMMEDIATELY", "PATCH_THIS_WEEK", "PATCH_THIS_MONTH", "PATCH_NEXT_CYCLE"],
                 ),
                 "STATUS": st.column_config.SelectboxColumn(
@@ -746,8 +746,8 @@ elif current_section == "vulnerabilities":
         )
 
 elif current_section == "fraud":
-    st.title("💰 Machine Learning Fraud Detection")
-    st.markdown("**Real-time transaction analysis using advanced ML algorithms**")
+    st.title("💰 Fraud Detection")
+    st.markdown("**Real-time transaction analysis using advanced scoring algorithms**")
     
     # Get fraud detection data
     fraud_data = run_query("""
@@ -1257,18 +1257,18 @@ ORDER BY foreign_logins DESC, countries DESC;
 
 elif current_section == "chatbot":
     st.title("🤖 Security Chatbot")
-    st.markdown("**AI-powered security assistant for natural language queries**")
+    st.markdown("**Intelligent security assistant for natural language queries**")
     
     # Initialize chat history
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
     
     # Chat interface
-    st.subheader("💬 Ask the Security AI")
+    st.subheader("💬 Ask the Security Assistant")
     
     # Sample questions
     st.markdown("**Try these sample questions:**")
-    st.markdown("*Click any button below to automatically ask the Security AI*")
+    st.markdown("*Click any button below to automatically ask the Security Assistant*")
     
     sample_questions = [
         "Show me all critical security incidents from today",
@@ -1326,7 +1326,7 @@ elif current_section == "chatbot":
         if message["role"] == "user":
             st.markdown(f"**🧑 You:** {message['content']}")
         else:
-            st.markdown(f"**🤖 Security AI:** {message['content']}")
+            st.markdown(f"**🤖 Security Assistant:** {message['content']}")
     
     # Clear chat button
     if st.button("🗑️ Clear Chat History"):
@@ -1488,8 +1488,8 @@ elif current_section == "performance":
 st.markdown("---")
 st.markdown("""
 <div style="text-align: center; color: #666; padding: 20px;">
-    <p>🛡️ <strong>Snowflake Cybersecurity AI/ML Demo</strong></p>
-    <p>Powered by Snowflake's Native App Platform | Real-time ML Analytics | Cost-Effective Security Data Lake</p>
-    <p><em>Demonstrating: Anomaly Detection • Threat Prioritization • Vulnerability Management • Fraud Detection • Security Chatbot</em></p>
+    <p>🛡️ <strong>Snowflake Cybersecurity Analytics Demo</strong></p>
+    <p>Powered by Snowflake's Native App Platform | Advanced Security Analytics | Cost-Effective Security Data Lake</p>
+    <p><em>Demonstrating: Advanced Analytics • Threat Prioritization • Vulnerability Management • Fraud Detection • Security Intelligence</em></p>
 </div>
 """, unsafe_allow_html=True)
