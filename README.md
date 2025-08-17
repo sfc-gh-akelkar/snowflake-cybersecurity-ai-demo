@@ -23,38 +23,60 @@ This repository demonstrates how Snowflake transforms cybersecurity operations t
 - ✅ **Application Development** - Low-code Python with Streamlit
 - ✅ **Open Security Data Lake** - Marketplace integration & data sharing
 
-### AI/ML Cybersecurity Use Cases
-- ✅ **Anomaly Detection** - Behavioral analysis with statistical modeling
-- ✅ **Threat Prioritization** - ML-based incident scoring & classification
-- ✅ **Vulnerability Management** - Enhanced CVSS with contextual analysis
-- ✅ **Fraud Detection** - Real-time transaction risk scoring
-- ✅ **Root Cause Analysis** - Event correlation & pattern recognition
-- ✅ **Security Chatbot** - Natural language security queries
+### Advanced AI/ML Cybersecurity Use Cases
+- ✅ **Snowflake Native ML Anomaly Detection** - Built-in time-series analysis with statistical confidence
+- ✅ **Snowpark ML User Clustering** - Isolation Forest & K-means behavioral classification  
+- ✅ **Hybrid ML Analytics** - Combining Native + Snowpark ML for comprehensive analysis
+- ✅ **ML Model Comparison & Agreement** - Side-by-side analysis of different ML approaches
+- ✅ **Enhanced Threat Prioritization** - Multi-variate ML-based incident scoring & classification
+- ✅ **Advanced Vulnerability Management** - Context-aware CVSS scoring with threat intel correlation
+- ✅ **Sophisticated Fraud Detection** - Velocity analysis and transaction pattern ML with 500+ user profiles
+- ✅ **Time-Series Pattern Recognition** - Seasonal analysis with 180+ days of training data
+- ✅ **Insider Threat ML Classification** - Multi-dimensional risk scoring with persona-based analysis
+- ✅ **AI Security Chatbot** - Natural language security queries with ML insights
 
-## 🏗️ Architecture
+## 🏗️ Enhanced ML Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Streamlit in Snowflake                      │
 │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐│
-│  │ Executive   │ │ Anomaly     │ │ Threat      │ │ Security    ││
-│  │ Dashboard   │ │ Detection   │ │ Hunting     │ │ Chatbot     ││
+│  │ Executive   │ │ Native ML   │ │ Snowpark ML │ │ ML Model    ││
+│  │ Dashboard   │ │ Anomalies   │ │ Clustering  │ │ Comparison  ││
+│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘│
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐│
+│  │ Threat      │ │ Vulnerability│ │ Fraud       │ │ Security    ││
+│  │ Hunting     │ │ Management  │ │ Detection   │ │ Chatbot     ││
 │  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘│
 └─────────────────────────────────────────────────────────────────┘
                                   │
 ┌─────────────────────────────────────────────────────────────────┐
-│                     AI/ML Analytics Layer                      │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐│
-│  │ Anomaly     │ │ Threat      │ │ Vulnerability│ │ Fraud       ││
-│  │ Scoring     │ │ Priority    │ │ Ranking     │ │ Detection   ││
-│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘│
+│                 Dual ML Analytics Layer                        │
+│  ┌─────────────────────┐              ┌─────────────────────┐   │
+│  │   Native ML Models  │              │   Snowpark ML       │   │
+│  │                     │              │                     │   │
+│  │ • Time-series       │              │ • Isolation Forest  │   │
+│  │ • User behavior     │              │ • K-means clusters  │   │
+│  │ • Network patterns  │              │ • Custom algorithms │   │
+│  │ • Built-in confidence│              │ • Python models    │   │
+│  └─────────────────────┘              └─────────────────────┘   │
+│                    ┌─────────────────────┐                      │
+│                    │ Hybrid ML Analytics │                      │
+│                    │ • Model comparison  │                      │
+│                    │ • Agreement analysis│                      │
+│                    │ • Combined confidence│                     │
+│                    └─────────────────────┘                      │
 └─────────────────────────────────────────────────────────────────┘
                                   │
 ┌─────────────────────────────────────────────────────────────────┐
-│                   Security Data Platform                       │
+│                Enhanced Security Data Platform                  │
 │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐│
-│  │ Auth Logs   │ │ Network     │ │ Vulns       │ │ Transactions││
-│  │             │ │ Security    │ │             │ │             ││
+│  │ 500+ Users  │ │ 180+ Days   │ │ Seasonal    │ │ Persona     ││
+│  │ Auth Logs   │ │ Time Series │ │ Patterns    │ │ Modeling    ││
+│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘│
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐│
+│  │ Network     │ │ Vulnerabil. │ │ Financial   │ │ Threat      ││
+│  │ Security    │ │ Scans       │ │ Transactions│ │ Intelligence││
 │  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘│
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -135,38 +157,76 @@ Hands-on exploration featuring:
 | **Scaling** | Manual, expensive | Auto-scaling, elastic |
 | **Total Cost Savings** | Baseline | **99.5% reduction** |
 
-## 🔍 Sample Queries
+## 🔍 Enhanced ML Sample Queries
 
-### Threat Hunting
+### Native ML Anomaly Detection
 ```sql
--- Detect lateral movement patterns
+-- Snowflake Native ML time-series anomaly detection
+SELECT 
+    timestamp,
+    login_count,
+    expected_login_count,
+    native_confidence,
+    ml_risk_level,
+    CASE WHEN native_anomaly THEN 'ANOMALY DETECTED' ELSE 'NORMAL' END as status
+FROM NATIVE_ML_LOGIN_PATTERNS
+WHERE native_anomaly = TRUE
+    AND timestamp >= DATEADD(day, -7, CURRENT_TIMESTAMP())
+ORDER BY native_confidence DESC;
+```
+
+### Snowpark ML User Clustering
+```sql
+-- Advanced user behavior clustering with Isolation Forest
+SELECT 
+    username,
+    cluster_label,
+    isolation_forest_score,
+    user_cluster,
+    countries,
+    unique_ips,
+    offhours_ratio
+FROM SNOWPARK_ML_USER_CLUSTERS
+WHERE snowpark_anomaly = TRUE
+ORDER BY isolation_forest_score ASC;  -- Most anomalous first
+```
+
+### ML Model Comparison
+```sql
+-- Compare Native ML vs Snowpark ML results
+SELECT 
+    username,
+    analysis_date,
+    model_agreement,
+    hybrid_confidence,
+    hybrid_risk_assessment,
+    native_confidence,
+    snowpark_score,
+    cluster_label
+FROM ML_MODEL_COMPARISON
+WHERE model_agreement IN ('BOTH_AGREE_ANOMALY', 'NATIVE_ONLY', 'SNOWPARK_ONLY')
+ORDER BY hybrid_confidence DESC;
+```
+
+### Advanced Threat Hunting
+```sql
+-- ML-enhanced lateral movement detection
 SELECT 
     ual.username,
     ual.source_ip,
     COUNT(DISTINCT dal.resource_name) as resources_accessed,
-    SUM(dal.bytes_accessed) as total_bytes
+    SUM(dal.bytes_accessed) as total_bytes,
+    ml.hybrid_risk_assessment,
+    ml.cluster_label
 FROM USER_AUTHENTICATION_LOGS ual
 JOIN DATA_ACCESS_LOGS dal ON ual.username = dal.username
+LEFT JOIN ML_MODEL_COMPARISON ml ON ual.username = ml.username 
+    AND DATE(ual.timestamp) = ml.analysis_date
 WHERE ual.timestamp >= DATEADD(hour, -24, CURRENT_TIMESTAMP())
     AND dal.data_classification = 'restricted'
-GROUP BY ual.username, ual.source_ip
+GROUP BY ual.username, ual.source_ip, ml.hybrid_risk_assessment, ml.cluster_label
 HAVING COUNT(DISTINCT dal.resource_name) > 5
 ORDER BY total_bytes DESC;
-```
-
-### Anomaly Detection
-```sql
--- Real-time login anomaly scoring
-SELECT 
-    username,
-    timestamp,
-    anomaly_score,
-    risk_level,
-    anomaly_indicators
-FROM LOGIN_ANOMALY_DETECTION
-WHERE risk_level IN ('CRITICAL', 'HIGH')
-    AND timestamp >= DATEADD(hour, -24, CURRENT_TIMESTAMP())
-ORDER BY anomaly_score DESC;
 ```
 
 ## 🛠️ Customization

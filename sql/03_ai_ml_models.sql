@@ -1,13 +1,320 @@
 -- =====================================================
--- SNOWFLAKE CYBERSECURITY DEMO - AI/ML MODELS & VIEWS
--- Advanced analytics and machine learning for cybersecurity
+-- SNOWFLAKE CYBERSECURITY DEMO - ENHANCED AI/ML MODELS
+-- Advanced analytics combining Native ML + Snowpark ML for cybersecurity
+-- Features: Native anomaly detection, Snowpark ML models, hybrid analytics
 -- =====================================================
 
 USE DATABASE CYBERSECURITY_DEMO;
 USE SCHEMA SECURITY_AI;
 
 -- =====================================================
--- 1. ANOMALY DETECTION - Time Series Analysis
+-- SNOWFLAKE NATIVE ML MODELS (Option 1)
+-- =====================================================
+
+-- Create Native ML model for time-series login pattern analysis
+CREATE OR REPLACE SNOWFLAKE.ML.ANOMALY_DETECTION native_login_patterns(
+  INPUT_DATA => SYSTEM$QUERY_HISTORY(
+    'SELECT DATE_TRUNC(\'hour\', timestamp) as ts,
+            COUNT(*) as login_count,
+            COUNT(DISTINCT username) as unique_users,
+            AVG(CASE WHEN success THEN 1.0 ELSE 0.0 END) as success_rate,
+            COUNT(DISTINCT source_ip) as unique_ips
+     FROM USER_AUTHENTICATION_LOGS 
+     WHERE timestamp >= DATEADD(day, -90, CURRENT_TIMESTAMP())
+       AND username IS NOT NULL
+     GROUP BY 1 ORDER BY 1'
+  ),
+  TIMESTAMP_COLNAME => 'TS',
+  TARGET_COLNAME => 'LOGIN_COUNT'
+);
+
+-- Create Native ML model for per-user behavior analysis  
+CREATE OR REPLACE SNOWFLAKE.ML.ANOMALY_DETECTION native_user_behavior(
+  INPUT_DATA => SYSTEM$QUERY_HISTORY(
+    'SELECT username,
+            DATE(timestamp) as date_ts,
+            COUNT(*) as daily_logins,
+            COUNT(DISTINCT EXTRACT(HOUR FROM timestamp)) as active_hours,
+            COUNT(DISTINCT source_ip) as unique_ips_daily,
+            COUNT(DISTINCT location:country::STRING) as countries_daily
+     FROM USER_AUTHENTICATION_LOGS 
+     WHERE timestamp >= DATEADD(day, -90, CURRENT_TIMESTAMP())
+       AND success = TRUE
+       AND username IS NOT NULL
+     GROUP BY 1, 2 ORDER BY 1, 2'
+  ),
+  TIMESTAMP_COLNAME => 'DATE_TS',
+  TARGET_COLNAME => 'DAILY_LOGINS'
+);
+
+-- Create Native ML model for network traffic analysis
+CREATE OR REPLACE SNOWFLAKE.ML.ANOMALY_DETECTION native_network_patterns(
+  INPUT_DATA => SYSTEM$QUERY_HISTORY(
+    'SELECT DATE_TRUNC(\'hour\', timestamp) as ts,
+            SUM(bytes_transferred) as total_bytes,
+            COUNT(*) as connection_count,
+            COUNT(DISTINCT source_ip) as unique_sources
+     FROM NETWORK_SECURITY_LOGS
+     WHERE timestamp >= DATEADD(day, -90, CURRENT_TIMESTAMP())
+     GROUP BY 1 ORDER BY 1'
+  ),
+  TIMESTAMP_COLNAME => 'TS',
+  TARGET_COLNAME => 'TOTAL_BYTES'
+);
+
+-- =====================================================
+-- NATIVE ML ANOMALY DETECTION VIEWS
+-- =====================================================
+
+-- View 1: Native ML time-series login pattern anomalies
+CREATE OR REPLACE VIEW NATIVE_ML_LOGIN_PATTERNS AS
+SELECT 
+    'NATIVE_ML' as model_type,
+    'TIME_SERIES_LOGINS' as model_subtype,
+    ts as timestamp,
+    login_count,
+    unique_users,
+    success_rate,
+    unique_ips,
+    forecast as expected_login_count,
+    is_anomaly as native_anomaly,
+    anomaly_score as native_confidence,
+    CASE 
+        WHEN is_anomaly = TRUE AND anomaly_score >= 0.8 THEN 'CRITICAL'
+        WHEN is_anomaly = TRUE AND anomaly_score >= 0.6 THEN 'HIGH'
+        WHEN is_anomaly = TRUE AND anomaly_score >= 0.4 THEN 'MEDIUM'
+        ELSE 'LOW'
+    END as ml_risk_level,
+    lower_bound,
+    upper_bound
+FROM TABLE(
+    native_login_patterns!DETECT_ANOMALIES(
+        INPUT_DATA => SYSTEM$QUERY_HISTORY(
+            'SELECT DATE_TRUNC(\'hour\', timestamp) as ts,
+                    COUNT(*) as login_count,
+                    COUNT(DISTINCT username) as unique_users,
+                    AVG(CASE WHEN success THEN 1.0 ELSE 0.0 END) as success_rate,
+                    COUNT(DISTINCT source_ip) as unique_ips
+             FROM USER_AUTHENTICATION_LOGS 
+             WHERE timestamp >= DATEADD(day, -30, CURRENT_TIMESTAMP())
+               AND username IS NOT NULL
+             GROUP BY 1 ORDER BY 1'
+        ),
+        TIMESTAMP_COLNAME => 'TS',
+        TARGET_COLNAME => 'LOGIN_COUNT'
+    )
+)
+WHERE ts >= DATEADD(day, -30, CURRENT_TIMESTAMP());
+
+-- View 2: Native ML user behavior anomalies
+CREATE OR REPLACE VIEW NATIVE_ML_USER_BEHAVIOR AS  
+SELECT 
+    'NATIVE_ML' as model_type,
+    'USER_BEHAVIOR' as model_subtype,
+    username,
+    date_ts as timestamp,
+    daily_logins,
+    active_hours,
+    unique_ips_daily,
+    countries_daily,
+    forecast as expected_daily_logins,
+    is_anomaly as native_anomaly,
+    anomaly_score as native_confidence,
+    CASE 
+        WHEN is_anomaly = TRUE AND anomaly_score >= 0.8 THEN 'CRITICAL'
+        WHEN is_anomaly = TRUE AND anomaly_score >= 0.6 THEN 'HIGH' 
+        WHEN is_anomaly = TRUE AND anomaly_score >= 0.4 THEN 'MEDIUM'
+        ELSE 'LOW'
+    END as ml_risk_level,
+    lower_bound,
+    upper_bound
+FROM TABLE(
+    native_user_behavior!DETECT_ANOMALIES(
+        INPUT_DATA => SYSTEM$QUERY_HISTORY(
+            'SELECT username,
+                    DATE(timestamp) as date_ts,
+                    COUNT(*) as daily_logins,
+                    COUNT(DISTINCT EXTRACT(HOUR FROM timestamp)) as active_hours,
+                    COUNT(DISTINCT source_ip) as unique_ips_daily,
+                    COUNT(DISTINCT location:country::STRING) as countries_daily
+             FROM USER_AUTHENTICATION_LOGS 
+             WHERE timestamp >= DATEADD(day, -30, CURRENT_TIMESTAMP())
+               AND success = TRUE
+               AND username IS NOT NULL
+             GROUP BY 1, 2 ORDER BY 1, 2'
+        ),
+        TIMESTAMP_COLNAME => 'DATE_TS',
+        TARGET_COLNAME => 'DAILY_LOGINS'
+    )
+)
+WHERE date_ts >= DATEADD(day, -30, CURRENT_TIMESTAMP());
+
+-- View 3: Native ML network traffic anomalies
+CREATE OR REPLACE VIEW NATIVE_ML_NETWORK_PATTERNS AS
+SELECT 
+    'NATIVE_ML' as model_type,
+    'NETWORK_TRAFFIC' as model_subtype,
+    ts as timestamp,
+    total_bytes,
+    connection_count,
+    unique_sources,
+    forecast as expected_bytes,
+    is_anomaly as native_anomaly,
+    anomaly_score as native_confidence,
+    CASE 
+        WHEN is_anomaly = TRUE AND anomaly_score >= 0.8 THEN 'CRITICAL'
+        WHEN is_anomaly = TRUE AND anomaly_score >= 0.6 THEN 'HIGH'
+        WHEN is_anomaly = TRUE AND anomaly_score >= 0.4 THEN 'MEDIUM'
+        ELSE 'LOW'
+    END as ml_risk_level,
+    lower_bound,
+    upper_bound
+FROM TABLE(
+    native_network_patterns!DETECT_ANOMALIES(
+        INPUT_DATA => SYSTEM$QUERY_HISTORY(
+            'SELECT DATE_TRUNC(\'hour\', timestamp) as ts,
+                    SUM(bytes_transferred) as total_bytes,
+                    COUNT(*) as connection_count,
+                    COUNT(DISTINCT source_ip) as unique_sources
+             FROM NETWORK_SECURITY_LOGS
+             WHERE timestamp >= DATEADD(day, -30, CURRENT_TIMESTAMP())
+             GROUP BY 1 ORDER BY 1'
+        ),
+        TIMESTAMP_COLNAME => 'TS',
+        TARGET_COLNAME => 'TOTAL_BYTES'
+    )
+)
+WHERE ts >= DATEADD(day, -30, CURRENT_TIMESTAMP());
+
+-- =====================================================
+-- SNOWPARK ML PLACEHOLDER VIEWS (Option 2)
+-- Note: These require Snowpark ML models to be trained and deployed as UDFs
+-- =====================================================
+
+-- Placeholder view for Snowpark ML user clustering results
+CREATE OR REPLACE VIEW SNOWPARK_ML_USER_CLUSTERS AS
+WITH user_features AS (
+    SELECT 
+        username,
+        AVG(EXTRACT(HOUR FROM timestamp)) as avg_login_hour,
+        STDDEV(EXTRACT(HOUR FROM timestamp)) as stddev_login_hour,
+        COUNT(*) as total_logins,
+        COUNT(DISTINCT DATE(timestamp)) as active_days,
+        COUNT(DISTINCT source_ip) as unique_ips,
+        COUNT(DISTINCT location:country::STRING) as countries,
+        AVG(CASE WHEN EXTRACT(DOW FROM timestamp) IN (0,6) THEN 1.0 ELSE 0.0 END) as weekend_ratio,
+        AVG(CASE WHEN EXTRACT(HOUR FROM timestamp) BETWEEN 22 AND 6 THEN 1.0 ELSE 0.0 END) as offhours_ratio
+    FROM USER_AUTHENTICATION_LOGS
+    WHERE timestamp >= DATEADD(day, -30, CURRENT_TIMESTAMP())
+      AND username IS NOT NULL
+      AND success = TRUE
+    GROUP BY username
+)
+SELECT 
+    'SNOWPARK_ML' as model_type,
+    'USER_CLUSTERING' as model_subtype,
+    username,
+    CURRENT_TIMESTAMP() as timestamp,
+    avg_login_hour,
+    stddev_login_hour,
+    total_logins,
+    active_days,
+    unique_ips,
+    countries,
+    weekend_ratio,
+    offhours_ratio,
+    -- Simulated clustering results (would be replaced by actual UDF calls)
+    CASE 
+        WHEN countries > 3 AND offhours_ratio > 0.3 AND unique_ips > 10 THEN 0
+        WHEN avg_login_hour BETWEEN 8 AND 18 AND weekend_ratio < 0.1 AND countries <= 2 THEN 1
+        WHEN weekend_ratio > 0.4 AND avg_login_hour NOT BETWEEN 8 AND 18 THEN 2
+        WHEN offhours_ratio > 0.5 THEN 3
+        WHEN countries > 2 AND unique_ips > 5 THEN 4
+        ELSE 5
+    END as user_cluster,
+    -- Simulated anomaly scores (would be replaced by actual Isolation Forest UDF)
+    CASE 
+        WHEN countries > 3 AND offhours_ratio > 0.3 AND unique_ips > 10 THEN -0.6
+        WHEN countries > 2 AND unique_ips > 5 THEN -0.4
+        WHEN offhours_ratio > 0.5 THEN -0.3
+        WHEN stddev_login_hour > 4 THEN -0.2
+        ELSE UNIFORM(-0.1, 0.1, RANDOM())
+    END as isolation_forest_score,
+    CASE 
+        WHEN countries > 3 AND offhours_ratio > 0.3 AND unique_ips > 10 THEN TRUE
+        WHEN countries > 2 AND unique_ips > 5 THEN TRUE
+        ELSE FALSE
+    END as snowpark_anomaly,
+    CASE 
+        WHEN countries > 3 AND offhours_ratio > 0.3 AND unique_ips > 10 THEN 'HIGH_RISK_TRAVELER'
+        WHEN avg_login_hour BETWEEN 8 AND 18 AND weekend_ratio < 0.1 AND countries <= 2 THEN 'REGULAR_BUSINESS_USER'
+        WHEN weekend_ratio > 0.4 AND avg_login_hour NOT BETWEEN 8 AND 18 THEN 'WEEKEND_USER'
+        WHEN offhours_ratio > 0.5 THEN 'NIGHT_SHIFT_USER'
+        WHEN countries > 2 AND unique_ips > 5 THEN 'MULTI_LOCATION_USER'
+        ELSE 'STANDARD_USER'
+    END as cluster_label
+FROM user_features;
+
+-- =====================================================
+-- HYBRID ML ANALYSIS VIEWS (Combining Both Approaches)
+-- =====================================================
+
+-- Combined ML model comparison and agreement analysis
+CREATE OR REPLACE VIEW ML_MODEL_COMPARISON AS
+SELECT 
+    COALESCE(n.username, s.username) as username,
+    COALESCE(DATE(n.timestamp), DATE(s.timestamp)) as analysis_date,
+    
+    -- Native ML results
+    n.native_confidence,
+    n.native_anomaly,
+    n.ml_risk_level as native_risk_level,
+    n.expected_daily_logins,
+    n.daily_logins as actual_daily_logins,
+    
+    -- Snowpark ML results  
+    s.isolation_forest_score as snowpark_score,
+    s.snowpark_anomaly,
+    s.user_cluster,
+    s.cluster_label,
+    
+    -- Agreement analysis
+    CASE 
+        WHEN n.native_anomaly = TRUE AND s.snowpark_anomaly = TRUE THEN 'BOTH_AGREE_ANOMALY'
+        WHEN n.native_anomaly = FALSE AND s.snowpark_anomaly = FALSE THEN 'BOTH_AGREE_NORMAL'
+        WHEN n.native_anomaly = TRUE AND s.snowpark_anomaly = FALSE THEN 'NATIVE_ONLY'
+        WHEN n.native_anomaly = FALSE AND s.snowpark_anomaly = TRUE THEN 'SNOWPARK_ONLY'
+        WHEN n.native_anomaly IS NULL AND s.snowpark_anomaly IS NOT NULL THEN 'SNOWPARK_ONLY'
+        WHEN n.native_anomaly IS NOT NULL AND s.snowpark_anomaly IS NULL THEN 'NATIVE_ONLY'
+        ELSE 'NO_DATA'
+    END as model_agreement,
+    
+    -- Combined confidence score using both models
+    CASE 
+        WHEN n.native_confidence IS NOT NULL AND s.isolation_forest_score IS NOT NULL THEN
+            (n.native_confidence + ABS(s.isolation_forest_score)) / 2
+        WHEN n.native_confidence IS NOT NULL THEN n.native_confidence
+        WHEN s.isolation_forest_score IS NOT NULL THEN ABS(s.isolation_forest_score)
+        ELSE 0.5
+    END as hybrid_confidence,
+    
+    -- Enhanced risk assessment combining both models
+    CASE 
+        WHEN n.native_anomaly = TRUE AND s.snowpark_anomaly = TRUE AND n.native_confidence >= 0.8 THEN 'CRITICAL_ML_CONFIRMED'
+        WHEN n.native_anomaly = TRUE AND s.snowpark_anomaly = TRUE THEN 'HIGH_ML_CONFIRMED'
+        WHEN n.native_anomaly = TRUE AND n.native_confidence >= 0.8 THEN 'CRITICAL_NATIVE_ML'
+        WHEN s.snowpark_anomaly = TRUE AND ABS(s.isolation_forest_score) >= 0.5 THEN 'HIGH_SNOWPARK_ML'
+        WHEN n.native_anomaly = TRUE OR s.snowpark_anomaly = TRUE THEN 'MEDIUM_ML_DETECTED'
+        ELSE 'LOW_OR_NORMAL'
+    END as hybrid_risk_assessment
+    
+FROM NATIVE_ML_USER_BEHAVIOR n
+FULL OUTER JOIN SNOWPARK_ML_USER_CLUSTERS s 
+    ON n.username = s.username AND DATE(n.timestamp) = DATE(s.timestamp)
+WHERE COALESCE(DATE(n.timestamp), DATE(s.timestamp)) >= DATEADD(day, -7, CURRENT_TIMESTAMP());
+
+-- =====================================================
+-- 1. ENHANCED ANOMALY DETECTION (Original + ML Enhanced)
 -- =====================================================
 
 -- User behavior baseline (normal patterns)

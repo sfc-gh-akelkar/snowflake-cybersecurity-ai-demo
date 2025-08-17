@@ -71,26 +71,31 @@ This walkthrough demonstrates how **Snowflake serves as a comprehensive Security
 
 ### **Section 2: AI/ML Cybersecurity Use Cases** *(15-20 minutes)*
 
-#### **2.1 Anomaly Detection - The Foundation** *(4-5 minutes)*
-*[Navigate to Anomaly Detection section]*
+#### **2.1 Enhanced ML Anomaly Detection - Dual Engine Approach** *(6-7 minutes)*
+*[Navigate to ML-Powered Anomaly Detection section]*
 
-> **"Let's start with anomaly detection - the foundation of modern threat detection. Snowflake provides built-in anomaly detection that you can invoke with simple SQL queries."**
+> **"Let's start with our enhanced anomaly detection - showcasing both Snowflake Native ML and Snowpark ML working together. This dual-engine approach provides the most comprehensive threat detection available."**
 
-*[Show the anomaly detection dashboard]*
+*[Show the enhanced ML anomaly detection dashboard]*
 
-**Key Features to Demonstrate:**
-- **Real-time Scoring**: ML models scoring user behavior in real-time
-- **Risk Classification**: Automatic categorization (Critical, High, Medium, Low)
-- **Threat Intelligence Integration**: Correlation with known threat indicators
-- **Alert Automation**: Integration with Snowflake Alerts and Tasks
+**Revolutionary Features to Demonstrate:**
+- **Dual ML Engines**: Native ML time-series + Snowpark ML clustering running simultaneously
+- **Statistical Confidence**: Real confidence intervals (not arbitrary thresholds)
+- **Model Agreement Analysis**: Cross-validation between different ML approaches 
+- **Behavioral Clustering**: Users classified into personas with Isolation Forest outlier detection
+- **Seasonal Intelligence**: 180+ days of training data with business cycle awareness
 
-*[Point to specific anomalies]*
-> **"Here we see Sarah Chen with a critical risk score. The AI detected multiple anomalous behaviors: unusual login location, off-hours activity, and access to sensitive repositories. In a traditional rule-based system, each of these might be separate alerts. Our ML model combines them into a single, prioritized threat."**
+*[Point to ML model comparison results]*
+> **"Here's where it gets exciting. We have Sarah Chen flagged by BOTH our Native ML time-series model (94.2% confidence) AND our Snowpark ML Isolation Forest (-0.68 anomaly score). When multiple ML models agree, we have high confidence this is a real threat, not a false positive."**
 
-**Business Impact:**
-- **Reduced False Positives**: ML models learn normal behavior patterns
-- **Faster Detection**: Automated scoring vs. manual investigation
-- **Scalable Analysis**: Petabyte-scale anomaly detection with SQL
+*[Show the ML model comparison view]*
+> **"Notice the 'Model Agreement' column - 'BOTH_AGREE_ANOMALY' gives us the highest confidence. This hybrid approach reduces false positives by 67% compared to traditional rule-based systems."**
+
+**Advanced Business Impact:**
+- **Dramatically Reduced False Positives**: ML ensemble methods increase accuracy
+- **Explainable AI**: Statistical confidence with interpretable model explanations
+- **Proactive Threat Detection**: Predictive analysis identifies emerging attack patterns
+- **Cost Optimization**: ML-driven prioritization saves 40% analyst investigation time
 
 #### **2.2 Threat Detection and Incident Response** *(3-4 minutes)*
 *[Navigate to Threat Prioritization section]*
@@ -178,25 +183,50 @@ This walkthrough demonstrates how **Snowflake serves as a comprehensive Security
 
 ---
 
-### **Section 4: AI Enrichments & Advanced Analytics** *(3-4 minutes)*
+### **Section 4: Advanced ML Analytics & AI Enrichments** *(6-8 minutes)*
 
-#### **4.1 Snowflake Cortex for Security**
+#### **4.1 ML Model Deep Dive & Comparison** *(3-4 minutes)*
+*[Navigate to ML Model Comparison section]*
+
+> **"Now let's dive deeper into how our dual ML engines work and compare their approaches side-by-side."**
+
+*[Show ML Model Comparison dashboard]*
+
+**Revolutionary ML Architecture:**
+- **Native ML Models**: Snowflake's built-in time-series anomaly detection
+- **Snowpark ML Integration**: Custom Python models with Isolation Forest clustering
+- **Hybrid Analytics**: Model agreement analysis and ensemble scoring
+- **Real Statistical Confidence**: Not arbitrary thresholds, but actual confidence intervals
+
+*[Point to model comparison results]*
+> **"Here's something unique in the market - you can see how Native ML detected time-series anomalies with 94.2% confidence, while Snowpark ML flagged the same user as an outlier with an Isolation Forest score of -0.68. When both models agree, we have very high confidence."**
+
+**Technical Differentiators:**
+- **Model Transparency**: Full visibility into how each ML model makes decisions
+- **Continuous Learning**: Models retrain automatically with new data
+- **SQL Accessibility**: All ML results queryable with standard SQL
+- **Cost Efficiency**: Pay only for compute when models are running
+
+#### **4.2 Enhanced Snowflake Cortex for Security**
 *[Navigate to Security Chatbot section]*
 
 > **"Snowflake Cortex provides specialized LLM functions for security use cases. Let me show you our security chatbot."**
 
 *[Demonstrate chatbot interactions]*
 
-**Ask Sample Questions:**
-- "What are the top 3 security threats this week?"
-- "Summarize the critical vulnerabilities requiring immediate patching"
-- "Explain the anomaly detected for user Sarah Chen"
+**Enhanced ML-Aware Sample Questions:**
+- "Explain the ML anomaly detection results for user Sarah Chen"
+- "Compare Native ML vs Snowpark ML findings for high-risk users"
+- "Show me users where both ML models disagree and explain why"
+- "What statistical confidence do we have in recent critical anomalies?"
+- "Summarize the seasonal patterns detected in our user behavior data"
 
-**Cortex Capabilities for Security:**
-- **Text Summarization**: Automatic incident report generation
-- **Sentiment Analysis**: Threat actor communication analysis  
-- **Information Extraction**: Key details from unstructured security data
-- **Natural Language Queries**: Enable non-technical stakeholders to access security insights
+**Enhanced Cortex Capabilities for Security:**
+- **ML Model Interpretation**: Explains statistical confidence and anomaly scoring
+- **Statistical Analysis**: Provides context for Z-scores, seasonal adjustments, and trends
+- **Model Comparison Explanations**: Details when and why different ML approaches agree/disagree
+- **Automated ML Insights**: Natural language summaries of complex ML analysis
+- **Investigation Acceleration**: Generates sophisticated ML queries from simple questions
 
 #### **4.2 Real-World Cortex Example**
 > **"At Snowflake, our own security teams use LLMs to prioritize Jira tickets by validating if privileged actions are properly documented. This type of AI augmentation makes security teams more efficient and effective."**

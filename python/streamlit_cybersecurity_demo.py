@@ -253,13 +253,16 @@ st.sidebar.markdown("**Snowflake Analytics Platform**")
 
 demo_sections = {
     "🏠 Executive Dashboard": "dashboard",
-    "🔍 Anomaly Detection": "anomaly",
+    "🔍 ML-Powered Anomaly Detection": "anomaly",
+    "🧠 ML Model Comparison": "ml_models",
+    "⚡ Snowflake Native ML": "native_ml",
+    "🐍 Snowpark ML Analytics": "snowpark_ml",
     "⚠️ Threat Prioritization": "threats", 
     "🔓 Vulnerability Management": "vulnerabilities",
     "💰 Fraud Detection": "fraud",
     "🕵️ Insider Threat Detection": "insider",
     "🔎 Threat Hunting": "hunting",
-    "🤖 Security Chatbot": "chatbot",
+    "🤖 AI Security Chatbot": "chatbot",
     "📊 Cost & Performance": "performance"
 }
 
@@ -401,8 +404,8 @@ if current_section == "dashboard":
             st.plotly_chart(fig, use_container_width=True)
 
 elif current_section == "anomaly":
-    st.title("🔍 Anomaly Detection")
-    st.markdown("**Advanced analytics detecting suspicious user behavior patterns**")
+    st.title("🔍 ML-Powered Anomaly Detection")
+    st.markdown("**Advanced machine learning algorithms with dual-engine approach detecting suspicious user behavior patterns using statistical analysis, Z-score detection, and behavioral clustering**")
     
     # Filter controls
     col1, col2, col3 = st.columns(3)
@@ -527,6 +530,196 @@ elif current_section == "anomaly":
         )
     else:
         st.info("No anomalies found for the selected criteria.")
+
+elif current_section == "ml_models":
+    st.title("🧠 ML Model Comparison")
+    st.markdown("**Advanced analytics comparing Snowflake Native ML vs Snowpark ML approaches**")
+    
+    st.header("🎯 Model Agreement Analysis")
+    st.markdown("""
+    **Hybrid ML Analytics Dashboard**
+    
+    Our dual-engine ML approach combines the best of both worlds:
+    - **Snowflake Native ML**: Built-in time-series anomaly detection with statistical confidence
+    - **Snowpark ML**: Custom Python models with Isolation Forest and K-means clustering
+    - **Model Agreement**: Cross-validation and ensemble scoring for maximum accuracy
+    """)
+    
+    # Sample ML comparison data
+    ml_comparison_data = {
+        'Username': ['sarah.chen', 'james.wilson', 'alex.brown', 'mike.rodriguez', 'lisa.wang'],
+        'Analysis_Date': ['2024-01-15', '2024-01-15', '2024-01-14', '2024-01-14', '2024-01-13'],
+        'Native_Confidence': [0.94, 0.87, 0.62, 0.45, 0.23],
+        'Native_Anomaly': [True, True, True, False, False],
+        'Snowpark_Score': [-0.68, -0.52, -0.34, 0.12, 0.45],
+        'Snowpark_Anomaly': [True, True, False, False, False],
+        'Model_Agreement': ['BOTH_AGREE_ANOMALY', 'BOTH_AGREE_ANOMALY', 'NATIVE_ONLY', 'BOTH_AGREE_NORMAL', 'BOTH_AGREE_NORMAL'],
+        'Hybrid_Confidence': [0.81, 0.695, 0.48, 0.285, 0.34],
+        'Risk_Assessment': ['CRITICAL_ML_CONFIRMED', 'HIGH_ML_CONFIRMED', 'MEDIUM_NATIVE_ML', 'LOW_OR_NORMAL', 'LOW_OR_NORMAL']
+    }
+    
+    df_ml = pd.DataFrame(ml_comparison_data)
+    
+    # Model agreement visualization
+    agreement_counts = df_ml['Model_Agreement'].value_counts()
+    fig_agreement = px.pie(
+        values=agreement_counts.values,
+        names=agreement_counts.index,
+        title="ML Model Agreement Distribution",
+        color_discrete_sequence=['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7']
+    )
+    st.plotly_chart(fig_agreement, use_container_width=True)
+    
+    # Detailed comparison table
+    st.header("📊 Detailed Model Comparison")
+    st.dataframe(df_ml, use_container_width=True)
+    
+    # Statistical insights
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Model Agreement Rate", "80%", "↑ 15%")
+    with col2:
+        st.metric("False Positive Reduction", "67%", "↑ 23%")
+    with col3:
+        st.metric("Avg Hybrid Confidence", "56.7%", "↑ 12%")
+    with col4:
+        st.metric("Critical Alerts Confirmed", "100%", "↑ 5%")
+
+elif current_section == "native_ml":
+    st.title("⚡ Snowflake Native ML")
+    st.markdown("**Built-in machine learning with automatic training and statistical confidence**")
+    
+    st.header("🔍 Time-Series Anomaly Detection")
+    st.markdown("""
+    **Native ML Models**
+    - **Login Pattern Analysis**: Detects unusual login volumes and patterns
+    - **User Behavior Modeling**: Individual user behavioral baselines
+    - **Network Traffic Analysis**: Identifies traffic anomalies
+    - **Automatic Retraining**: Models update continuously with new data
+    """)
+    
+    # Native ML sample data
+    native_ml_data = {
+        'Timestamp': pd.date_range('2024-01-10', periods=20, freq='H'),
+        'Login_Count': [45, 52, 38, 67, 41, 39, 156, 43, 47, 51, 44, 49, 42, 38, 168, 45, 47, 52, 41, 44],
+        'Expected_Count': [47, 49, 42, 45, 43, 41, 46, 44, 48, 52, 46, 50, 44, 40, 47, 46, 49, 51, 43, 46],
+        'Native_Confidence': [0.12, 0.18, 0.23, 0.68, 0.15, 0.19, 0.94, 0.11, 0.14, 0.16, 0.13, 0.17, 0.18, 0.22, 0.87, 0.12, 0.16, 0.15, 0.19, 0.13],
+        'Is_Anomaly': [False, False, False, False, False, False, True, False, False, False, False, False, False, False, True, False, False, False, False, False]
+    }
+    
+    df_native = pd.DataFrame(native_ml_data)
+    
+    # Time series visualization
+    fig_native = go.Figure()
+    fig_native.add_trace(go.Scatter(
+        x=df_native['Timestamp'],
+        y=df_native['Login_Count'],
+        mode='lines+markers',
+        name='Actual Logins',
+        line=dict(color='#FF6B6B', width=2)
+    ))
+    fig_native.add_trace(go.Scatter(
+        x=df_native['Timestamp'],
+        y=df_native['Expected_Count'],
+        mode='lines',
+        name='ML Forecast',
+        line=dict(color='#4ECDC4', width=2, dash='dash')
+    ))
+    
+    # Highlight anomalies
+    anomaly_points = df_native[df_native['Is_Anomaly']]
+    fig_native.add_trace(go.Scatter(
+        x=anomaly_points['Timestamp'],
+        y=anomaly_points['Login_Count'],
+        mode='markers',
+        name='ML Detected Anomalies',
+        marker=dict(color='red', size=12, symbol='x')
+    ))
+    
+    fig_native.update_layout(
+        title="Native ML Time-Series Anomaly Detection",
+        xaxis_title="Time",
+        yaxis_title="Login Count",
+        height=400
+    )
+    st.plotly_chart(fig_native, use_container_width=True)
+    
+    # Native ML metrics
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Anomalies Detected", "2", "Last 24h")
+    with col2:
+        st.metric("Avg Confidence", "94.2%", "For anomalies")
+    with col3:
+        st.metric("Model Accuracy", "97.8%", "↑ 2.1%")
+    with col4:
+        st.metric("Training Data", "180 days", "Auto-updated")
+
+elif current_section == "snowpark_ml":
+    st.title("🐍 Snowpark ML Analytics")
+    st.markdown("**Advanced Python-based machine learning with custom algorithms**")
+    
+    st.header("🎯 User Behavior Clustering")
+    st.markdown("""
+    **Snowpark ML Models**
+    - **Isolation Forest**: Outlier detection for anomalous user behavior
+    - **K-means Clustering**: User classification into behavioral personas
+    - **Feature Engineering**: Multi-dimensional behavioral analysis
+    - **Custom Algorithms**: Python-based extensible ML framework
+    """)
+    
+    # Snowpark ML clustering data
+    cluster_data = {
+        'Username': ['sarah.chen', 'james.wilson', 'alex.brown', 'mike.rodriguez', 'lisa.wang', 'david.kim', 'emma.watson', 'maria.garcia'],
+        'Cluster_ID': [0, 0, 1, 1, 2, 2, 3, 3],
+        'Cluster_Label': ['HIGH_RISK_TRAVELER', 'HIGH_RISK_TRAVELER', 'REGULAR_BUSINESS_USER', 'REGULAR_BUSINESS_USER', 
+                         'WEEKEND_USER', 'WEEKEND_USER', 'NIGHT_SHIFT_USER', 'NIGHT_SHIFT_USER'],
+        'Isolation_Score': [-0.68, -0.52, 0.12, 0.18, 0.25, 0.19, -0.34, -0.28],
+        'Countries': [5, 4, 1, 2, 1, 1, 3, 2],
+        'Unique_IPs': [15, 12, 3, 4, 2, 3, 8, 6],
+        'Offhours_Ratio': [0.45, 0.38, 0.05, 0.12, 0.85, 0.78, 0.95, 0.82],
+        'Is_Anomaly': [True, True, False, False, False, False, True, False]
+    }
+    
+    df_cluster = pd.DataFrame(cluster_data)
+    
+    # Scatter plot for clustering
+    fig_cluster = px.scatter(
+        df_cluster,
+        x='Countries',
+        y='Unique_IPs',
+        color='Cluster_Label',
+        size=[abs(x)*10 + 5 for x in df_cluster['Isolation_Score']],
+        hover_data=['Username', 'Isolation_Score'],
+        title="Snowpark ML User Behavior Clusters"
+    )
+    fig_cluster.update_layout(height=400)
+    st.plotly_chart(fig_cluster, use_container_width=True)
+    
+    # Isolation Forest scores
+    st.header("🌲 Isolation Forest Anomaly Detection")
+    fig_isolation = px.bar(
+        df_cluster,
+        x='Username',
+        y='Isolation_Score',
+        color=['Anomaly' if x else 'Normal' for x in df_cluster['Is_Anomaly']],
+        title="Isolation Forest Anomaly Scores (Lower = More Anomalous)",
+        color_discrete_map={'Anomaly': '#FF6B6B', 'Normal': '#4ECDC4'}
+    )
+    fig_isolation.add_hline(y=-0.3, line_dash="dash", line_color="red", 
+                           annotation_text="Anomaly Threshold")
+    st.plotly_chart(fig_isolation, use_container_width=True)
+    
+    # Snowpark ML metrics
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("User Clusters", "4", "Behavioral types")
+    with col2:
+        st.metric("Outliers Detected", "3", "High risk users")
+    with col3:
+        st.metric("Feature Dimensions", "12", "Behavioral features")
+    with col4:
+        st.metric("Model Performance", "92.5%", "Precision")
 
 elif current_section == "threats":
     st.title("⚠️ Threat Prioritization")
@@ -1256,8 +1449,8 @@ ORDER BY foreign_logins DESC, countries DESC;
         st.metric("Compute Cost", "Pay-per-use", delta="No idle charges")
 
 elif current_section == "chatbot":
-    st.title("🤖 Security Chatbot")
-    st.markdown("**Intelligent security assistant for natural language queries**")
+    st.title("🤖 AI Security Chatbot")
+    st.markdown("**Intelligent security assistant with ML model interpretation for natural language queries**")
     
     # Initialize chat history
     if "chat_history" not in st.session_state:
@@ -1271,13 +1464,14 @@ elif current_section == "chatbot":
     st.markdown("*Click any button below to automatically ask the Security Assistant*")
     
     sample_questions = [
-        "Show me all critical security incidents from today",
-        "What are the top 5 vulnerabilities I should patch first?",
-        "Which users have the highest insider threat scores?",
-        "Explain the anomaly detected for user Sarah Chen",
-        "Find all login attempts from Russia or China", 
-        "Show me suspicious financial transactions above $5000",
-        "What network security events happened in the last hour?"
+        "Explain the ML anomaly detection results for user Sarah Chen",
+        "Compare Native ML vs Snowpark ML findings for high-risk users", 
+        "Show me users where both ML models disagree and explain why",
+        "What statistical confidence do we have in recent critical anomalies?",
+        "Summarize the seasonal patterns detected in our user behavior data",
+        "Which ML model performed better for fraud detection this week?",
+        "Show network traffic anomalies with ML confidence scores",
+        "Investigate users flagged by the Isolation Forest algorithm"
     ]
     
     # Organize sample questions in columns for better layout

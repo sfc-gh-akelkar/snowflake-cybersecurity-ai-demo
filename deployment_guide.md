@@ -14,12 +14,18 @@ Execute the SQL scripts in order:
 -- 1. Create schema and tables
 @01_cybersecurity_schema.sql
 
--- 2. Generate sample data
+-- 2. Generate enhanced sample data (500+ users, 180+ days, seasonality)
 @02_sample_data_generation.sql
 
--- 3. Create AI/ML models and views
+-- 3. Create Native ML models and Snowpark ML views
 @03_ai_ml_models.sql
 ```
+
+⚠️ **Important ML Model Notes:**
+- Native ML models require **sufficient training data** (90+ days recommended)
+- Models will train automatically when first queried
+- Allow **5-10 minutes** for initial model training and deployment
+- Snowpark ML views provide **simulated results** - can be enhanced with actual Python models
 
 ### Step 2: Deploy Streamlit App
 1. Navigate to Snowflake UI → Streamlit
@@ -50,58 +56,81 @@ Execute the SQL scripts in order:
 - Partner ecosystem demonstrations
 - Secure data sharing capabilities
 
-### AI/ML Use Cases
-✅ **Anomaly Detection**
-- Behavioral analysis of user login patterns
-- Statistical scoring with risk classification
-- Real-time alerting on suspicious activities
+### Enhanced AI/ML Use Cases
 
-✅ **Threat Prioritization**
-- ML-based incident scoring
-- Contextual threat intelligence correlation
-- Asset criticality weighting
+✅ **Snowflake Native ML Anomaly Detection**
+- Time-series login pattern analysis with statistical confidence
+- User behavior modeling with forecasting and confidence intervals
+- Network traffic anomaly detection with upper/lower bounds
+- Built-in model training and deployment automation
 
-✅ **Vulnerability Prioritization**
-- Enhanced CVSS scoring with context
-- Exploit availability analysis
-- AI-driven patch recommendations
+✅ **Snowpark ML Advanced Analytics**
+- Isolation Forest anomaly detection for outlier identification
+- K-means user clustering for behavioral classification
+- Multi-dimensional feature engineering and analysis
+- Python-based custom model development framework
 
-✅ **Fraud Detection**
-- Transaction velocity analysis
-- Geographic and behavioral anomalies
-- Real-time risk scoring
+✅ **Hybrid ML Analytics**
+- Side-by-side comparison of Native ML vs Snowpark ML results
+- Model agreement analysis and confidence scoring
+- Combined risk assessment using multiple ML approaches
+- Statistical ensemble methods for improved accuracy
 
-✅ **Root Cause Analysis**
-- Cross-correlation of security events
-- Timeline analysis for incident investigation
-- Automated pattern recognition
+✅ **Enhanced Threat Prioritization**
+- Multi-variate ML-based incident scoring with 500+ user profiles
+- Contextual threat intelligence correlation using ML confidence
+- Asset criticality weighting with behavioral analysis
+- Time-series pattern recognition for trend analysis
 
-✅ **Security Chatbot**
-- Natural language security queries
-- AI-powered incident response
-- Interactive investigation assistant
+✅ **Advanced Vulnerability Management**
+- Context-aware CVSS scoring enhanced with ML insights
+- Exploit availability analysis using threat intelligence ML
+- AI-driven patch recommendations with user clustering
+- Risk assessment combining vulnerability + behavior data
+
+✅ **Sophisticated Fraud Detection**
+- Transaction velocity analysis with 180+ days seasonal training
+- Geographic and behavioral anomalies using persona modeling
+- Real-time risk scoring with ML confidence intervals
+- Multi-dimensional fraud pattern recognition
+
+✅ **ML-Powered Security Analytics**
+- Seasonal pattern recognition with business cycle analysis
+- Insider threat classification using behavioral clustering
+- Cross-domain correlation with ML confidence scoring
+- Advanced chatbot with ML insights and explanations
 
 ## 📊 Demo Flow Recommendations
 
 ### Executive Demo (15 minutes)
-1. **Executive Dashboard** - Show real-time security metrics
-2. **Cost Comparison** - Traditional SIEM vs Snowflake economics
-3. **AI/ML Capabilities** - Quick tour of anomaly detection
-4. **Performance** - Query speed and scale demonstrations
+1. **Executive Dashboard** - Real-time security metrics with ML insights
+2. **ML Cost Benefits** - Traditional SIEM vs Snowflake ML economics  
+3. **Hybrid ML Capabilities** - Native + Snowpark ML comparison
+4. **Business Impact** - ML-driven threat reduction and cost savings
 
 ### Technical Demo (30 minutes)
-1. **Architecture Overview** - Schema and data model
-2. **Anomaly Detection** - ML algorithms and scoring
-3. **Threat Hunting** - SQL-based investigation
-4. **AI/ML Models** - Detailed algorithm explanations
-5. **Security Chatbot** - Natural language interface
+1. **ML Architecture Overview** - Dual ML approach and hybrid analytics
+2. **Native ML Anomaly Detection** - Time-series models with confidence scoring
+3. **Snowpark ML Clustering** - User behavior classification and outlier detection
+4. **Model Comparison Analysis** - Agreement metrics and ensemble scoring
+5. **ML-Enhanced Threat Hunting** - SQL with ML insights
+6. **Advanced Security Chatbot** - Natural language queries with ML explanations
 
-### Deep Dive Demo (45+ minutes)
-1. **Complete Platform Tour** - All sections
-2. **Custom Queries** - Live threat hunting
-3. **Data Integration** - Marketplace and partner data
-4. **Development Demo** - Show how to extend capabilities
-5. **Q&A and Customization**
+### Data Science Deep Dive (45+ minutes)
+1. **Complete ML Platform Tour** - All ML models and approaches
+2. **Model Training & Performance** - Native ML vs Snowpark ML comparison
+3. **Custom ML Development** - Extending with Python models
+4. **Statistical Analysis** - Z-scores, confidence intervals, seasonal patterns
+5. **ML Model Interpretation** - Understanding feature importance and scoring
+6. **Production ML Deployment** - Scaling considerations and best practices
+
+### ML Workshop (60+ minutes)
+1. **Hands-on Model Creation** - Build custom anomaly detection models
+2. **Feature Engineering** - Creating behavioral features from security data
+3. **Model Evaluation** - Comparing different ML approaches
+4. **Hybrid Analytics Development** - Combining multiple ML models
+5. **Custom Use Case Implementation** - Adapt to specific customer needs
+6. **Q&A and Advanced Customization**
 
 ## 🎯 Key Talking Points
 
