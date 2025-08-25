@@ -341,16 +341,16 @@ if current_section == "dashboard":
     col1, col2 = st.columns(2)
     
     with col1:
-        st.subheader("🚨 Anomaly Detection Overview")
+        st.subheader("🧠 Real ML Anomaly Detection")
         
         anomaly_data = run_query("""
         SELECT 
             risk_level,
             COUNT(*) as count,
-            DATE(timestamp) as date
-        FROM LOGIN_ANOMALY_DETECTION 
-        WHERE timestamp >= DATEADD(day, -7, CURRENT_TIMESTAMP())
-        GROUP BY risk_level, DATE(timestamp)
+            analysis_date as date
+        FROM ML_MODEL_COMPARISON 
+        WHERE analysis_date >= DATEADD(day, -7, CURRENT_TIMESTAMP())
+        GROUP BY risk_level, analysis_date
         ORDER BY date DESC
         """)
         
@@ -366,7 +366,7 @@ if current_section == "dashboard":
                     'MEDIUM': '#ffcc00',
                     'LOW': '#88cc88'
                 },
-                title="Anomalies by Risk Level (Last 7 Days)"
+                title="Real ML Anomalies by Risk Level (Last 7 Days)"
             )
             fig.update_layout(height=400, showlegend=True)
             st.plotly_chart(fig, use_container_width=True)
@@ -404,8 +404,8 @@ if current_section == "dashboard":
             st.plotly_chart(fig, use_container_width=True)
 
 elif current_section == "anomaly":
-    st.title("🔍 ML-Powered Anomaly Detection")
-    st.markdown("**Advanced machine learning algorithms with dual-engine approach detecting suspicious user behavior patterns using statistical analysis, Z-score detection, and behavioral clustering**")
+    st.title("🧠 Real ML Anomaly Detection")
+    st.markdown("**Production-grade machine learning with Isolation Forest, K-means clustering, and Snowflake Native ML detecting genuine user behavior anomalies**")
     
     # Filter controls
     col1, col2, col3 = st.columns(3)
@@ -417,7 +417,7 @@ elif current_section == "anomaly":
         user_filter = st.text_input("Filter by user (optional)")
     
     # Build query with filters
-    where_conditions = [f"timestamp >= DATEADD(day, -{days_back}, CURRENT_TIMESTAMP())"]
+    where_conditions = [f"analysis_date >= DATEADD(day, -{days_back}, CURRENT_TIMESTAMP())"]
     if risk_filter != "All":
         where_conditions.append(f"risk_level = '{risk_filter}'")
     if user_filter:
@@ -428,17 +428,22 @@ elif current_section == "anomaly":
     anomaly_query = f"""
     SELECT 
         username,
-        timestamp,
+        analysis_date,
         current_country as country,
         current_hour as hour,
-        anomaly_score,
+        ABS(snowpark_score) as anomaly_score,
         risk_level,
         anomaly_indicators,
         source_ip,
-        threat_intel_match
-    FROM LOGIN_ANOMALY_DETECTION 
+        threat_intel_match,
+        model_agreement,
+        native_confidence,
+        snowpark_anomaly,
+        user_cluster,
+        cluster_label
+    FROM ML_MODEL_COMPARISON 
     WHERE {where_clause}
-    ORDER BY anomaly_score DESC, timestamp DESC
+    ORDER BY ABS(snowpark_score) DESC, analysis_date DESC
     """
     
     anomaly_data = run_query(anomaly_query)
@@ -447,15 +452,16 @@ elif current_section == "anomaly":
         # Summary metrics
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            st.metric("Total Anomalies", len(anomaly_data))
+            st.metric("ML Detections", len(anomaly_data))
         with col2:
-            st.metric("Avg Anomaly Score", f"{anomaly_data['ANOMALY_SCORE'].mean():.2f}")
+            avg_score = anomaly_data['ANOMALY_SCORE'].mean() if 'ANOMALY_SCORE' in anomaly_data.columns else 0
+            st.metric("Avg ML Score", f"{avg_score:.3f}")
         with col3:
             critical_count = len(anomaly_data[anomaly_data['RISK_LEVEL'] == 'CRITICAL'])
             st.metric("Critical Risk", critical_count, delta=f"{critical_count/len(anomaly_data)*100:.1f}%")
         with col4:
-            threat_intel_hits = anomaly_data['THREAT_INTEL_MATCH'].sum()
-            st.metric("Threat Intel Matches", threat_intel_hits)
+            model_agreement = len(anomaly_data[anomaly_data['MODEL_AGREEMENT'] == 'BOTH_AGREE_ANOMALY'])
+            st.metric("Model Agreement", model_agreement, delta=f"{model_agreement/len(anomaly_data)*100:.1f}%")
         
         # Risk Level Distribution
         st.subheader("📊 Risk Level Distribution")
@@ -477,13 +483,13 @@ elif current_section == "anomaly":
         col1, col2 = st.columns(2)
         
         with col1:
-            # Anomaly score line chart (SiS-compatible)
+            # ML anomaly score line chart
             fig = px.line(
-                anomaly_data.sort_values('TIMESTAMP'),
-                x='TIMESTAMP',
+                anomaly_data.sort_values('ANALYSIS_DATE'),
+                x='ANALYSIS_DATE',
                 y='ANOMALY_SCORE',
                 color='RISK_LEVEL',
-                title="Anomaly Scores Over Time",
+                title="ML Anomaly Scores Over Time",
                 color_discrete_map={
                     'CRITICAL': '#ff4444',
                     'HIGH': '#ff8800',
@@ -504,26 +510,39 @@ elif current_section == "anomaly":
             st.bar_chart(country_counts, height=400)
         
         # Detailed table
-        st.subheader("🔍 Detailed Anomaly Analysis")
+        st.subheader("🔍 Detailed ML Anomaly Analysis")
         
         # Format the data for display
         display_data = anomaly_data.copy()
-        display_data['TIMESTAMP'] = pd.to_datetime(display_data['TIMESTAMP']).dt.strftime('%Y-%m-%d %H:%M')
-        display_data['ANOMALY_INDICATORS'] = display_data['ANOMALY_INDICATORS'].apply(
-            lambda x: ', '.join(eval(x)) if x and x != '[]' else 'None'
-        )
+        display_data['ANALYSIS_DATE'] = pd.to_datetime(display_data['ANALYSIS_DATE']).dt.strftime('%Y-%m-%d')
+        if 'ANOMALY_INDICATORS' in display_data.columns:
+            display_data['ANOMALY_INDICATORS'] = display_data['ANOMALY_INDICATORS'].apply(
+                lambda x: ', '.join(eval(x)) if x and x != '[]' else 'None'
+            )
+        
+        # Add ML-specific columns for display
+        display_columns = ['USERNAME', 'ANALYSIS_DATE', 'RISK_LEVEL', 'ANOMALY_SCORE', 
+                          'MODEL_AGREEMENT', 'USER_CLUSTER', 'CLUSTER_LABEL', 'COUNTRY']
+        if 'THREAT_INTEL_MATCH' in display_data.columns:
+            display_columns.append('THREAT_INTEL_MATCH')
+        
+        display_data_filtered = display_data[display_columns].copy()
         
         st.dataframe(
-            display_data,
+            display_data_filtered,
             column_config={
                 "RISK_LEVEL": st.column_config.SelectboxColumn(
                     "Risk Level",
                     options=["CRITICAL", "HIGH", "MEDIUM", "LOW"],
                 ),
                 "ANOMALY_SCORE": st.column_config.ProgressColumn(
-                    "Anomaly Score",
+                    "ML Score",
                     min_value=0,
-                    max_value=20,
+                    max_value=1,
+                ),
+                "MODEL_AGREEMENT": st.column_config.SelectboxColumn(
+                    "Model Agreement",
+                    options=["BOTH_AGREE_ANOMALY", "BOTH_AGREE_NORMAL", "NATIVE_ONLY", "SNOWPARK_ONLY"],
                 ),
             },
             use_container_width=True
@@ -537,12 +556,13 @@ elif current_section == "ml_models":
     
     st.header("🎯 Model Agreement Analysis")
     st.markdown("""
-    **Hybrid ML Analytics Dashboard**
+    **Production ML Analytics Dashboard**
     
-    Our dual-engine ML approach combines the best of both worlds:
+    Our dual-engine real ML approach combines the best of both worlds:
     - **Snowflake Native ML**: Built-in time-series anomaly detection with statistical confidence
-    - **Snowpark ML**: Custom Python models with Isolation Forest and K-means clustering
-    - **Model Agreement**: Cross-validation and ensemble scoring for maximum accuracy
+    - **Snowpark ML**: Custom trained Python models with Isolation Forest and K-means clustering
+    - **Model Agreement**: Real cross-validation and ensemble scoring for maximum accuracy
+    - **Threat Intelligence**: Integrated IP reputation and indicator matching
     """)
     
     # Query REAL ML model comparison data

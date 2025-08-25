@@ -26,10 +26,12 @@ This repository demonstrates how Snowflake transforms cybersecurity operations t
 ### Advanced AI/ML Cybersecurity Use Cases
 - ✅ **Snowflake Native ML Anomaly Detection** - Built-in time-series analysis with statistical confidence
 - ✅ **Real Snowpark ML Models** - Production Isolation Forest & K-means with actual training pipeline
+- ✅ **Enterprise ML with Model Registry** - Professional model lifecycle management and versioning  
 - ✅ **Hybrid ML Analytics** - Combining Native + Snowpark ML for comprehensive analysis
 - ✅ **4-Tier Risk Assessment** - ML-powered CRITICAL | HIGH | MEDIUM | LOW categories
 - ✅ **ML Model Comparison & Agreement** - Side-by-side analysis of different ML approaches
 - ✅ **Production ML Pipeline** - Complete training, deployment, and monitoring infrastructure
+- ✅ **ML Governance & Versioning** - Track model changes, metadata, and performance tracking
 - ✅ **Enhanced Threat Prioritization** - Multi-variate ML-based incident scoring & classification
 - ✅ **Advanced Vulnerability Management** - Context-aware CVSS scoring with threat intel correlation
 - ✅ **Sophisticated Fraud Detection** - Velocity analysis and transaction pattern ML with 500+ user profiles
@@ -91,7 +93,7 @@ This repository demonstrates how Snowflake transforms cybersecurity operations t
 ├── 📄 deployment_guide.md                 # Detailed setup instructions
 ├── 📄 DEMO_WALKTHROUGH.md                 # Demo presentation script
 ├── 📁 notebooks/
-│   ├── 📓 ML_Model_Training_and_Deployment.ipynb  # Real ML training notebook
+│   ├── 📓 Cybersecurity_ML_Demo_Companion.ipynb   # ML training companion for demo
 │   └── 📄 requirements.txt                        # Python dependencies (for local dev)
 ├── 📁 python/
 │   └── 📄 streamlit_cybersecurity_demo.py # Main Streamlit application
@@ -99,7 +101,8 @@ This repository demonstrates how Snowflake transforms cybersecurity operations t
     ├── 📄 01_cybersecurity_schema.sql     # Database schema & tables
     ├── 📄 02_sample_data_generation.sql   # Realistic sample data
     ├── 📄 03_ai_ml_models.sql             # AI/ML models & views
-    └── 📄 04_snowpark_ml_deployment.sql   # UDF registration & deployment
+    ├── 📄 04_snowpark_ml_deployment.sql   # UDF registration & deployment
+    └── 📄 05_model_registry_deployment.sql # Model Registry integration
 ```
 
 ## 🚀 Quick Start

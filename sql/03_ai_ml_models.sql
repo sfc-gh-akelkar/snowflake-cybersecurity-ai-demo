@@ -313,71 +313,9 @@ WHERE TIMESTAMP >= DATEADD(day, -30, CURRENT_TIMESTAMP())
     AND USERNAME IS NOT NULL
 GROUP BY USERNAME, EXTRACT(HOUR FROM TIMESTAMP), EXTRACT(DOW FROM TIMESTAMP), LOCATION:country::STRING;
 
--- Real-time anomaly detection using statistical analysis
-CREATE OR REPLACE VIEW LOGIN_ANOMALY_DETECTION AS
-WITH user_stats AS (
-    SELECT 
-        USERNAME,
-        ARRAY_AGG(DISTINCT EXTRACT(HOUR FROM TIMESTAMP)) as typical_hours,
-        ARRAY_AGG(DISTINCT LOCATION:country::STRING) as typical_countries
-    FROM USER_AUTHENTICATION_LOGS
-    WHERE TIMESTAMP >= DATEADD(day, -30, CURRENT_TIMESTAMP())
-        AND SUCCESS = TRUE
-    GROUP BY USERNAME
-),
-recent_logins AS (
-    SELECT 
-        ual.*,
-        EXTRACT(HOUR FROM ual.TIMESTAMP) as current_hour,
-        EXTRACT(DOW FROM ual.TIMESTAMP) as current_dow,
-        ual.LOCATION:country::STRING as current_country,
-        -- Check if IP is in threat intel
-        CASE WHEN ti.INDICATOR_VALUE IS NOT NULL THEN 1 ELSE 0 END as threat_intel_match
-    FROM USER_AUTHENTICATION_LOGS ual
-    LEFT JOIN THREAT_INTEL_FEED ti ON ual.SOURCE_IP = ti.INDICATOR_VALUE AND ti.INDICATOR_TYPE = 'ip'
-    WHERE ual.TIMESTAMP >= DATEADD(day, -7, CURRENT_TIMESTAMP())
-)
-SELECT 
-    rl.*,
-    -- Anomaly scoring
-    (CASE WHEN NOT ARRAY_CONTAINS(rl.current_hour::VARIANT, us.typical_hours) THEN 3.0 ELSE 0.0 END +
-     CASE WHEN NOT ARRAY_CONTAINS(rl.current_country::VARIANT, us.typical_countries) THEN 5.0 ELSE 0.0 END +
-     CASE WHEN rl.threat_intel_match = 1 THEN 8.0 ELSE 0.0 END +
-     CASE WHEN rl.current_dow IN (0, 6) AND rl.current_hour BETWEEN 22 AND 6 THEN 2.0 ELSE 0.0 END +
-     CASE WHEN ed.STATUS = 'terminated' THEN 10.0 ELSE 0.0 END) as anomaly_score,
-    
-    -- Risk classification
-    CASE 
-        WHEN (CASE WHEN NOT ARRAY_CONTAINS(rl.current_hour::VARIANT, us.typical_hours) THEN 3.0 ELSE 0.0 END +
-              CASE WHEN NOT ARRAY_CONTAINS(rl.current_country::VARIANT, us.typical_countries) THEN 5.0 ELSE 0.0 END +
-              CASE WHEN rl.threat_intel_match = 1 THEN 8.0 ELSE 0.0 END +
-              CASE WHEN rl.current_dow IN (0, 6) AND rl.current_hour BETWEEN 22 AND 6 THEN 2.0 ELSE 0.0 END +
-              CASE WHEN ed.STATUS = 'terminated' THEN 10.0 ELSE 0.0 END) >= 8.0 THEN 'CRITICAL'
-        WHEN (CASE WHEN NOT ARRAY_CONTAINS(rl.current_hour::VARIANT, us.typical_hours) THEN 3.0 ELSE 0.0 END +
-              CASE WHEN NOT ARRAY_CONTAINS(rl.current_country::VARIANT, us.typical_countries) THEN 5.0 ELSE 0.0 END +
-              CASE WHEN rl.threat_intel_match = 1 THEN 8.0 ELSE 0.0 END +
-              CASE WHEN rl.current_dow IN (0, 6) AND rl.current_hour BETWEEN 22 AND 6 THEN 2.0 ELSE 0.0 END +
-              CASE WHEN ed.STATUS = 'terminated' THEN 10.0 ELSE 0.0 END) >= 5.0 THEN 'HIGH'
-        WHEN (CASE WHEN NOT ARRAY_CONTAINS(rl.current_hour::VARIANT, us.typical_hours) THEN 3.0 ELSE 0.0 END +
-              CASE WHEN NOT ARRAY_CONTAINS(rl.current_country::VARIANT, us.typical_countries) THEN 5.0 ELSE 0.0 END +
-              CASE WHEN rl.threat_intel_match = 1 THEN 8.0 ELSE 0.0 END +
-              CASE WHEN rl.current_dow IN (0, 6) AND rl.current_hour BETWEEN 22 AND 6 THEN 2.0 ELSE 0.0 END +
-              CASE WHEN ed.STATUS = 'terminated' THEN 10.0 ELSE 0.0 END) >= 2.0 THEN 'MEDIUM'
-        ELSE 'LOW'
-    END as risk_level,
-    
-    -- Anomaly indicators
-    ARRAY_CONSTRUCT_COMPACT(
-        CASE WHEN NOT ARRAY_CONTAINS(rl.current_hour::VARIANT, us.typical_hours) THEN 'unusual_time' END,
-        CASE WHEN NOT ARRAY_CONTAINS(rl.current_country::VARIANT, us.typical_countries) THEN 'unusual_location' END,
-        CASE WHEN rl.threat_intel_match = 1 THEN 'threat_intel_match' END,
-        CASE WHEN rl.current_dow IN (0, 6) AND rl.current_hour BETWEEN 22 AND 6 THEN 'off_hours' END,
-        CASE WHEN ed.STATUS = 'terminated' THEN 'terminated_employee' END
-    ) as anomaly_indicators
-    
-FROM recent_logins rl
-LEFT JOIN user_stats us ON rl.USERNAME = us.USERNAME
-LEFT JOIN EMPLOYEE_DATA ed ON rl.USERNAME = ed.USERNAME;
+-- LEGACY VIEW REMOVED: LOGIN_ANOMALY_DETECTION
+-- Replaced by ML_MODEL_COMPARISON which uses real ML algorithms
+-- instead of rule-based scoring
 
 -- =====================================================
 -- 2. THREAT PRIORITIZATION using ML scoring

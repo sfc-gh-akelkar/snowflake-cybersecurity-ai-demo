@@ -203,11 +203,29 @@ SELECT
     ) as cluster_label
 FROM user_features;
 
--- Enhanced ML model comparison with real models
+-- Enhanced ML model comparison with real models + threat intelligence
 CREATE OR REPLACE VIEW ML_MODEL_COMPARISON AS
+WITH recent_logins_with_threat_intel AS (
+    SELECT 
+        ual.username,
+        DATE(ual.timestamp) as analysis_date,
+        EXTRACT(HOUR FROM ual.timestamp) as current_hour,
+        ual.location:country::STRING as current_country,
+        ual.source_ip,
+        -- Check if IP is in threat intel
+        CASE WHEN ti.INDICATOR_VALUE IS NOT NULL THEN 1 ELSE 0 END as threat_intel_match,
+        -- Create anomaly indicators array for compatibility
+        ARRAY_CONSTRUCT_COMPACT(
+            CASE WHEN ti.INDICATOR_VALUE IS NOT NULL THEN 'threat_intel_match' END
+        ) as anomaly_indicators
+    FROM USER_AUTHENTICATION_LOGS ual
+    LEFT JOIN THREAT_INTEL_FEED ti ON ual.SOURCE_IP = ti.INDICATOR_VALUE AND ti.INDICATOR_TYPE = 'ip'
+    WHERE ual.TIMESTAMP >= DATEADD(day, -7, CURRENT_TIMESTAMP())
+      AND ual.SUCCESS = TRUE
+)
 SELECT 
-    COALESCE(n.username, s.username) as username,
-    COALESCE(DATE(n.timestamp), DATE(s.timestamp)) as analysis_date,
+    COALESCE(n.username, s.username, rl.username) as username,
+    COALESCE(DATE(n.timestamp), DATE(s.timestamp), rl.analysis_date) as analysis_date,
     
     -- Native ML results
     n.native_confidence,
@@ -221,6 +239,13 @@ SELECT
     s.snowpark_anomaly,
     s.user_cluster,
     s.cluster_label,
+    
+    -- Threat Intelligence enrichment (from legacy system)
+    rl.current_hour,
+    rl.current_country,
+    rl.source_ip,
+    rl.threat_intel_match,
+    rl.anomaly_indicators,
     
     -- Agreement analysis between real models
     CASE 
@@ -244,7 +269,10 @@ SELECT
 FROM NATIVE_ML_USER_BEHAVIOR n
 FULL OUTER JOIN SNOWPARK_ML_USER_CLUSTERS s 
     ON n.username = s.username AND DATE(n.timestamp) = DATE(s.timestamp)
-WHERE COALESCE(DATE(n.timestamp), DATE(s.timestamp)) >= DATEADD(day, -7, CURRENT_TIMESTAMP());
+FULL OUTER JOIN recent_logins_with_threat_intel rl
+    ON COALESCE(n.username, s.username) = rl.username 
+    AND COALESCE(DATE(n.timestamp), DATE(s.timestamp)) = rl.analysis_date
+WHERE COALESCE(DATE(n.timestamp), DATE(s.timestamp), rl.analysis_date) >= DATEADD(day, -7, CURRENT_TIMESTAMP());
 
 -- =====================================================
 -- 5. ML MODEL PERFORMANCE MONITORING

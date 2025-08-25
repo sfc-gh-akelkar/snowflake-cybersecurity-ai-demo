@@ -30,20 +30,21 @@ Execute the SQL scripts in order:
 - Allow **5-10 minutes** for initial model training and deployment
 - **Real Snowpark ML models** require Python model training and deployment
 
-### Step 2: Train and Deploy Real ML Models
+### Step 2: Train and Deploy Real ML Models with Model Registry
 
 **Prerequisites:**
 - Python 3.8+ environment with ML packages: `scikit-learn`, `pandas`, `numpy`
-- Snowflake packages: `snowflake-snowpark-python`
+- Snowflake packages: `snowflake-snowpark-python`, `snowflake-ml-python`
+- **Snowflake Model Registry** access (included with Snowflake Notebooks)
 
-**Option A: Snowflake Notebooks (Recommended)**
+**Option A: Snowflake Notebooks (Recommended) ✨**
 1. **Import notebook into Snowflake Notebooks**:
-   - Upload `notebooks/ML_Model_Training_and_Deployment.ipynb` to Snowflake Notebooks
+   - Upload `notebooks/Cybersecurity_ML_Demo_Companion.ipynb` to Snowflake Notebooks
    - Session is automatically configured - no connection parameters needed!
-   - Required packages are pre-installed in Snowflake Notebooks
+   - Required packages including `snowflake-ml-python` are pre-installed
    
-2. **Run all cells** to train and deploy models
-3. **Notebook is optimized for Snowflake** - uses built-in session and context
+2. **Run all cells** to train and register models in Model Registry
+3. **Enterprise benefits**: Version control, metadata management, automated UDF deployment
 
 **Option B: Local Development (Optional)**
 For local development outside Snowflake Notebooks:
@@ -56,10 +57,16 @@ For local development outside Snowflake Notebooks:
 2. **Modify notebook connection**:
    - Uncomment the manual connection section in the notebook
    - Add your Snowflake credentials
-   - Run notebook locally with Jupyter
+   - Run notebook locally with Jupyter (`Cybersecurity_ML_Demo_Companion.ipynb`)
 
-3. **Verify deployment**:
+3. **Verify Model Registry deployment**:
    ```sql
+   -- Check Model Registry models
+   SHOW MODELS IN MODEL REGISTRY;
+   
+   -- Test deployed UDFs
+   SELECT CYBERSECURITY_ISOLATION_FOREST_PREDICT(14.5, 2.1, 3, 2, 0.1, 0.2) as anomaly_score;
+   
    -- Check ML model performance
    SELECT * FROM ML_DEPLOYMENT_VALIDATION;
    SELECT * FROM ML_MODEL_PERFORMANCE;
