@@ -80,6 +80,7 @@ This walkthrough demonstrates how **Snowflake serves as a comprehensive Security
 
 **Revolutionary Features to Demonstrate:**
 - **Dual ML Engines**: Native ML time-series + Snowpark ML clustering running simultaneously
+- **4-Tier Risk Assessment**: Simplified CRITICAL | HIGH | MEDIUM | LOW categories
 - **Statistical Confidence**: Real confidence intervals (not arbitrary thresholds)
 - **Model Agreement Analysis**: Cross-validation between different ML approaches 
 - **Behavioral Clustering**: Users classified into personas with Isolation Forest outlier detection

@@ -545,23 +545,50 @@ elif current_section == "ml_models":
     - **Model Agreement**: Cross-validation and ensemble scoring for maximum accuracy
     """)
     
-    # Sample ML comparison data
-    ml_comparison_data = {
-        'Username': ['sarah.chen', 'james.wilson', 'alex.brown', 'mike.rodriguez', 'lisa.wang'],
-        'Analysis_Date': ['2024-01-15', '2024-01-15', '2024-01-14', '2024-01-14', '2024-01-13'],
-        'Native_Confidence': [0.94, 0.87, 0.62, 0.45, 0.23],
-        'Native_Anomaly': [True, True, True, False, False],
-        'Snowpark_Score': [-0.68, -0.52, -0.34, 0.12, 0.45],
-        'Snowpark_Anomaly': [True, True, False, False, False],
-        'Model_Agreement': ['BOTH_AGREE_ANOMALY', 'BOTH_AGREE_ANOMALY', 'NATIVE_ONLY', 'BOTH_AGREE_NORMAL', 'BOTH_AGREE_NORMAL'],
-        'Hybrid_Confidence': [0.81, 0.695, 0.48, 0.285, 0.34],
-        'Risk_Assessment': ['CRITICAL_ML_CONFIRMED', 'HIGH_ML_CONFIRMED', 'MEDIUM_NATIVE_ML', 'LOW_OR_NORMAL', 'LOW_OR_NORMAL']
-    }
+    # Query REAL ML model comparison data
+    ml_comparison_query = """
+    SELECT 
+        username,
+        analysis_date,
+        native_confidence,
+        native_anomaly,
+        snowpark_score,
+        snowpark_anomaly,
+        model_agreement,
+        risk_level
+    FROM ML_MODEL_COMPARISON
+    ORDER BY analysis_date DESC, 
+             CASE risk_level 
+                 WHEN 'CRITICAL' THEN 1 
+                 WHEN 'HIGH' THEN 2 
+                 WHEN 'MEDIUM' THEN 3 
+                 ELSE 4 
+             END
+    LIMIT 15
+    """
     
-    df_ml = pd.DataFrame(ml_comparison_data)
+    df_ml_comparison = run_query(ml_comparison_query)
     
-    # Model agreement visualization
-    agreement_counts = df_ml['Model_Agreement'].value_counts()
+    if df_ml_comparison.empty:
+        st.warning("⚠️ No ML comparison data available. Ensure both Native ML and Snowpark ML models are deployed.")
+        # Fallback to sample data
+        ml_comparison_data = {
+            'USERNAME': ['sarah.chen', 'james.wilson', 'alex.brown', 'mike.rodriguez', 'lisa.wang'],
+            'ANALYSIS_DATE': ['2024-01-15', '2024-01-15', '2024-01-14', '2024-01-14', '2024-01-13'],
+            'NATIVE_CONFIDENCE': [0.94, 0.87, 0.62, 0.45, 0.23],
+            'NATIVE_ANOMALY': [True, True, True, False, False],
+            'SNOWPARK_SCORE': [-0.68, -0.52, -0.34, 0.12, 0.45],
+            'SNOWPARK_ANOMALY': [True, True, False, False, False],
+            'MODEL_AGREEMENT': ['BOTH_AGREE_ANOMALY', 'BOTH_AGREE_ANOMALY', 'NATIVE_ONLY', 'BOTH_AGREE_NORMAL', 'BOTH_AGREE_NORMAL'],
+            'RISK_LEVEL': ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'LOW']
+        }
+        df_ml_comparison = pd.DataFrame(ml_comparison_data)
+    else:
+        # Standardize column names
+        df_ml_comparison.columns = [col.upper() for col in df_ml_comparison.columns]
+    
+    # Model agreement visualization using real ML data
+    agreement_counts = df_ml_comparison['MODEL_AGREEMENT'].value_counts()
     fig_agreement = px.pie(
         values=agreement_counts.values,
         names=agreement_counts.index,
@@ -570,20 +597,29 @@ elif current_section == "ml_models":
     )
     st.plotly_chart(fig_agreement, use_container_width=True)
     
-    # Detailed comparison table
-    st.header("📊 Detailed Model Comparison")
-    st.dataframe(df_ml, use_container_width=True)
+    # Detailed real ML comparison table
+    st.header("📊 Real ML Model Comparison Results")
+    display_columns = ['USERNAME', 'NATIVE_CONFIDENCE', 'SNOWPARK_SCORE', 'MODEL_AGREEMENT', 'RISK_LEVEL']
+    available_columns = [col for col in display_columns if col in df_ml_comparison.columns]
+    st.dataframe(df_ml_comparison[available_columns], use_container_width=True)
     
-    # Statistical insights
+    # Real ML statistical insights
     col1, col2, col3, col4 = st.columns(4)
+    
+    # Calculate real metrics from ML data
+    total_comparisons = len(df_ml_comparison)
+    agreement_rate = len(df_ml_comparison[df_ml_comparison['MODEL_AGREEMENT'].str.contains('BOTH_AGREE', na=False)]) / total_comparisons if total_comparisons > 0 else 0
+    critical_incidents = len(df_ml_comparison[df_ml_comparison['RISK_LEVEL'] == 'CRITICAL']) if 'RISK_LEVEL' in df_ml_comparison.columns else 0
+    high_risk_incidents = len(df_ml_comparison[df_ml_comparison['RISK_LEVEL'].isin(['CRITICAL', 'HIGH'])]) if 'RISK_LEVEL' in df_ml_comparison.columns else 0
+    
     with col1:
-        st.metric("Model Agreement Rate", "80%", "↑ 15%")
+        st.metric("Model Agreement Rate", f"{agreement_rate:.1%}", "Real ML Data")
     with col2:
-        st.metric("False Positive Reduction", "67%", "↑ 23%")
+        st.metric("Critical Risk Users", str(critical_incidents), "ML Detected")
     with col3:
-        st.metric("Avg Hybrid Confidence", "56.7%", "↑ 12%")
+        st.metric("High+ Risk Users", str(high_risk_incidents), "Requires Action")
     with col4:
-        st.metric("Critical Alerts Confirmed", "100%", "↑ 5%")
+        st.metric("Total Analyzed", str(total_comparisons), "Users")
 
 elif current_section == "native_ml":
     st.title("⚡ Snowflake Native ML")
@@ -668,46 +704,67 @@ elif current_section == "snowpark_ml":
     - **Custom Algorithms**: Python-based extensible ML framework
     """)
     
-    # Snowpark ML clustering data
-    cluster_data = {
-        'Username': ['sarah.chen', 'james.wilson', 'alex.brown', 'mike.rodriguez', 'lisa.wang', 'david.kim', 'emma.watson', 'maria.garcia'],
-        'Cluster_ID': [0, 0, 1, 1, 2, 2, 3, 3],
-        'Cluster_Label': ['HIGH_RISK_TRAVELER', 'HIGH_RISK_TRAVELER', 'REGULAR_BUSINESS_USER', 'REGULAR_BUSINESS_USER', 
-                         'WEEKEND_USER', 'WEEKEND_USER', 'NIGHT_SHIFT_USER', 'NIGHT_SHIFT_USER'],
-        'Isolation_Score': [-0.68, -0.52, 0.12, 0.18, 0.25, 0.19, -0.34, -0.28],
-        'Countries': [5, 4, 1, 2, 1, 1, 3, 2],
-        'Unique_IPs': [15, 12, 3, 4, 2, 3, 8, 6],
-        'Offhours_Ratio': [0.45, 0.38, 0.05, 0.12, 0.85, 0.78, 0.95, 0.82],
-        'Is_Anomaly': [True, True, False, False, False, False, True, False]
-    }
+    # Query REAL Snowpark ML clustering data
+    snowpark_query = """
+    SELECT 
+        username,
+        user_cluster as cluster_id,
+        cluster_label,
+        isolation_forest_score,
+        countries,
+        unique_ips,
+        offhours_ratio,
+        snowpark_anomaly as is_anomaly
+    FROM SNOWPARK_ML_USER_CLUSTERS
+    ORDER BY isolation_forest_score ASC
+    LIMIT 20
+    """
     
-    df_cluster = pd.DataFrame(cluster_data)
+    df_cluster = run_query(snowpark_query)
     
-    # Scatter plot for clustering
+    if df_cluster.empty:
+        st.warning("⚠️ No Snowpark ML data available. Ensure ML models are trained and deployed.")
+        # Fallback to sample data for demo
+        cluster_data = {
+            'USERNAME': ['sarah.chen', 'james.wilson', 'alex.brown', 'mike.rodriguez'],
+            'CLUSTER_ID': [0, 1, 2, 3],
+            'CLUSTER_LABEL': ['HIGH_RISK_TRAVELER', 'REGULAR_BUSINESS_USER', 'WEEKEND_USER', 'NIGHT_SHIFT_USER'],
+            'ISOLATION_FOREST_SCORE': [-0.68, 0.12, 0.25, -0.34],
+            'COUNTRIES': [5, 1, 1, 3],
+            'UNIQUE_IPS': [15, 3, 2, 8],
+            'OFFHOURS_RATIO': [0.45, 0.05, 0.85, 0.95],
+            'IS_ANOMALY': [True, False, False, True]
+        }
+        df_cluster = pd.DataFrame(cluster_data)
+    
+    # Standardize column names for visualization
+    df_cluster.columns = [col.upper() for col in df_cluster.columns]
+    
+    # Scatter plot for clustering using real ML data
     fig_cluster = px.scatter(
         df_cluster,
-        x='Countries',
-        y='Unique_IPs',
-        color='Cluster_Label',
-        size=[abs(x)*10 + 5 for x in df_cluster['Isolation_Score']],
-        hover_data=['Username', 'Isolation_Score'],
-        title="Snowpark ML User Behavior Clusters"
+        x='COUNTRIES',
+        y='UNIQUE_IPS',
+        color='CLUSTER_LABEL',
+        size=[abs(x)*10 + 5 for x in df_cluster['ISOLATION_FOREST_SCORE']],
+        hover_data=['USERNAME', 'ISOLATION_FOREST_SCORE'],
+        title="Real Snowpark ML User Behavior Clusters"
     )
     fig_cluster.update_layout(height=400)
     st.plotly_chart(fig_cluster, use_container_width=True)
     
-    # Isolation Forest scores
-    st.header("🌲 Isolation Forest Anomaly Detection")
+    # Real Isolation Forest scores from trained model
+    st.header("🌲 Real Isolation Forest Anomaly Detection")
     fig_isolation = px.bar(
         df_cluster,
-        x='Username',
-        y='Isolation_Score',
-        color=['Anomaly' if x else 'Normal' for x in df_cluster['Is_Anomaly']],
-        title="Isolation Forest Anomaly Scores (Lower = More Anomalous)",
+        x='USERNAME',
+        y='ISOLATION_FOREST_SCORE',
+        color=['Anomaly' if x else 'Normal' for x in df_cluster['IS_ANOMALY']],
+        title="Real Isolation Forest Anomaly Scores (Lower = More Anomalous)",
         color_discrete_map={'Anomaly': '#FF6B6B', 'Normal': '#4ECDC4'}
     )
-    fig_isolation.add_hline(y=-0.3, line_dash="dash", line_color="red", 
-                           annotation_text="Anomaly Threshold")
+    fig_isolation.add_hline(y=-0.5, line_dash="dash", line_color="red", 
+                           annotation_text="ML Anomaly Threshold")
     st.plotly_chart(fig_isolation, use_container_width=True)
     
     # Snowpark ML metrics

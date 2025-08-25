@@ -17,17 +17,59 @@ Execute the SQL scripts in order:
 -- 2. Generate enhanced sample data (500+ users, 180+ days, seasonality)
 @02_sample_data_generation.sql
 
--- 3. Create Native ML models and Snowpark ML views
+-- 3. Create Native ML models and placeholder Snowpark ML views
 @03_ai_ml_models.sql
+
+-- 4. Deploy real Snowpark ML models and UDFs
+@04_snowpark_ml_deployment.sql
 ```
 
 ⚠️ **Important ML Model Notes:**
 - Native ML models require **sufficient training data** (90+ days recommended)
 - Models will train automatically when first queried
 - Allow **5-10 minutes** for initial model training and deployment
-- Snowpark ML views provide **simulated results** - can be enhanced with actual Python models
+- **Real Snowpark ML models** require Python model training and deployment
 
-### Step 2: Deploy Streamlit App
+### Step 2: Train and Deploy Real ML Models
+
+**Prerequisites:**
+- Python 3.8+ environment with ML packages: `scikit-learn`, `pandas`, `numpy`
+- Snowflake packages: `snowflake-snowpark-python`
+
+**Option A: Snowflake Notebooks (Recommended)**
+1. **Import notebook into Snowflake Notebooks**:
+   - Upload `notebooks/ML_Model_Training_and_Deployment.ipynb` to Snowflake Notebooks
+   - Session is automatically configured - no connection parameters needed!
+   - Required packages are pre-installed in Snowflake Notebooks
+   
+2. **Run all cells** to train and deploy models
+3. **Notebook is optimized for Snowflake** - uses built-in session and context
+
+**Option B: Local Development (Optional)**
+For local development outside Snowflake Notebooks:
+1. **Set up local Python environment**:
+   ```bash
+   cd notebooks
+   pip install -r requirements.txt
+   ```
+
+2. **Modify notebook connection**:
+   - Uncomment the manual connection section in the notebook
+   - Add your Snowflake credentials
+   - Run notebook locally with Jupyter
+
+3. **Verify deployment**:
+   ```sql
+   -- Check ML model performance
+   SELECT * FROM ML_DEPLOYMENT_VALIDATION;
+   SELECT * FROM ML_MODEL_PERFORMANCE;
+   
+   -- Test real ML models
+   SELECT * FROM SNOWPARK_ML_USER_CLUSTERS LIMIT 10;
+   SELECT * FROM ML_MODEL_COMPARISON LIMIT 10;
+   ```
+
+### Step 3: Deploy Streamlit App
 1. Navigate to Snowflake UI → Streamlit
 2. Create new Streamlit app
 3. Upload `streamlit_cybersecurity_demo.py`
@@ -62,6 +104,12 @@ Execute the SQL scripts in order:
 - Time-series login pattern analysis with statistical confidence
 - User behavior modeling with forecasting and confidence intervals
 - Network traffic anomaly detection with upper/lower bounds
+
+✅ **Real Snowpark ML Models** 
+- **Production Isolation Forest**: Trained on 180+ days of user behavior data
+- **K-means User Clustering**: 6-cluster behavioral classification with real algorithms
+- **Hybrid Risk Assessment**: ML-powered CRITICAL/HIGH/MEDIUM/LOW categorization
+- **Model Performance Monitoring**: Real-time ML model health and accuracy tracking
 - Built-in model training and deployment automation
 
 ✅ **Snowpark ML Advanced Analytics**

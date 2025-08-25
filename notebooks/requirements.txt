@@ -1,0 +1,26 @@
+# Requirements for ML Model Training and Deployment Notebook
+# 
+# For Snowflake Notebooks:
+# Most packages are pre-installed, but this documents what the notebook uses
+#
+# For Local Development:
+# pip install -r requirements.txt
+
+# Snowflake connectivity and data processing
+snowflake-snowpark-python>=1.10.0
+
+# Machine Learning libraries
+scikit-learn>=1.3.0
+pandas>=1.5.0
+numpy>=1.21.0
+
+# Visualization (optional - for local development)
+matplotlib>=3.6.0
+seaborn>=0.12.0
+
+# Jupyter notebook support (for local development only)
+jupyter>=1.0.0
+ipykernel>=6.0.0
+
+# Data serialization
+pickle5>=0.0.11;python_version<"3.8"

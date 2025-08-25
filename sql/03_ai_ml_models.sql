@@ -187,17 +187,24 @@ FROM TABLE(
 WHERE ts >= DATEADD(day, -30, CURRENT_TIMESTAMP());
 
 -- =====================================================
--- SNOWPARK ML PLACEHOLDER VIEWS (Option 2)
--- Note: These require Snowpark ML models to be trained and deployed as UDFs
+-- REAL SNOWPARK ML MODELS (Option 2)
+-- Production-grade ML models with trained Isolation Forest and K-means
+-- Note: Requires deployment of 04_snowpark_ml_deployment.sql first
 -- =====================================================
 
--- Placeholder view for Snowpark ML user clustering results
+-- IMPORTANT: This view now uses REAL ML models, not simulations!
+-- Before using this view, you must:
+-- 1. Run model_trainer.py to train the models
+-- 2. Deploy models using 04_snowpark_ml_deployment.sql
+-- 3. Ensure UDFs are properly registered
+-- 4. ML training data validation views are available in 04_snowpark_ml_deployment.sql
+
 CREATE OR REPLACE VIEW SNOWPARK_ML_USER_CLUSTERS AS
 WITH user_features AS (
     SELECT 
         username,
         AVG(EXTRACT(HOUR FROM timestamp)) as avg_login_hour,
-        STDDEV(EXTRACT(HOUR FROM timestamp)) as stddev_login_hour,
+        COALESCE(STDDEV(EXTRACT(HOUR FROM timestamp)), 0) as stddev_login_hour,
         COUNT(*) as total_logins,
         COUNT(DISTINCT DATE(timestamp)) as active_days,
         COUNT(DISTINCT source_ip) as unique_ips,
@@ -209,6 +216,7 @@ WITH user_features AS (
       AND username IS NOT NULL
       AND success = TRUE
     GROUP BY username
+    HAVING COUNT(*) >= 5  -- Minimum activity for meaningful ML analysis
 )
 SELECT 
     'SNOWPARK_ML' as model_type,
@@ -223,36 +231,21 @@ SELECT
     countries,
     weekend_ratio,
     offhours_ratio,
-    -- Simulated clustering results (would be replaced by actual UDF calls)
-    CASE 
-        WHEN countries > 3 AND offhours_ratio > 0.3 AND unique_ips > 10 THEN 0
-        WHEN avg_login_hour BETWEEN 8 AND 18 AND weekend_ratio < 0.1 AND countries <= 2 THEN 1
-        WHEN weekend_ratio > 0.4 AND avg_login_hour NOT BETWEEN 8 AND 18 THEN 2
-        WHEN offhours_ratio > 0.5 THEN 3
-        WHEN countries > 2 AND unique_ips > 5 THEN 4
-        ELSE 5
-    END as user_cluster,
-    -- Simulated anomaly scores (would be replaced by actual Isolation Forest UDF)
-    CASE 
-        WHEN countries > 3 AND offhours_ratio > 0.3 AND unique_ips > 10 THEN -0.6
-        WHEN countries > 2 AND unique_ips > 5 THEN -0.4
-        WHEN offhours_ratio > 0.5 THEN -0.3
-        WHEN stddev_login_hour > 4 THEN -0.2
-        ELSE UNIFORM(-0.1, 0.1, RANDOM())
-    END as isolation_forest_score,
-    CASE 
-        WHEN countries > 3 AND offhours_ratio > 0.3 AND unique_ips > 10 THEN TRUE
-        WHEN countries > 2 AND unique_ips > 5 THEN TRUE
-        ELSE FALSE
-    END as snowpark_anomaly,
-    CASE 
-        WHEN countries > 3 AND offhours_ratio > 0.3 AND unique_ips > 10 THEN 'HIGH_RISK_TRAVELER'
-        WHEN avg_login_hour BETWEEN 8 AND 18 AND weekend_ratio < 0.1 AND countries <= 2 THEN 'REGULAR_BUSINESS_USER'
-        WHEN weekend_ratio > 0.4 AND avg_login_hour NOT BETWEEN 8 AND 18 THEN 'WEEKEND_USER'
-        WHEN offhours_ratio > 0.5 THEN 'NIGHT_SHIFT_USER'
-        WHEN countries > 2 AND unique_ips > 5 THEN 'MULTI_LOCATION_USER'
-        ELSE 'STANDARD_USER'
-    END as cluster_label
+    
+    -- REAL ML UDF CALLS - No more simulations!
+    kmeans_cluster_assignment(avg_login_hour, countries, weekend_ratio, 
+                             offhours_ratio, unique_ips) as user_cluster,
+    
+    isolation_forest_score(avg_login_hour, countries, unique_ips,
+                          weekend_ratio, offhours_ratio, stddev_login_hour) as isolation_forest_score,
+    
+    isolation_forest_anomaly(avg_login_hour, countries, unique_ips,
+                           weekend_ratio, offhours_ratio, stddev_login_hour) as snowpark_anomaly,
+    
+    cluster_label_mapping(
+        kmeans_cluster_assignment(avg_login_hour, countries, weekend_ratio, 
+                                offhours_ratio, unique_ips)
+    ) as cluster_label
 FROM user_features;
 
 -- =====================================================
@@ -289,24 +282,13 @@ SELECT
         ELSE 'NO_DATA'
     END as model_agreement,
     
-    -- Combined confidence score using both models
-    CASE 
-        WHEN n.native_confidence IS NOT NULL AND s.isolation_forest_score IS NOT NULL THEN
-            (n.native_confidence + ABS(s.isolation_forest_score)) / 2
-        WHEN n.native_confidence IS NOT NULL THEN n.native_confidence
-        WHEN s.isolation_forest_score IS NOT NULL THEN ABS(s.isolation_forest_score)
-        ELSE 0.5
-    END as hybrid_confidence,
-    
-    -- Enhanced risk assessment combining both models
-    CASE 
-        WHEN n.native_anomaly = TRUE AND s.snowpark_anomaly = TRUE AND n.native_confidence >= 0.8 THEN 'CRITICAL_ML_CONFIRMED'
-        WHEN n.native_anomaly = TRUE AND s.snowpark_anomaly = TRUE THEN 'HIGH_ML_CONFIRMED'
-        WHEN n.native_anomaly = TRUE AND n.native_confidence >= 0.8 THEN 'CRITICAL_NATIVE_ML'
-        WHEN s.snowpark_anomaly = TRUE AND ABS(s.isolation_forest_score) >= 0.5 THEN 'HIGH_SNOWPARK_ML'
-        WHEN n.native_anomaly = TRUE OR s.snowpark_anomaly = TRUE THEN 'MEDIUM_ML_DETECTED'
-        ELSE 'LOW_OR_NORMAL'
-    END as hybrid_risk_assessment
+    -- Real hybrid risk assessment using ML UDF (no more manual rules!)
+    hybrid_risk_assessment(
+        s.isolation_forest_score,
+        s.snowpark_anomaly,
+        s.user_cluster,
+        n.native_anomaly
+    ) as risk_level
     
 FROM NATIVE_ML_USER_BEHAVIOR n
 FULL OUTER JOIN SNOWPARK_ML_USER_CLUSTERS s 

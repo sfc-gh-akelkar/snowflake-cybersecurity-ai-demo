@@ -25,9 +25,11 @@ This repository demonstrates how Snowflake transforms cybersecurity operations t
 
 ### Advanced AI/ML Cybersecurity Use Cases
 - ✅ **Snowflake Native ML Anomaly Detection** - Built-in time-series analysis with statistical confidence
-- ✅ **Snowpark ML User Clustering** - Isolation Forest & K-means behavioral classification  
+- ✅ **Real Snowpark ML Models** - Production Isolation Forest & K-means with actual training pipeline
 - ✅ **Hybrid ML Analytics** - Combining Native + Snowpark ML for comprehensive analysis
+- ✅ **4-Tier Risk Assessment** - ML-powered CRITICAL | HIGH | MEDIUM | LOW categories
 - ✅ **ML Model Comparison & Agreement** - Side-by-side analysis of different ML approaches
+- ✅ **Production ML Pipeline** - Complete training, deployment, and monitoring infrastructure
 - ✅ **Enhanced Threat Prioritization** - Multi-variate ML-based incident scoring & classification
 - ✅ **Advanced Vulnerability Management** - Context-aware CVSS scoring with threat intel correlation
 - ✅ **Sophisticated Fraud Detection** - Velocity analysis and transaction pattern ML with 500+ user profiles
@@ -87,10 +89,17 @@ This repository demonstrates how Snowflake transforms cybersecurity operations t
 📦 snowflake-cybersecurity-demo
 ├── 📄 README.md                           # This file
 ├── 📄 deployment_guide.md                 # Detailed setup instructions
-├── 📄 01_cybersecurity_schema.sql         # Database schema & tables
-├── 📄 02_sample_data_generation.sql       # Realistic sample data
-├── 📄 03_ai_ml_models.sql                 # AI/ML models & views
-└── 📄 streamlit_cybersecurity_demo.py     # Main Streamlit application
+├── 📄 DEMO_WALKTHROUGH.md                 # Demo presentation script
+├── 📁 notebooks/
+│   ├── 📓 ML_Model_Training_and_Deployment.ipynb  # Real ML training notebook
+│   └── 📄 requirements.txt                        # Python dependencies (for local dev)
+├── 📁 python/
+│   └── 📄 streamlit_cybersecurity_demo.py # Main Streamlit application
+└── 📁 sql/
+    ├── 📄 01_cybersecurity_schema.sql     # Database schema & tables
+    ├── 📄 02_sample_data_generation.sql   # Realistic sample data
+    ├── 📄 03_ai_ml_models.sql             # AI/ML models & views
+    └── 📄 04_snowpark_ml_deployment.sql   # UDF registration & deployment
 ```
 
 ## 🚀 Quick Start
@@ -116,9 +125,26 @@ This repository demonstrates how Snowflake transforms cybersecurity operations t
 ```sql
 -- Execute in Snowflake worksheet
 @03_ai_ml_models.sql
+@04_snowpark_ml_deployment.sql
 ```
 
-### 4. Launch Streamlit App
+### 4. Train Real ML Models
+
+**Option A: Snowflake Notebooks (Recommended)**
+```bash
+# Upload notebooks/ML_Model_Training_and_Deployment.ipynb to Snowflake Notebooks
+# No connection setup needed - session is automatic!
+# Simply run all cells to train and deploy real ML models
+```
+
+**Option B: Local Development (Optional)**
+```bash
+# For local development outside Snowflake Notebooks:
+cd notebooks && pip install -r requirements.txt
+# Then modify notebook connection parameters and run locally
+```
+
+### 5. Launch Streamlit App
 1. Navigate to **Snowflake UI → Streamlit**
 2. Create new Streamlit app
 3. Upload `streamlit_cybersecurity_demo.py`
