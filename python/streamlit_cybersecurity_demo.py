@@ -243,8 +243,8 @@ def show_executive_dashboard(days_back):
         """)
         incident_count = total_incidents['COUNT'].iloc[0] if not total_incidents.empty else 0
         st.metric("🚨 Security Incidents", format_metric(incident_count))
-    
-    with col2:
+        
+        with col2:
         critical_threats = run_query(f"""
             SELECT COUNT(*) as count 
             FROM THREAT_INTEL_FEED 
@@ -253,8 +253,8 @@ def show_executive_dashboard(days_back):
         """)
         threat_count = critical_threats['COUNT'].iloc[0] if not critical_threats.empty else 0
         st.metric("⚡ Critical Threats", format_metric(threat_count))
-    
-    with col3:
+        
+        with col3:
         ml_anomalies = run_query(f"""
             SELECT COUNT(*) as count 
             FROM ML_MODEL_COMPARISON 
@@ -263,8 +263,8 @@ def show_executive_dashboard(days_back):
         """)
         anomaly_count = ml_anomalies['COUNT'].iloc[0] if not ml_anomalies.empty else 0
         st.metric("🎯 ML Anomalies", format_metric(anomaly_count))
-    
-    with col4:
+        
+        with col4:
         total_users = run_query("SELECT COUNT(DISTINCT username) as count FROM EMPLOYEE_DATA")
         user_count = total_users['COUNT'].iloc[0] if not total_users.empty else 0
         st.metric("👥 Protected Users", format_metric(user_count))
@@ -286,14 +286,14 @@ def show_executive_dashboard(days_back):
     if not risk_trends.empty:
         fig = px.area(risk_trends, x='DATE', y='INCIDENTS', color='RISK_LEVEL',
                      title="Daily Risk Level Distribution",
-                     color_discrete_map={
+                color_discrete_map={
                          'CRITICAL': '#FF4B4B',
                          'HIGH': '#FF8C00', 
                          'MEDIUM': '#FFD700',
                          'LOW': '#90EE90'
                      })
-        st.plotly_chart(fig, use_container_width=True)
-
+            st.plotly_chart(fig, use_container_width=True)
+    
 def show_anomaly_detection(days_back):
     """ML-powered anomaly detection analytics"""
     st.header("🔍 ML-Powered Anomaly Detection")
@@ -336,10 +336,10 @@ def show_anomaly_detection(days_back):
     st.subheader("🚨 Recent High-Risk Anomalies")
     
     recent_anomalies = run_query(f"""
-        SELECT 
-            username,
+    SELECT 
+        username,
             analysis_date,
-            risk_level,
+        risk_level,
             model_agreement,
             cluster_label,
             ROUND(snowpark_score, 3) as anomaly_score
@@ -404,9 +404,9 @@ def show_threat_intelligence(days_back):
     
     # Threat metrics
     threat_data = run_query(f"""
-        SELECT 
+    SELECT 
             threat_type,
-            severity,
+        severity,
             COUNT(*) as threat_count,
             AVG(confidence_score) as avg_confidence
         FROM THREAT_INTEL_FEED
@@ -418,7 +418,7 @@ def show_threat_intelligence(days_back):
     if not threat_data.empty:
         # Threat heatmap
         fig_heatmap = px.density_heatmap(
-            threat_data, 
+                threat_data,
             x='THREAT_TYPE', 
             y='SEVERITY', 
             z='THREAT_COUNT',
@@ -485,7 +485,7 @@ def generate_fallback_response(prompt):
         - 🛡️ ML-powered detection reduces false positives by 85%
         - 📊 Recommend reviewing latest threat intelligence dashboard"""
     
-    else:
+        else:
         return """🤖 I'm your security AI assistant! I can help analyze:
         - 📊 Current security status and metrics
         - 🔍 Anomaly detection results
@@ -500,7 +500,7 @@ def show_user_analytics(days_back):
     
     # User clusters
     cluster_data = run_query(f"""
-        SELECT 
+    SELECT 
             cluster_label,
             COUNT(*) as user_count,
             AVG(countries) as avg_countries,
@@ -530,14 +530,14 @@ def show_realtime_monitoring():
     
     # Recent events
     recent_events = run_query("""
-        SELECT 
-            timestamp,
-            username,
-            source_ip,
+SELECT 
+    timestamp,
+    username,
+    source_ip,
             location:country::STRING as country,
             success,
             CASE WHEN success THEN '✅' ELSE '❌' END as status_icon
-        FROM USER_AUTHENTICATION_LOGS
+FROM USER_AUTHENTICATION_LOGS
         WHERE timestamp >= DATEADD(minute, -60, CURRENT_TIMESTAMP())
         ORDER BY timestamp DESC
         LIMIT 50
@@ -649,7 +649,7 @@ def show_cortex_analyst():
                     
                     with st.expander("🔍 View Generated SQL"):
                         st.code(response.get('sql', 'Not available'), language='sql')
-            else:
+        else:
                 st.error(f"❌ {response.get('error', 'Unknown error occurred')}")
     
     # Quick action buttons
