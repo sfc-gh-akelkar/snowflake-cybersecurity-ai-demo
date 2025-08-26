@@ -16,40 +16,48 @@
 
 ## ⚡ Quick Start (15 minutes)
 
-### **Step 1: Database Setup**
-Execute the SQL scripts in order:
+### **🚀 Hybrid Deployment Approach (Recommended)**
 
-```sql
--- 1. Create schema and tables
-@01_cybersecurity_schema.sql
+**Step 1: Platform Deployment**
+Upload [`notebooks/Cybersecurity_ML_Demo_Companion.ipynb`](../notebooks/Cybersecurity_ML_Demo_Companion.ipynb) to **Snowflake Notebooks** and run all cells:
 
--- 2. Generate enhanced sample data (500+ users, 180+ days, seasonality)
-@02_sample_data_generation.sql
+**🏆 Platform Components:**
+- ✅ Database, schema, and warehouse setup
+- ✅ Sample data generation (500+ users, 180+ days)  
+- ✅ Native ML and Snowpark ML model training
+- ✅ Advanced features (UDFs, Cortex AI)
+- ✅ Complete backend infrastructure
 
--- 3. Create Native ML models and views
-@03_ai_ml_models.sql
+**Step 2: Application Deployment**
+Upload [`python/streamlit_cybersecurity_demo.py`](../python/streamlit_cybersecurity_demo.py) to **Snowflake Streamlit**:
 
--- 4. Deploy real Snowpark ML models and UDFs
-@04_snowpark_ml_deployment.sql
+**📱 Comprehensive Application Features:**
+- ✅ Executive dashboard + ML analytics + threat intelligence
+- ✅ Real Cortex AI security assistant + user behavior analysis
+- ✅ Real-time monitoring + Cortex Analyst integration
 
--- 5. (Optional) Model Registry integration
-@05_model_registry_deployment.sql
+#### **🎯 Core Platform (Always Run)**
+1. ✅ **Database & Schema Setup** - Automatic infrastructure creation
+2. ✅ **Sample Data Generation** - 500+ users, 180+ days of realistic data
+3. ✅ **Native ML Models** - Time-series anomaly detection
+4. ✅ **Deployment Validation** - Comprehensive platform verification
 
--- 6. (Optional) Cortex AI integration
-@06_cortex_ai_integration.sql
+#### **⚡ Advanced Features (Optional)**
+5. ✅ **Production Snowpark ML UDFs** - Real algorithms as SQL functions (+5 min)
+6. ✅ **Cortex AI Integration** - Data-driven security chatbot (+2 min)
+7. ✅ **Complete Streamlit Apps** - Main dashboard and Cortex Analyst apps (+0 min)
 
--- 7. (Optional) Cortex Analyst with semantic model
-@07_cortex_analyst_integration.sql
-```
+#### **📱 Streamlit Application Deployment**
+7. ✅ **Upload Comprehensive App** - Single file with all features integrated
+8. ✅ **Set Database Context** - Point to `CYBERSECURITY_DEMO.SECURITY_AI`  
+9. ✅ **Launch Application** - Full-featured cybersecurity analytics platform
 
-⚠️ **Important Notes:**
-- Native ML models require **90+ days** of training data
-- Allow **5-10 minutes** for initial model training
-- **Real Snowpark ML models** require the ML training notebook
+**Configuration: Zero** (automatic session management in notebook)  
+**Total time: 15-25 minutes** (complete platform + application)
 
 ---
 
-### **Step 2: Train and Deploy ML Models**
+### **Step 2: Advanced ML Features (Optional)**
 
 #### **Option A: Snowflake Notebooks (Recommended) ✨**
 1. **Upload notebook**: `notebooks/Cybersecurity_ML_Demo_Companion.ipynb` to Snowflake Notebooks

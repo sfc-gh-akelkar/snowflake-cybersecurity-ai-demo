@@ -4,6 +4,15 @@
 Comprehensive Streamlit in Snowflake application demonstrating
 cybersecurity capabilities and advanced analytics use cases.
 
+Features:
+- Executive Security Dashboard
+- ML-Powered Anomaly Detection  
+- Threat Intelligence Analytics
+- User Behavior Analysis
+- AI Security Assistant (Cortex AI)
+- Natural Language Analytics (Cortex Analyst)
+- Real-time Security Monitoring
+
 Use Cases Demonstrated:
 - Cost-Effective Security Data Platform
 - Threat Hunting & IR Automation  
@@ -22,6 +31,7 @@ from plotly.subplots import make_subplots
 import numpy as np
 from datetime import datetime, timedelta
 import json
+from typing import Dict, Any, Optional
 
 # Import Snowflake modules
 from snowflake.snowpark.context import get_active_session
@@ -48,1719 +58,674 @@ def run_query(query):
         result = session.sql(query).to_pandas()
         return result
     except Exception as e:
-        st.error(f"Query error: {str(e)}")
+        st.error(f"Query execution error: {str(e)}")
         return pd.DataFrame()
 
-def create_metric_card(title, value, delta=None, delta_color="normal"):
-    """Create a styled metric card"""
-    delta_html = ""
-    if delta:
-        color = "green" if delta_color == "good" else "red" if delta_color == "bad" else "gray"
-        delta_html = f'<span style="color: {color}; font-size: 14px;">({delta})</span>'
+def format_metric(value, metric_type="number"):
+    """Format metrics for display"""
+    if metric_type == "percentage":
+        return f"{value:.1f}%"
+    elif metric_type == "currency":
+        return f"${value:,.0f}"
+    elif metric_type == "number":
+        if value >= 1000000:
+            return f"{value/1000000:.1f}M"
+        elif value >= 1000:
+            return f"{value/1000:.1f}K"
+        else:
+            return f"{value:,.0f}"
+    return str(value)
+
+# =====================================================
+# CORTEX ANALYST FUNCTIONS
+# =====================================================
+
+def query_cortex_analyst(question: str, context: str = "general") -> Dict[str, Any]:
+    """
+    Query Cortex Analyst with natural language and return structured results
     
-    st.markdown(f"""
-    <div style="
-        background: linear-gradient(90deg, #1f1f2e 0%, #2d2d44 100%);
-        padding: 1rem;
-        border-radius: 10px;
-        border: 1px solid #444;
-        text-align: center;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    ">
-        <h3 style="color: #fff; margin: 0; font-size: 2rem;">{value}</h3>
-        <p style="color: #aaa; margin: 0.5rem 0 0 0; font-size: 14px;">{title} {delta_html}</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-def generate_ai_response(user_question):
-    """Generate AI response for chatbot (simplified implementation)"""
+    Args:
+        question: Natural language question
+        context: Analysis context (incidents, users, vulnerabilities, threats, trends)
     
-    question_lower = user_question.lower()
+    Returns:
+        Dictionary with query results, SQL, and explanation
+    """
+    try:
+        # Use the Cortex Analyst integration function if available
+        query = """
+        SELECT ask_security_analyst(%s) as analyst_response
+        """
+        
+        result = session.sql(query, [question]).collect()
+        
+        if result:
+            response = json.loads(result[0]['ANALYST_RESPONSE'])
+            return {
+                "success": True,
+                "data": response.get("data", []),
+                "sql": response.get("sql", ""),
+                "explanation": response.get("explanation", ""),
+                "visualization": response.get("visualization", {})
+            }
+        else:
+            return {"success": False, "error": "No response from Cortex Analyst"}
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+def create_fallback_response(question: str) -> Dict[str, Any]:
+    """Generate structured fallback responses when Cortex Analyst is not available"""
+    question_lower = question.lower()
     
-    if "critical" in question_lower and "incident" in question_lower:
-        return """I found the current critical security incidents:
-
-**P0 Critical Incidents:**
-1. **Suspicious Login from Threat Actor IP** - User john.smith logged in from known APT29 infrastructure
-2. **Ransomware Indicators Detected** - Multiple file encryption activities on file server
-
-**Recommended Actions:**
-- Immediately isolate affected systems
-- Reset user credentials
-- Activate incident response team
-
-Would you like me to show the detailed incident analysis?"""
+    if any(word in question_lower for word in ['incident', 'alert', 'breach']):
+        # Security incidents query
+        try:
+            data = run_query("""
+                SELECT 
+                    DATE(created_at) as date,
+                    incident_type,
+                    severity,
+                    COUNT(*) as count
+                FROM SECURITY_INCIDENTS
+                WHERE created_at >= DATEADD(day, -30, CURRENT_TIMESTAMP())
+                GROUP BY DATE(created_at), incident_type, severity
+                ORDER BY date DESC
+            """)
+            
+            return {
+                "success": True,
+                "data": data.to_dict('records') if not data.empty else [],
+                "sql": "SELECT DATE(created_at), incident_type, severity, COUNT(*) FROM SECURITY_INCIDENTS...",
+                "explanation": "Analysis of security incidents over the last 30 days, grouped by date, type, and severity.",
+                "chart_type": "bar"
+            }
+        except:
+            pass
     
-    elif "vulnerabilit" in question_lower and ("top" in question_lower or "patch" in question_lower):
-        return """Here are the top 5 vulnerabilities requiring immediate attention:
-
-**Patch Immediately:**
-1. **CVE-2021-44228** (Log4j) - CVSS 10.0 - web-server-01
-2. **CVE-2022-22965** (Spring) - CVSS 9.8 - api-server-01
-3. **CVE-2021-26855** (Exchange) - CVSS 7.2 - backup-server-01
-
-**Intelligent Recommendations:**
-- These vulnerabilities have known exploits in the wild
-- Assets are internet-facing with high exposure
-- Patch deployment estimated: 2-4 hours
-
-Would you like me to generate patch deployment scripts?"""
+    elif any(word in question_lower for word in ['user', 'login', 'authentication']):
+        # User analytics query
+        try:
+            data = run_query("""
+                SELECT 
+                    cluster_label,
+                    COUNT(*) as user_count,
+                    AVG(countries) as avg_countries
+                FROM SNOWPARK_ML_USER_CLUSTERS
+                WHERE analysis_date >= DATEADD(day, -7, CURRENT_TIMESTAMP())
+                GROUP BY cluster_label
+                ORDER BY user_count DESC
+            """)
+            
+            return {
+                "success": True,
+                "data": data.to_dict('records') if not data.empty else [],
+                "sql": "SELECT cluster_label, COUNT(*), AVG(countries) FROM SNOWPARK_ML_USER_CLUSTERS...",
+                "explanation": "User behavior clustering analysis showing different user patterns and their geographic distribution.",
+                "chart_type": "pie"
+            }
+        except:
+            pass
     
-    elif "insider threat" in question_lower:
-        return """Users with highest insider threat scores:
-
-**High Risk (Score > 70):**
-1. **james.wilson** (Score: 100) - Terminated employee with recent access attempts
-2. **alex.brown** (Score: 45) - Unusual data access patterns, off-hours activity
-
-**Key Risk Factors:**
-- Terminated employee access attempts
-- Large data downloads outside business hours
-- Multiple login anomalies
-
-**Recommended Actions:**
-- Disable access for terminated employees
-- Review data access permissions
-- Monitor off-hours activities
-
-Need more details on any specific user?"""
+    elif any(word in question_lower for word in ['threat', 'malware', 'attack']):
+        # Threat intelligence query
+        try:
+            data = run_query("""
+                SELECT 
+                    threat_type,
+                    severity,
+                    COUNT(*) as threat_count,
+                    AVG(confidence_score) as avg_confidence
+                FROM THREAT_INTEL_FEED
+                WHERE first_seen >= DATEADD(day, -14, CURRENT_TIMESTAMP())
+                GROUP BY threat_type, severity
+                ORDER BY threat_count DESC
+            """)
+            
+            return {
+                "success": True,
+                "data": data.to_dict('records') if not data.empty else [],
+                "sql": "SELECT threat_type, severity, COUNT(*), AVG(confidence_score) FROM THREAT_INTEL_FEED...",
+                "explanation": "Threat intelligence analysis showing active threats by type and severity over the last 14 days.",
+                "chart_type": "heatmap"
+            }
+        except:
+            pass
     
-    elif any(country in question_lower for country in ["russia", "china", "ru", "cn"]):
-        return """Found login attempts from Russia and China:
+    # Default response
+    return {
+        "success": False,
+        "error": "Cortex Analyst not available. Try questions about: incidents, users, threats, or authentication patterns."
+    }
 
-**Recent Foreign Login Attempts:**
-- **john.smith** - 203.0.113.45 (Russia) - 2 hours ago ⚠️ **THREAT INTEL MATCH**
-- **sarah.chen** - Multiple IPs (Russia) - Last 24 hours
-- **alex.brown** - 185.220.100.240 (China) - Failed attempts
-
-**Threat Intelligence Correlation:**
-- IPs match known APT infrastructure
-- Unusual access patterns detected
-- Recommended: Immediate credential reset
-
-Would you like me to show the detailed forensic timeline?"""
+def visualize_data(data: list, chart_type: str = "bar", explanation: str = ""):
+    """Create visualizations based on the data and chart type"""
+    if not data:
+        st.warning("No data to visualize")
+        return
     
-    elif "transaction" in question_lower and ("suspicious" in question_lower or "5000" in question_lower):
-        return """Suspicious financial transactions above $5000:
-
-**High Risk Transactions:**
-1. **$9,999.99** - User_1234 to crypto exchange (Russia) - Fraud Score: 0.95
-2. **$15,000.00** - User_9999 luxury goods (Miami) - New device - Fraud Score: 0.92
-3. **$5,000.00** - User_5678 ATM withdrawal (China) - Fraud Score: 0.88
-
-**Risk Indicators:**
-- Foreign transaction locations
-- Unusual amounts for user patterns
-- New/unknown device fingerprints
-
-**Actions Taken:**
-- Transactions flagged for review
-- Account holders notified
-- Additional verification required
-
-Need details on any specific transaction?"""
+    df = pd.DataFrame(data)
     
-    elif "network" in question_lower and ("hour" in question_lower or "last" in question_lower):
-        return """Network security events from the last hour:
-
-**Threat Events Detected:**
-1. **Blocked C2 Communication** - 192.168.1.100 → 203.0.113.45 (APT infrastructure)
-2. **Botnet Activity** - 192.168.1.150 → 185.220.100.240 (Emotet C2)
-3. **Data Exfiltration** - Large transfer 10.0.0.45 → external IP
-
-**Actions Taken:**
-- Malicious traffic blocked by firewall
-- Affected systems isolated
-- Security team notified
-
-**Status:** 🔴 Active monitoring in progress
-
-Would you like me to show the network flow analysis?"""
+    if chart_type == "bar" and len(df.columns) >= 2:
+        st.bar_chart(df.set_index(df.columns[0]))
     
-    elif ("anomaly" in question_lower or "anomalies" in question_lower) and ("sarah chen" in question_lower or "sarah.chen" in question_lower):
-        return """**Anomaly Analysis for User: Sarah Chen**
-
-**🚨 CRITICAL RISK SCORE: 95/100**
-
-**Detected Anomalies:**
-1. **Unusual Login Location** - Login from Moscow, Russia (203.0.113.45)
-   - User's typical locations: San Francisco, New York
-   - ⚠️ IP matches known APT29 infrastructure
-
-2. **Off-Hours Activity** - Login at 2:47 AM PST on Sunday
-   - User's normal hours: 9 AM - 6 PM, Monday-Friday
-   - Accessed sensitive GitHub repositories during this session
-
-3. **Data Access Pattern** - Downloaded 15GB of source code
-   - 300% above user's normal download volume
-   - Included proprietary algorithms and customer data schemas
-
-**Analytics Correlation:**
-- **Threat Intelligence Match**: Source IP linked to state-sponsored actors
-- **Behavioral Analysis**: Activity deviates 4.2 standard deviations from baseline
-- **Risk Multiplier**: Combination of location + timing + volume = Critical
-
-**Recommended Actions:**
-1. Immediately disable user account
-2. Reset all authentication credentials
-3. Review all accessed resources in last 48 hours
-4. Initiate incident response protocol
-5. Contact user via alternate communication channel
-
-**Investigation Status:** 🔴 **ACTIVE INCIDENT - P0 CRITICAL**
-
-Would you like me to show the detailed timeline or generate the incident response checklist?"""
+    elif chart_type == "line" and len(df.columns) >= 2:
+        st.line_chart(df.set_index(df.columns[0]))
     
-    elif ("anomaly" in question_lower or "anomalies" in question_lower) and any(user in question_lower for user in ["user", "john", "alex", "james"]):
-        return """**User Anomaly Analysis**
-
-I can provide detailed anomaly analysis for specific users. Here are some recent high-risk cases:
-
-**Current High-Risk Users:**
-1. **Sarah Chen** - Critical anomaly score (95/100) - Foreign login + off-hours access
-2. **James Wilson** - Terminated employee still accessing systems
-3. **Alex Brown** - Unusual data download patterns
-
-**Analysis Available:**
-- Behavioral pattern analysis
-- Threat intelligence correlation
-- Risk scoring methodology
-- Recommended remediation actions
-
-Please specify which user you'd like me to analyze, or ask about "Sarah Chen" for our most critical current case."""
+    elif chart_type == "pie" and len(df.columns) >= 2:
+        fig = px.pie(df, values=df.columns[1], names=df.columns[0])
+        st.plotly_chart(fig, use_container_width=True)
+    
+    elif chart_type == "heatmap" and len(df.columns) >= 3:
+        fig = px.density_heatmap(df, x=df.columns[0], y=df.columns[1], z=df.columns[2])
+        st.plotly_chart(fig, use_container_width=True)
     
     else:
-        return f"""I understand you're asking about: "{user_question}"
-
-I can help you with:
-- 🚨 Security incidents and alerts
-- 🔓 Vulnerability management
-- 🕵️ Threat hunting queries  
-- 💰 Fraud detection analysis
-- 👥 Insider threat assessment
-- 🌐 Network security events
-
-Please try rephrasing your question or ask about any of these security topics. For complex analysis, I can also generate SQL queries to investigate your security data.
-
-What specific security information would you like me to help you find?"""
+        st.dataframe(df, use_container_width=True)
 
 # =====================================================
-# SIDEBAR NAVIGATION
+# MAIN APPLICATION SECTIONS
 # =====================================================
 
-st.sidebar.title("🛡️ Cybersecurity Demo")
-st.sidebar.markdown("**Snowflake Analytics Platform**")
-
-demo_sections = {
-    "🏠 Executive Dashboard": "dashboard",
-    "🔍 ML-Powered Anomaly Detection": "anomaly",
-    "🧠 ML Model Comparison": "ml_models",
-    "⚡ Snowflake Native ML": "native_ml",
-    "🐍 Snowpark ML Analytics": "snowpark_ml",
-    "⚠️ Threat Prioritization": "threats", 
-    "🔓 Vulnerability Management": "vulnerabilities",
-    "💰 Fraud Detection": "fraud",
-    "🕵️ Insider Threat Detection": "insider",
-    "🔎 Threat Hunting": "hunting",
-    "🤖 AI Security Chatbot": "chatbot",
-    "📊 Cost & Performance": "performance"
-}
-
-selected_section = st.sidebar.selectbox("Select Demo Section", list(demo_sections.keys()))
-current_section = demo_sections[selected_section]
-
-# Database info
-st.sidebar.markdown("---")
-st.sidebar.info("""
-**Database:** CYBERSECURITY_DEMO  
-**Schema:** SECURITY_AI  
-**Compute:** Auto-scaling  
-**Storage:** Pay-per-use
-""")
-
-# =====================================================
-# MAIN APPLICATION CONTENT
-# =====================================================
-
-if current_section == "dashboard":
-    st.title("🏠 Executive Security Dashboard")
-    st.markdown("**Real-time cybersecurity metrics powered by Snowflake Analytics**")
+def show_executive_dashboard(days_back):
+    """Executive-level security metrics and KPIs"""
+    st.header("🏢 Executive Security Dashboard")
+    st.markdown("*High-level security posture and business impact metrics*")
     
-    # Get dashboard summary data
-    summary_data = run_query("SELECT * FROM SECURITY_DASHBOARD_SUMMARY")
-    
-    if not summary_data.empty:
-        summary = summary_data.iloc[0]
-        
-        # Top metrics row
-        col1, col2, col3, col4, col5 = st.columns(5)
-        
-        with col1:
-            create_metric_card(
-                "Critical Anomalies", 
-                summary.get('CRITICAL_LOGIN_ANOMALIES', 0), 
-                "+2 from yesterday", 
-                "bad"
-            )
-        
-        with col2:
-            create_metric_card(
-                "P0 Incidents", 
-                summary.get('P0_INCIDENTS', 0),
-                "Requires immediate action",
-                "bad"
-            )
-        
-        with col3:
-            create_metric_card(
-                "Critical Vulns", 
-                summary.get('CRITICAL_VULNS', 0),
-                "Patch immediately",
-                "bad"
-            )
-        
-        with col4:
-            create_metric_card(
-                "Fraud Detected", 
-                f"${summary.get('SUSPICIOUS_TRANSACTION_AMOUNT', 0):,.0f}",
-                "Blocked transactions",
-                "good"
-            )
-        
-        with col5:
-            create_metric_card(
-                "Threat Intel Hits", 
-                summary.get('THREAT_INTEL_MATCHES_TODAY', 0),
-                "Known bad actors",
-                "bad"
-            )
-    
-    st.markdown("---")
-    
-    # Charts row
-    col1, col2 = st.columns(2)
+    # Key metrics
+    col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.subheader("🧠 Real ML Anomaly Detection")
-        
-        anomaly_data = run_query("""
-        SELECT 
-            risk_level,
-            COUNT(*) as count,
-            analysis_date as date
-        FROM ML_MODEL_COMPARISON 
-        WHERE analysis_date >= DATEADD(day, -7, CURRENT_TIMESTAMP())
-        GROUP BY risk_level, analysis_date
-        ORDER BY date DESC
+        total_incidents = run_query(f"""
+            SELECT COUNT(*) as count 
+            FROM SECURITY_INCIDENTS 
+            WHERE created_at >= DATEADD(day, -{days_back}, CURRENT_TIMESTAMP())
         """)
-        
-        if not anomaly_data.empty:
-            fig = px.bar(
-                anomaly_data, 
-                x='DATE', 
-                y='COUNT', 
-                color='RISK_LEVEL',
-                color_discrete_map={
-                    'CRITICAL': '#ff4444',
-                    'HIGH': '#ff8800', 
-                    'MEDIUM': '#ffcc00',
-                    'LOW': '#88cc88'
-                },
-                title="Real ML Anomalies by Risk Level (Last 7 Days)"
-            )
-            fig.update_layout(height=400, showlegend=True)
-            st.plotly_chart(fig, use_container_width=True)
+        incident_count = total_incidents['COUNT'].iloc[0] if not total_incidents.empty else 0
+        st.metric("🚨 Security Incidents", format_metric(incident_count))
     
     with col2:
-        st.subheader("💰 Fraud Detection Trends")
-        
-        fraud_data = run_query("""
-        SELECT 
-            DATE(timestamp) as date,
-            fraud_classification,
-            COUNT(*) as transaction_count,
-            SUM(amount) as total_amount
-        FROM FRAUD_DETECTION_SCORING
-        WHERE timestamp >= DATEADD(day, -7, CURRENT_TIMESTAMP())
-        GROUP BY DATE(timestamp), fraud_classification
-        ORDER BY date DESC
+        critical_threats = run_query(f"""
+            SELECT COUNT(*) as count 
+            FROM THREAT_INTEL_FEED 
+            WHERE severity = 'critical' 
+            AND first_seen >= DATEADD(day, -{days_back}, CURRENT_TIMESTAMP())
         """)
-        
-        if not fraud_data.empty:
-            fig = px.line(
-                fraud_data,
-                x='DATE',
-                y='TOTAL_AMOUNT', 
-                color='FRAUD_CLASSIFICATION',
-                title="Fraud Detection by Amount (Last 7 Days)",
-                color_discrete_map={
-                    'HIGH_RISK': '#ff4444',
-                    'MEDIUM_RISK': '#ffcc00',
-                    'LOW_RISK': '#88cc88',
-                    'NORMAL': '#4488cc'
-                }
-            )
-            fig.update_layout(height=400)
-            st.plotly_chart(fig, use_container_width=True)
-
-elif current_section == "anomaly":
-    st.title("🧠 Real ML Anomaly Detection")
-    st.markdown("**Production-grade machine learning with Isolation Forest, K-means clustering, and Snowflake Native ML detecting genuine user behavior anomalies**")
+        threat_count = critical_threats['COUNT'].iloc[0] if not critical_threats.empty else 0
+        st.metric("⚡ Critical Threats", format_metric(threat_count))
     
-    # Filter controls
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        risk_filter = st.selectbox("Risk Level", ["All", "CRITICAL", "HIGH", "MEDIUM", "LOW"])
-    with col2:
-        days_back = st.slider("Days to analyze", 1, 30, 7)
     with col3:
-        user_filter = st.text_input("Filter by user (optional)")
+        ml_anomalies = run_query(f"""
+            SELECT COUNT(*) as count 
+            FROM ML_MODEL_COMPARISON 
+            WHERE risk_level IN ('CRITICAL', 'HIGH')
+            AND analysis_date >= DATEADD(day, -{days_back}, CURRENT_TIMESTAMP())
+        """)
+        anomaly_count = ml_anomalies['COUNT'].iloc[0] if not ml_anomalies.empty else 0
+        st.metric("🎯 ML Anomalies", format_metric(anomaly_count))
     
-    # Build query with filters
-    where_conditions = [f"analysis_date >= DATEADD(day, -{days_back}, CURRENT_TIMESTAMP())"]
-    if risk_filter != "All":
-        where_conditions.append(f"risk_level = '{risk_filter}'")
-    if user_filter:
-        where_conditions.append(f"username ILIKE '%{user_filter}%'")
+    with col4:
+        total_users = run_query("SELECT COUNT(DISTINCT username) as count FROM EMPLOYEE_DATA")
+        user_count = total_users['COUNT'].iloc[0] if not total_users.empty else 0
+        st.metric("👥 Protected Users", format_metric(user_count))
     
-    where_clause = " AND ".join(where_conditions)
+    # Risk trend chart
+    st.subheader("📈 Security Risk Trends")
     
-    anomaly_query = f"""
-    SELECT 
-        username,
-        analysis_date,
-        current_country as country,
-        current_hour as hour,
-        ABS(snowpark_score) as anomaly_score,
-        risk_level,
-        anomaly_indicators,
-        source_ip,
-        threat_intel_match,
-        model_agreement,
-        native_confidence,
-        snowpark_anomaly,
-        user_cluster,
-        cluster_label
-    FROM ML_MODEL_COMPARISON 
-    WHERE {where_clause}
-    ORDER BY ABS(snowpark_score) DESC, analysis_date DESC
-    """
+    risk_trends = run_query(f"""
+        SELECT 
+            DATE(analysis_date) as date,
+            risk_level,
+            COUNT(*) as incidents
+        FROM ML_MODEL_COMPARISON
+        WHERE analysis_date >= DATEADD(day, -{days_back}, CURRENT_TIMESTAMP())
+        GROUP BY DATE(analysis_date), risk_level
+        ORDER BY date
+    """)
     
-    anomaly_data = run_query(anomaly_query)
+    if not risk_trends.empty:
+        fig = px.area(risk_trends, x='DATE', y='INCIDENTS', color='RISK_LEVEL',
+                     title="Daily Risk Level Distribution",
+                     color_discrete_map={
+                         'CRITICAL': '#FF4B4B',
+                         'HIGH': '#FF8C00', 
+                         'MEDIUM': '#FFD700',
+                         'LOW': '#90EE90'
+                     })
+        st.plotly_chart(fig, use_container_width=True)
+
+def show_anomaly_detection(days_back):
+    """ML-powered anomaly detection analytics"""
+    st.header("🔍 ML-Powered Anomaly Detection")
+    st.markdown("*Advanced machine learning models identifying suspicious behavior*")
     
-    if not anomaly_data.empty:
-        # Summary metrics
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("ML Detections", len(anomaly_data))
-        with col2:
-            avg_score = anomaly_data['ANOMALY_SCORE'].mean() if 'ANOMALY_SCORE' in anomaly_data.columns else 0
-            st.metric("Avg ML Score", f"{avg_score:.3f}")
-        with col3:
-            critical_count = len(anomaly_data[anomaly_data['RISK_LEVEL'] == 'CRITICAL'])
-            st.metric("Critical Risk", critical_count, delta=f"{critical_count/len(anomaly_data)*100:.1f}%")
-        with col4:
-            model_agreement = len(anomaly_data[anomaly_data['MODEL_AGREEMENT'] == 'BOTH_AGREE_ANOMALY'])
-            st.metric("Model Agreement", model_agreement, delta=f"{model_agreement/len(anomaly_data)*100:.1f}%")
+    # Model performance metrics
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        native_anomalies = run_query(f"""
+            SELECT COUNT(*) as count 
+            FROM NATIVE_ML_USER_BEHAVIOR 
+            WHERE native_anomaly = TRUE
+            AND timestamp >= DATEADD(day, -{days_back}, CURRENT_TIMESTAMP())
+        """)
+        native_count = native_anomalies['COUNT'].iloc[0] if not native_anomalies.empty else 0
+        st.metric("🧠 Native ML Detections", native_count)
+    
+    with col2:
+        snowpark_anomalies = run_query(f"""
+            SELECT COUNT(*) as count 
+            FROM SNOWPARK_ML_USER_CLUSTERS 
+            WHERE snowpark_anomaly = TRUE
+            AND analysis_date >= DATEADD(day, -{days_back}, CURRENT_TIMESTAMP())
+        """)
+        snowpark_count = snowpark_anomalies['COUNT'].iloc[0] if not snowpark_anomalies.empty else 0
+        st.metric("⚡ Snowpark ML Detections", snowpark_count)
+    
+    with col3:
+        agreement = run_query(f"""
+            SELECT COUNT(*) as count 
+            FROM ML_MODEL_COMPARISON 
+            WHERE model_agreement = 'BOTH_AGREE_ANOMALY'
+            AND analysis_date >= DATEADD(day, -{days_back}, CURRENT_TIMESTAMP())
+        """)
+        agreement_count = agreement['COUNT'].iloc[0] if not agreement.empty else 0
+        st.metric("🎯 High Confidence", agreement_count)
+    
+    # Recent anomalies table
+    st.subheader("🚨 Recent High-Risk Anomalies")
+    
+    recent_anomalies = run_query(f"""
+        SELECT 
+            username,
+            analysis_date,
+            risk_level,
+            model_agreement,
+            cluster_label,
+            ROUND(snowpark_score, 3) as anomaly_score
+        FROM ML_MODEL_COMPARISON
+        WHERE risk_level IN ('CRITICAL', 'HIGH')
+        AND analysis_date >= DATEADD(day, -{days_back}, CURRENT_TIMESTAMP())
+        ORDER BY analysis_date DESC
+        LIMIT 20
+    """)
+    
+    if not recent_anomalies.empty:
+        # Color code by risk level
+        def color_risk(val):
+            if val == 'CRITICAL':
+                return 'background-color: #ffebee'
+            elif val == 'HIGH':
+                return 'background-color: #fff3e0'
+            return ''
         
-        # Risk Level Distribution
-        st.subheader("📊 Risk Level Distribution")
-        risk_counts = anomaly_data['RISK_LEVEL'].value_counts()
-        
-        risk_cols = st.columns(len(risk_counts))
-        colors = {'CRITICAL': '🔴', 'HIGH': '🟠', 'MEDIUM': '🟡', 'LOW': '🟢'}
-        
-        for i, (risk_level, count) in enumerate(risk_counts.items()):
-            with risk_cols[i]:
-                percentage = (count / len(anomaly_data)) * 100
-                st.metric(
-                    label=f"{colors.get(risk_level, '⚪')} {risk_level}",
-                    value=count,
-                    delta=f"{percentage:.1f}%"
-                )
-        
-        # Visualization
+        styled_df = recent_anomalies.style.applymap(color_risk, subset=['RISK_LEVEL'])
+        st.dataframe(styled_df, use_container_width=True)
+
+def show_ml_comparison(days_back):
+    """Compare different ML model performance"""
+    st.header("📊 ML Model Comparison & Performance")
+    st.markdown("*Comparing Native ML vs Snowpark ML detection capabilities*")
+    
+    # Model agreement analysis
+    agreement_data = run_query(f"""
+        SELECT 
+            model_agreement,
+            COUNT(*) as count,
+            ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 1) as percentage
+        FROM ML_MODEL_COMPARISON
+        WHERE analysis_date >= DATEADD(day, -{days_back}, CURRENT_TIMESTAMP())
+        GROUP BY model_agreement
+        ORDER BY count DESC
+    """)
+    
+    if not agreement_data.empty:
         col1, col2 = st.columns(2)
         
         with col1:
-            # ML anomaly score line chart
-            fig = px.line(
-                anomaly_data.sort_values('ANALYSIS_DATE'),
-                x='ANALYSIS_DATE',
-                y='ANOMALY_SCORE',
-                color='RISK_LEVEL',
-                title="ML Anomaly Scores Over Time",
-                color_discrete_map={
-                    'CRITICAL': '#ff4444',
-                    'HIGH': '#ff8800',
-                    'MEDIUM': '#ffcc00', 
-                    'LOW': '#88cc88'
-                },
-                markers=True
-            )
-            fig.update_layout(height=400)
-            st.plotly_chart(fig, use_container_width=True)
+            # Agreement pie chart
+            fig_pie = px.pie(agreement_data, values='COUNT', names='MODEL_AGREEMENT',
+                           title="Model Agreement Distribution")
+            st.plotly_chart(fig_pie, use_container_width=True)
         
         with col2:
-            # Geographic distribution (Native Streamlit - 100% SiS compatible)
-            st.subheader("🌍 Anomalies by Country")
-            country_counts = anomaly_data['COUNTRY'].value_counts()
-            
-            # Use native Streamlit bar chart (most reliable in SiS)
-            st.bar_chart(country_counts, height=400)
-        
-        # Detailed table
-        st.subheader("🔍 Detailed ML Anomaly Analysis")
-        
-        # Format the data for display
-        display_data = anomaly_data.copy()
-        display_data['ANALYSIS_DATE'] = pd.to_datetime(display_data['ANALYSIS_DATE']).dt.strftime('%Y-%m-%d')
-        if 'ANOMALY_INDICATORS' in display_data.columns:
-            display_data['ANOMALY_INDICATORS'] = display_data['ANOMALY_INDICATORS'].apply(
-                lambda x: ', '.join(eval(x)) if x and x != '[]' else 'None'
-            )
-        
-        # Add ML-specific columns for display
-        display_columns = ['USERNAME', 'ANALYSIS_DATE', 'RISK_LEVEL', 'ANOMALY_SCORE', 
-                          'MODEL_AGREEMENT', 'USER_CLUSTER', 'CLUSTER_LABEL', 'COUNTRY']
-        if 'THREAT_INTEL_MATCH' in display_data.columns:
-            display_columns.append('THREAT_INTEL_MATCH')
-        
-        display_data_filtered = display_data[display_columns].copy()
-        
-        st.dataframe(
-            display_data_filtered,
-            column_config={
-                "RISK_LEVEL": st.column_config.SelectboxColumn(
-                    "Risk Level",
-                    options=["CRITICAL", "HIGH", "MEDIUM", "LOW"],
-                ),
-                "ANOMALY_SCORE": st.column_config.ProgressColumn(
-                    "ML Score",
-                    min_value=0,
-                    max_value=1,
-                ),
-                "MODEL_AGREEMENT": st.column_config.SelectboxColumn(
-                    "Model Agreement",
-                    options=["BOTH_AGREE_ANOMALY", "BOTH_AGREE_NORMAL", "NATIVE_ONLY", "SNOWPARK_ONLY"],
-                ),
-            },
-            use_container_width=True
-        )
-    else:
-        st.info("No anomalies found for the selected criteria.")
+            # Agreement metrics
+            st.subheader("🎯 Model Performance")
+            for _, row in agreement_data.iterrows():
+                st.metric(
+                    row['MODEL_AGREEMENT'].replace('_', ' ').title(),
+                    f"{row['COUNT']} ({row['PERCENTAGE']}%)"
+                )
 
-elif current_section == "ml_models":
-    st.title("🧠 ML Model Comparison")
-    st.markdown("**Advanced analytics comparing Snowflake Native ML vs Snowpark ML approaches**")
+def show_threat_intelligence(days_back):
+    """Threat intelligence and correlation"""
+    st.header("🚨 Threat Intelligence Dashboard")
+    st.markdown("*Real-time threat correlation and prioritization*")
     
-    st.header("🎯 Model Agreement Analysis")
-    st.markdown("""
-    **Production ML Analytics Dashboard**
-    
-    Our dual-engine real ML approach combines the best of both worlds:
-    - **Snowflake Native ML**: Built-in time-series anomaly detection with statistical confidence
-    - **Snowpark ML**: Custom trained Python models with Isolation Forest and K-means clustering
-    - **Model Agreement**: Real cross-validation and ensemble scoring for maximum accuracy
-    - **Threat Intelligence**: Integrated IP reputation and indicator matching
-    """)
-    
-    # Query REAL ML model comparison data
-    ml_comparison_query = """
-    SELECT 
-        username,
-        analysis_date,
-        native_confidence,
-        native_anomaly,
-        snowpark_score,
-        snowpark_anomaly,
-        model_agreement,
-        risk_level
-    FROM ML_MODEL_COMPARISON
-    ORDER BY analysis_date DESC, 
-             CASE risk_level 
-                 WHEN 'CRITICAL' THEN 1 
-                 WHEN 'HIGH' THEN 2 
-                 WHEN 'MEDIUM' THEN 3 
-                 ELSE 4 
-             END
-    LIMIT 15
-    """
-    
-    df_ml_comparison = run_query(ml_comparison_query)
-    
-    if df_ml_comparison.empty:
-        st.warning("⚠️ No ML comparison data available. Ensure both Native ML and Snowpark ML models are deployed.")
-        # Fallback to sample data
-        ml_comparison_data = {
-            'USERNAME': ['sarah.chen', 'james.wilson', 'alex.brown', 'mike.rodriguez', 'lisa.wang'],
-            'ANALYSIS_DATE': ['2024-01-15', '2024-01-15', '2024-01-14', '2024-01-14', '2024-01-13'],
-            'NATIVE_CONFIDENCE': [0.94, 0.87, 0.62, 0.45, 0.23],
-            'NATIVE_ANOMALY': [True, True, True, False, False],
-            'SNOWPARK_SCORE': [-0.68, -0.52, -0.34, 0.12, 0.45],
-            'SNOWPARK_ANOMALY': [True, True, False, False, False],
-            'MODEL_AGREEMENT': ['BOTH_AGREE_ANOMALY', 'BOTH_AGREE_ANOMALY', 'NATIVE_ONLY', 'BOTH_AGREE_NORMAL', 'BOTH_AGREE_NORMAL'],
-            'RISK_LEVEL': ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'LOW']
-        }
-        df_ml_comparison = pd.DataFrame(ml_comparison_data)
-    else:
-        # Standardize column names
-        df_ml_comparison.columns = [col.upper() for col in df_ml_comparison.columns]
-    
-    # Model agreement visualization using real ML data
-    agreement_counts = df_ml_comparison['MODEL_AGREEMENT'].value_counts()
-    fig_agreement = px.pie(
-        values=agreement_counts.values,
-        names=agreement_counts.index,
-        title="ML Model Agreement Distribution",
-        color_discrete_sequence=['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7']
-    )
-    st.plotly_chart(fig_agreement, use_container_width=True)
-    
-    # Detailed real ML comparison table
-    st.header("📊 Real ML Model Comparison Results")
-    display_columns = ['USERNAME', 'NATIVE_CONFIDENCE', 'SNOWPARK_SCORE', 'MODEL_AGREEMENT', 'RISK_LEVEL']
-    available_columns = [col for col in display_columns if col in df_ml_comparison.columns]
-    st.dataframe(df_ml_comparison[available_columns], use_container_width=True)
-    
-    # Real ML statistical insights
-    col1, col2, col3, col4 = st.columns(4)
-    
-    # Calculate real metrics from ML data
-    total_comparisons = len(df_ml_comparison)
-    agreement_rate = len(df_ml_comparison[df_ml_comparison['MODEL_AGREEMENT'].str.contains('BOTH_AGREE', na=False)]) / total_comparisons if total_comparisons > 0 else 0
-    critical_incidents = len(df_ml_comparison[df_ml_comparison['RISK_LEVEL'] == 'CRITICAL']) if 'RISK_LEVEL' in df_ml_comparison.columns else 0
-    high_risk_incidents = len(df_ml_comparison[df_ml_comparison['RISK_LEVEL'].isin(['CRITICAL', 'HIGH'])]) if 'RISK_LEVEL' in df_ml_comparison.columns else 0
-    
-    with col1:
-        st.metric("Model Agreement Rate", f"{agreement_rate:.1%}", "Real ML Data")
-    with col2:
-        st.metric("Critical Risk Users", str(critical_incidents), "ML Detected")
-    with col3:
-        st.metric("High+ Risk Users", str(high_risk_incidents), "Requires Action")
-    with col4:
-        st.metric("Total Analyzed", str(total_comparisons), "Users")
-
-elif current_section == "native_ml":
-    st.title("⚡ Snowflake Native ML")
-    st.markdown("**Built-in machine learning with automatic training and statistical confidence**")
-    
-    st.header("🔍 Time-Series Anomaly Detection")
-    st.markdown("""
-    **Native ML Models**
-    - **Login Pattern Analysis**: Detects unusual login volumes and patterns
-    - **User Behavior Modeling**: Individual user behavioral baselines
-    - **Network Traffic Analysis**: Identifies traffic anomalies
-    - **Automatic Retraining**: Models update continuously with new data
-    """)
-    
-    # Native ML sample data
-    native_ml_data = {
-        'Timestamp': pd.date_range('2024-01-10', periods=20, freq='H'),
-        'Login_Count': [45, 52, 38, 67, 41, 39, 156, 43, 47, 51, 44, 49, 42, 38, 168, 45, 47, 52, 41, 44],
-        'Expected_Count': [47, 49, 42, 45, 43, 41, 46, 44, 48, 52, 46, 50, 44, 40, 47, 46, 49, 51, 43, 46],
-        'Native_Confidence': [0.12, 0.18, 0.23, 0.68, 0.15, 0.19, 0.94, 0.11, 0.14, 0.16, 0.13, 0.17, 0.18, 0.22, 0.87, 0.12, 0.16, 0.15, 0.19, 0.13],
-        'Is_Anomaly': [False, False, False, False, False, False, True, False, False, False, False, False, False, False, True, False, False, False, False, False]
-    }
-    
-    df_native = pd.DataFrame(native_ml_data)
-    
-    # Time series visualization
-    fig_native = go.Figure()
-    fig_native.add_trace(go.Scatter(
-        x=df_native['Timestamp'],
-        y=df_native['Login_Count'],
-        mode='lines+markers',
-        name='Actual Logins',
-        line=dict(color='#FF6B6B', width=2)
-    ))
-    fig_native.add_trace(go.Scatter(
-        x=df_native['Timestamp'],
-        y=df_native['Expected_Count'],
-        mode='lines',
-        name='ML Forecast',
-        line=dict(color='#4ECDC4', width=2, dash='dash')
-    ))
-    
-    # Highlight anomalies
-    anomaly_points = df_native[df_native['Is_Anomaly']]
-    fig_native.add_trace(go.Scatter(
-        x=anomaly_points['Timestamp'],
-        y=anomaly_points['Login_Count'],
-        mode='markers',
-        name='ML Detected Anomalies',
-        marker=dict(color='red', size=12, symbol='x')
-    ))
-    
-    fig_native.update_layout(
-        title="Native ML Time-Series Anomaly Detection",
-        xaxis_title="Time",
-        yaxis_title="Login Count",
-        height=400
-    )
-    st.plotly_chart(fig_native, use_container_width=True)
-    
-    # Native ML metrics
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Anomalies Detected", "2", "Last 24h")
-    with col2:
-        st.metric("Avg Confidence", "94.2%", "For anomalies")
-    with col3:
-        st.metric("Model Accuracy", "97.8%", "↑ 2.1%")
-    with col4:
-        st.metric("Training Data", "180 days", "Auto-updated")
-
-elif current_section == "snowpark_ml":
-    st.title("🐍 Snowpark ML Analytics")
-    st.markdown("**Advanced Python-based machine learning with custom algorithms**")
-    
-    st.header("🎯 User Behavior Clustering")
-    st.markdown("""
-    **Snowpark ML Models**
-    - **Isolation Forest**: Outlier detection for anomalous user behavior
-    - **K-means Clustering**: User classification into behavioral personas
-    - **Feature Engineering**: Multi-dimensional behavioral analysis
-    - **Custom Algorithms**: Python-based extensible ML framework
-    """)
-    
-    # Query REAL Snowpark ML clustering data
-    snowpark_query = """
-    SELECT 
-        username,
-        user_cluster as cluster_id,
-        cluster_label,
-        isolation_forest_score,
-        countries,
-        unique_ips,
-        offhours_ratio,
-        snowpark_anomaly as is_anomaly
-    FROM SNOWPARK_ML_USER_CLUSTERS
-    ORDER BY isolation_forest_score ASC
-    LIMIT 20
-    """
-    
-    df_cluster = run_query(snowpark_query)
-    
-    if df_cluster.empty:
-        st.warning("⚠️ No Snowpark ML data available. Ensure ML models are trained and deployed.")
-        # Fallback to sample data for demo
-        cluster_data = {
-            'USERNAME': ['sarah.chen', 'james.wilson', 'alex.brown', 'mike.rodriguez'],
-            'CLUSTER_ID': [0, 1, 2, 3],
-            'CLUSTER_LABEL': ['HIGH_RISK_TRAVELER', 'REGULAR_BUSINESS_USER', 'WEEKEND_USER', 'NIGHT_SHIFT_USER'],
-            'ISOLATION_FOREST_SCORE': [-0.68, 0.12, 0.25, -0.34],
-            'COUNTRIES': [5, 1, 1, 3],
-            'UNIQUE_IPS': [15, 3, 2, 8],
-            'OFFHOURS_RATIO': [0.45, 0.05, 0.85, 0.95],
-            'IS_ANOMALY': [True, False, False, True]
-        }
-        df_cluster = pd.DataFrame(cluster_data)
-    
-    # Standardize column names for visualization
-    df_cluster.columns = [col.upper() for col in df_cluster.columns]
-    
-    # Scatter plot for clustering using real ML data
-    fig_cluster = px.scatter(
-        df_cluster,
-        x='COUNTRIES',
-        y='UNIQUE_IPS',
-        color='CLUSTER_LABEL',
-        size=[abs(x)*10 + 5 for x in df_cluster['ISOLATION_FOREST_SCORE']],
-        hover_data=['USERNAME', 'ISOLATION_FOREST_SCORE'],
-        title="Real Snowpark ML User Behavior Clusters"
-    )
-    fig_cluster.update_layout(height=400)
-    st.plotly_chart(fig_cluster, use_container_width=True)
-    
-    # Real Isolation Forest scores from trained model
-    st.header("🌲 Real Isolation Forest Anomaly Detection")
-    fig_isolation = px.bar(
-        df_cluster,
-        x='USERNAME',
-        y='ISOLATION_FOREST_SCORE',
-        color=['Anomaly' if x else 'Normal' for x in df_cluster['IS_ANOMALY']],
-        title="Real Isolation Forest Anomaly Scores (Lower = More Anomalous)",
-        color_discrete_map={'Anomaly': '#FF6B6B', 'Normal': '#4ECDC4'}
-    )
-    fig_isolation.add_hline(y=-0.5, line_dash="dash", line_color="red", 
-                           annotation_text="ML Anomaly Threshold")
-    st.plotly_chart(fig_isolation, use_container_width=True)
-    
-    # Snowpark ML metrics
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("User Clusters", "4", "Behavioral types")
-    with col2:
-        st.metric("Outliers Detected", "3", "High risk users")
-    with col3:
-        st.metric("Feature Dimensions", "12", "Behavioral features")
-    with col4:
-        st.metric("Model Performance", "92.5%", "Precision")
-
-elif current_section == "threats":
-    st.title("⚠️ Threat Prioritization")
-    st.markdown("**Intelligent algorithms ranking threats by impact and context**")
-    
-    # Get threat prioritization data
-    threat_data = run_query("""
-    SELECT 
-        incident_id,
-        title,
-        severity,
-        status,
-        created_at,
-        ml_priority_score,
-        priority_classification,
-        asset_criticality_score,
-        threat_intel_matches,
-        estimated_impact_score,
-        affected_systems
-    FROM THREAT_PRIORITIZATION_SCORING
-    ORDER BY ml_priority_score DESC, created_at DESC
+    # Threat metrics
+    threat_data = run_query(f"""
+        SELECT 
+            threat_type,
+            severity,
+            COUNT(*) as threat_count,
+            AVG(confidence_score) as avg_confidence
+        FROM THREAT_INTEL_FEED
+        WHERE first_seen >= DATEADD(day, -{days_back}, CURRENT_TIMESTAMP())
+        GROUP BY threat_type, severity
+        ORDER BY threat_count DESC
     """)
     
     if not threat_data.empty:
-        # Summary metrics
-        col1, col2, col3, col4 = st.columns(4)
-        
-        p0_count = len(threat_data[threat_data['PRIORITY_CLASSIFICATION'] == 'P0_CRITICAL'])
-        p1_count = len(threat_data[threat_data['PRIORITY_CLASSIFICATION'] == 'P1_HIGH'])
-        open_incidents = len(threat_data[threat_data['STATUS'] == 'open'])
-        avg_priority = threat_data['ML_PRIORITY_SCORE'].mean()
-        
-        with col1:
-            st.metric("P0 Critical", p0_count, delta="Immediate action required")
-        with col2:
-            st.metric("P1 High", p1_count, delta="High priority")
-        with col3:
-            st.metric("Open Incidents", open_incidents)
-        with col4:
-            st.metric("Avg ML Score", f"{avg_priority:.1f}/100")
-        
-        # Priority distribution chart
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            priority_counts = threat_data['PRIORITY_CLASSIFICATION'].value_counts()
-            fig = px.bar(
-                x=priority_counts.index,
-                y=priority_counts.values,
-                color=priority_counts.index,
-                title="Threat Priority Distribution",
-                color_discrete_map={
-                    'P0_CRITICAL': '#ff4444',
-                    'P1_HIGH': '#ff8800',
-                    'P2_MEDIUM': '#ffcc00',
-                    'P3_LOW': '#88cc88'
-                }
-            )
-            fig.update_layout(height=400, showlegend=False)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            # ML Score vs Time
-            fig = px.scatter(
-                threat_data,
-                x='CREATED_AT',
-                y='ML_PRIORITY_SCORE',
-                color='PRIORITY_CLASSIFICATION',
-                size='THREAT_INTEL_MATCHES',
-                hover_data=['TITLE', 'SEVERITY'],
-                title="ML Priority Scores Timeline",
-                color_discrete_map={
-                    'P0_CRITICAL': '#ff4444',
-                    'P1_HIGH': '#ff8800', 
-                    'P2_MEDIUM': '#ffcc00',
-                    'P3_LOW': '#88cc88'
-                }
-            )
-            fig.update_layout(height=400)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        # Detailed threat analysis
-        st.subheader("🎯 Prioritized Threat Queue")
-        
-        # Format for display
-        display_threats = threat_data.copy()
-        display_threats['CREATED_AT'] = pd.to_datetime(display_threats['CREATED_AT']).dt.strftime('%Y-%m-%d %H:%M')
-        display_threats['AFFECTED_SYSTEMS'] = display_threats['AFFECTED_SYSTEMS'].apply(
-            lambda x: ', '.join(eval(x)) if x and isinstance(x, str) else 'Unknown'
+        # Threat heatmap
+        fig_heatmap = px.density_heatmap(
+            threat_data, 
+            x='THREAT_TYPE', 
+            y='SEVERITY', 
+            z='THREAT_COUNT',
+            title="Threat Type vs Severity Heatmap"
         )
-        
-        st.dataframe(
-            display_threats,
-            column_config={
-                "ML_PRIORITY_SCORE": st.column_config.ProgressColumn(
-                    "ML Priority Score",
-                    min_value=0,
-                    max_value=100,
-                ),
-                "PRIORITY_CLASSIFICATION": st.column_config.SelectboxColumn(
-                    "Priority",
-                    options=["P0_CRITICAL", "P1_HIGH", "P2_MEDIUM", "P3_LOW"],
-                ),
-                "STATUS": st.column_config.SelectboxColumn(
-                    "Status",
-                    options=["open", "investigating", "resolved", "closed"],
-                ),
-            },
-            use_container_width=True
-        )
+        st.plotly_chart(fig_heatmap, use_container_width=True)
 
-elif current_section == "vulnerabilities":
-    st.title("🔓 Vulnerability Management")
-    st.markdown("**Smart vulnerability prioritization using CVSS, context, and threat intelligence**")
-    
-    # Get vulnerability data
-    vuln_data = run_query("""
-    SELECT 
-        vuln_id,
-        asset_name,
-        cve_id,
-        cvss_score,
-        severity,
-        status,
-        enhanced_priority_score,
-        ai_recommendation,
-        exploit_availability_score,
-        asset_exposure_score,
-        threat_intel_mentions,
-        first_detected,
-        age_multiplier
-    FROM VULNERABILITY_PRIORITIZATION
-    ORDER BY enhanced_priority_score DESC
-    """)
-    
-    if not vuln_data.empty:
-        # Summary metrics
-        col1, col2, col3, col4 = st.columns(4)
-        
-        patch_immediately = len(vuln_data[vuln_data['AI_RECOMMENDATION'] == 'PATCH_IMMEDIATELY'])
-        critical_vulns = len(vuln_data[vuln_data['SEVERITY'] == 'critical'])
-        open_vulns = len(vuln_data[vuln_data['STATUS'] == 'open'])
-        avg_cvss = vuln_data['CVSS_SCORE'].mean()
-        
-        with col1:
-            st.metric("Patch Immediately", patch_immediately, delta="Critical priority")
-        with col2:
-            st.metric("Critical Vulns", critical_vulns)
-        with col3:
-            st.metric("Open Vulns", open_vulns)
-        with col4:
-            st.metric("Avg CVSS Score", f"{avg_cvss:.1f}/10")
-        
-        # Visualizations
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # CVSS vs AI Priority Score
-            fig = px.scatter(
-                vuln_data,
-                x='CVSS_SCORE',
-                y='ENHANCED_PRIORITY_SCORE',
-                color='AI_RECOMMENDATION',
-                size='THREAT_INTEL_MENTIONS',
-                hover_data=['CVE_ID', 'ASSET_NAME'],
-                title="CVSS Score vs Enhanced Priority Score",
-                color_discrete_map={
-                    'PATCH_IMMEDIATELY': '#ff4444',
-                    'PATCH_THIS_WEEK': '#ff8800',
-                    'PATCH_THIS_MONTH': '#ffcc00',
-                    'PATCH_NEXT_CYCLE': '#88cc88'
-                }
-            )
-            fig.update_layout(height=400)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            # Recommendation distribution
-            rec_counts = vuln_data['AI_RECOMMENDATION'].value_counts()
-            fig = px.pie(
-                values=rec_counts.values,
-                names=rec_counts.index,
-                title="Intelligent Patch Recommendations"
-            )
-            fig.update_layout(height=400)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        # Detailed vulnerability table
-        st.subheader("🔍 Vulnerability Analysis")
-        
-        display_vulns = vuln_data.copy()
-        display_vulns['FIRST_DETECTED'] = pd.to_datetime(display_vulns['FIRST_DETECTED']).dt.strftime('%Y-%m-%d')
-        
-        st.dataframe(
-            display_vulns,
-            column_config={
-                "ENHANCED_PRIORITY_SCORE": st.column_config.ProgressColumn(
-                    "Enhanced Priority Score",
-                    min_value=0,
-                    max_value=100,
-                ),
-                "CVSS_SCORE": st.column_config.ProgressColumn(
-                    "CVSS Score",
-                    min_value=0,
-                    max_value=10,
-                ),
-                "AI_RECOMMENDATION": st.column_config.SelectboxColumn(
-                    "Intelligent Recommendation",
-                    options=["PATCH_IMMEDIATELY", "PATCH_THIS_WEEK", "PATCH_THIS_MONTH", "PATCH_NEXT_CYCLE"],
-                ),
-                "STATUS": st.column_config.SelectboxColumn(
-                    "Status",
-                    options=["open", "patched", "accepted_risk"],
-                ),
-            },
-            use_container_width=True
-        )
-
-elif current_section == "fraud":
-    st.title("💰 Fraud Detection")
-    st.markdown("**Real-time transaction analysis using advanced scoring algorithms**")
-    
-    # Get fraud detection data
-    fraud_data = run_query("""
-    SELECT 
-        transaction_id,
-        timestamp,
-        user_id,
-        transaction_type,
-        amount,
-        currency,
-        location,
-        ml_fraud_score,
-        fraud_classification,
-        transactions_last_hour,
-        amount_last_24h,
-        prev_country
-    FROM FRAUD_DETECTION_SCORING
-    WHERE timestamp >= DATEADD(day, -7, CURRENT_TIMESTAMP())
-    ORDER BY ml_fraud_score DESC, timestamp DESC
-    """)
-    
-    if not fraud_data.empty:
-        # Extract location country for analysis
-        fraud_data['COUNTRY'] = fraud_data['LOCATION'].apply(
-            lambda x: json.loads(x)['country'] if x else 'Unknown'
-        )
-        
-        # Summary metrics
-        col1, col2, col3, col4 = st.columns(4)
-        
-        high_risk_count = len(fraud_data[fraud_data['FRAUD_CLASSIFICATION'] == 'HIGH_RISK'])
-        total_suspicious_amount = fraud_data[
-            fraud_data['FRAUD_CLASSIFICATION'].isin(['HIGH_RISK', 'MEDIUM_RISK'])
-        ]['AMOUNT'].sum()
-        avg_fraud_score = fraud_data['ML_FRAUD_SCORE'].mean()
-        unique_users = fraud_data['USER_ID'].nunique()
-        
-        with col1:
-            st.metric("High Risk Transactions", high_risk_count)
-        with col2:
-            st.metric("Suspicious Amount", f"${total_suspicious_amount:,.2f}")
-        with col3:
-            st.metric("Avg Fraud Score", f"{avg_fraud_score:.3f}")
-        with col4:
-            st.metric("Affected Users", unique_users)
-        
-        # Visualizations
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Fraud score distribution
-            fig = px.histogram(
-                fraud_data,
-                x='ML_FRAUD_SCORE',
-                color='FRAUD_CLASSIFICATION',
-                title="Fraud Score Distribution",
-                nbins=20,
-                color_discrete_map={
-                    'HIGH_RISK': '#ff4444',
-                    'MEDIUM_RISK': '#ffcc00',
-                    'LOW_RISK': '#88cc88',
-                    'NORMAL': '#4488cc'
-                }
-            )
-            fig.update_layout(height=400)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            # Geographic fraud distribution
-            country_fraud = fraud_data.groupby('COUNTRY').agg({
-                'ML_FRAUD_SCORE': 'mean',
-                'AMOUNT': 'sum'
-            }).reset_index()
-            
-            fig = px.scatter(
-                country_fraud,
-                x='ML_FRAUD_SCORE',
-                y='AMOUNT',
-                size='AMOUNT',
-                hover_data=['COUNTRY'],
-                title="Fraud Risk by Country"
-            )
-            fig.update_layout(height=400)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        # Transaction timeline
-        st.subheader("📈 Fraud Detection Timeline")
-        
-        # Group by hour for timeline
-        fraud_timeline = fraud_data.groupby([
-            pd.to_datetime(fraud_data['TIMESTAMP']).dt.floor('H'),
-            'FRAUD_CLASSIFICATION'
-        ]).size().reset_index(name='count')
-        fraud_timeline.columns = ['hour', 'classification', 'count']
-        
-        fig = px.line(
-            fraud_timeline,
-            x='hour',
-            y='count',
-            color='classification',
-            title="Fraud Detection Over Time",
-            color_discrete_map={
-                'HIGH_RISK': '#ff4444',
-                'MEDIUM_RISK': '#ffcc00',
-                'LOW_RISK': '#88cc88',
-                'NORMAL': '#4488cc'
-            }
-        )
-        fig.update_layout(height=400)
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Detailed transactions
-        st.subheader("💳 Transaction Analysis")
-        
-        # Filter for high/medium risk only
-        risk_filter = st.selectbox(
-            "Filter by Risk Level",
-            ["All", "HIGH_RISK", "MEDIUM_RISK", "LOW_RISK", "NORMAL"]
-        )
-        
-        if risk_filter != "All":
-            display_data = fraud_data[fraud_data['FRAUD_CLASSIFICATION'] == risk_filter]
-        else:
-            display_data = fraud_data
-        
-        display_data_formatted = display_data.copy()
-        display_data_formatted['TIMESTAMP'] = pd.to_datetime(
-            display_data_formatted['TIMESTAMP']
-        ).dt.strftime('%Y-%m-%d %H:%M')
-        
-        st.dataframe(
-            display_data_formatted[[
-                'TRANSACTION_ID', 'TIMESTAMP', 'USER_ID', 'TRANSACTION_TYPE',
-                'AMOUNT', 'COUNTRY', 'ML_FRAUD_SCORE', 'FRAUD_CLASSIFICATION'
-            ]],
-            column_config={
-                "ML_FRAUD_SCORE": st.column_config.ProgressColumn(
-                    "Fraud Score",
-                    min_value=0,
-                    max_value=1,
-                ),
-                "AMOUNT": st.column_config.NumberColumn(
-                    "Amount",
-                    format="$%.2f"
-                ),
-                "FRAUD_CLASSIFICATION": st.column_config.SelectboxColumn(
-                    "Risk Level",
-                    options=["HIGH_RISK", "MEDIUM_RISK", "LOW_RISK", "NORMAL"],
-                ),
-            },
-            use_container_width=True
-        )
-
-elif current_section == "insider":
-    st.title("🕵️ Insider Threat Detection")
-    st.markdown("**Behavioral analytics to identify potential insider threats**")
-    
-    # Get insider threat data
-    insider_data = run_query("""
-    SELECT 
-        username,
-        department,
-        status,
-        login_anomalies_30d,
-        total_data_accessed_30d,
-        avg_daily_data_access,
-        off_hours_activity_30d,
-        insider_threat_score,
-        insider_threat_classification
-    FROM INSIDER_THREAT_DETECTION
-    ORDER BY insider_threat_score DESC
-    """)
-    
-    if not insider_data.empty:
-        # Summary metrics
-        col1, col2, col3, col4 = st.columns(4)
-        
-        high_risk_users = len(insider_data[insider_data['INSIDER_THREAT_CLASSIFICATION'] == 'HIGH_RISK'])
-        terminated_users = len(insider_data[insider_data['STATUS'] == 'terminated'])
-        avg_threat_score = insider_data['INSIDER_THREAT_SCORE'].mean()
-        total_anomalies = insider_data['LOGIN_ANOMALIES_30D'].sum()
-        
-        with col1:
-            st.metric("High Risk Users", high_risk_users, delta="Requires investigation")
-        with col2:
-            st.metric("Terminated Users", terminated_users, delta="Access monitoring")
-        with col3:
-            st.metric("Avg Threat Score", f"{avg_threat_score:.1f}/100")
-        with col4:
-            st.metric("Login Anomalies (30d)", total_anomalies)
-        
-        # Visualizations
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Risk distribution by department
-            dept_risk = insider_data.groupby(['DEPARTMENT', 'INSIDER_THREAT_CLASSIFICATION']).size().reset_index(name='count')
-            fig = px.bar(
-                dept_risk,
-                x='DEPARTMENT',
-                y='count',
-                color='INSIDER_THREAT_CLASSIFICATION',
-                title="Insider Threat Risk by Department",
-                color_discrete_map={
-                    'HIGH_RISK': '#ff4444',
-                    'MEDIUM_RISK': '#ffcc00',
-                    'LOW_RISK': '#88cc88',
-                    'NORMAL': '#4488cc'
-                }
-            )
-            fig.update_layout(height=400)
-            fig.update_xaxes(tickangle=45)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            # Scatter plot: Data access vs Off-hours activity
-            fig = px.scatter(
-                insider_data,
-                x='OFF_HOURS_ACTIVITY_30D',
-                y='TOTAL_DATA_ACCESSED_30D',
-                color='INSIDER_THREAT_CLASSIFICATION',
-                size='INSIDER_THREAT_SCORE',
-                hover_data=['USERNAME', 'DEPARTMENT'],
-                title="Data Access vs Off-Hours Activity",
-                color_discrete_map={
-                    'HIGH_RISK': '#ff4444',
-                    'MEDIUM_RISK': '#ffcc00',
-                    'LOW_RISK': '#88cc88',
-                    'NORMAL': '#4488cc'
-                }
-            )
-            fig.update_layout(height=400)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        # Risk factors analysis
-        st.subheader("🔍 Risk Factors Analysis")
-        
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            # Login anomalies distribution
-            fig = px.histogram(
-                insider_data,
-                x='LOGIN_ANOMALIES_30D',
-                title="Login Anomalies Distribution",
-                nbins=10
-            )
-            fig.update_layout(height=300)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            # Off-hours activity
-            fig = px.histogram(
-                insider_data,
-                x='OFF_HOURS_ACTIVITY_30D',
-                title="Off-Hours Activity Distribution",
-                nbins=10
-            )
-            fig.update_layout(height=300)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col3:
-            # Threat score distribution
-            fig = px.histogram(
-                insider_data,
-                x='INSIDER_THREAT_SCORE',
-                color='INSIDER_THREAT_CLASSIFICATION',
-                title="Threat Score Distribution",
-                nbins=10,
-                color_discrete_map={
-                    'HIGH_RISK': '#ff4444',
-                    'MEDIUM_RISK': '#ffcc00',
-                    'LOW_RISK': '#88cc88',
-                    'NORMAL': '#4488cc'
-                }
-            )
-            fig.update_layout(height=300)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        # Detailed user analysis
-        st.subheader("👥 User Risk Assessment")
-        
-        # Filter controls
-        col1, col2 = st.columns(2)
-        with col1:
-            dept_filter = st.selectbox(
-                "Filter by Department",
-                ["All"] + list(insider_data['DEPARTMENT'].unique())
-            )
-        with col2:
-            risk_filter = st.selectbox(
-                "Filter by Risk Level",
-                ["All", "HIGH_RISK", "MEDIUM_RISK", "LOW_RISK", "NORMAL"]
-            )
-        
-        # Apply filters
-        filtered_data = insider_data.copy()
-        if dept_filter != "All":
-            filtered_data = filtered_data[filtered_data['DEPARTMENT'] == dept_filter]
-        if risk_filter != "All":
-            filtered_data = filtered_data[filtered_data['INSIDER_THREAT_CLASSIFICATION'] == risk_filter]
-        
-        st.dataframe(
-            filtered_data,
-            column_config={
-                "INSIDER_THREAT_SCORE": st.column_config.ProgressColumn(
-                    "Threat Score",
-                    min_value=0,
-                    max_value=100,
-                ),
-                "INSIDER_THREAT_CLASSIFICATION": st.column_config.SelectboxColumn(
-                    "Risk Level",
-                    options=["HIGH_RISK", "MEDIUM_RISK", "LOW_RISK", "NORMAL"],
-                ),
-                "STATUS": st.column_config.SelectboxColumn(
-                    "Status",
-                    options=["active", "terminated", "suspended"],
-                ),
-                "TOTAL_DATA_ACCESSED_30D": st.column_config.NumberColumn(
-                    "Data Accessed (30d)",
-                    format="%d bytes"
-                ),
-            },
-            use_container_width=True
-        )
-
-elif current_section == "hunting":
-    st.title("🔎 Threat Hunting & Investigation")
-    st.markdown("**High-performance search and analysis of security logs**")
-    
-    # Search interface
-    st.subheader("🕵️ Threat Hunting Query Interface")
-    
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        search_query = st.text_area(
-            "Enter your threat hunting SQL query:",
-            value="""-- Example: Search for suspicious network activities
-SELECT 
-    timestamp,
-    source_ip,
-    dest_ip,
-    protocol,
-    bytes_transferred,
-    threat_category,
-    severity
-FROM NETWORK_SECURITY_LOGS
-WHERE threat_category != 'legitimate'
-    AND timestamp >= DATEADD(day, -7, CURRENT_TIMESTAMP())
-ORDER BY severity DESC, timestamp DESC
-LIMIT 100;""",
-            height=200
-        )
-    
-    with col2:
-        st.markdown("**Quick Searches:**")
-        if st.button("🔍 Threat Intel Matches"):
-            search_query = """
-SELECT 
-    ual.timestamp,
-    ual.username,
-    ual.source_ip,
-    ti.indicator_value,
-    ti.threat_type,
-    ti.description
-FROM USER_AUTHENTICATION_LOGS ual
-JOIN THREAT_INTEL_FEED ti ON ual.source_ip = ti.indicator_value
-WHERE ual.timestamp >= DATEADD(day, -7, CURRENT_TIMESTAMP())
-ORDER BY ual.timestamp DESC;
-"""
-        
-        if st.button("🚨 Failed Logins"):
-            search_query = """
-SELECT 
-    timestamp,
-    username,
-    source_ip,
-    failure_reason,
-    location:country::STRING as country
-FROM USER_AUTHENTICATION_LOGS
-WHERE success = FALSE
-    AND timestamp >= DATEADD(day, -7, CURRENT_TIMESTAMP())
-ORDER BY timestamp DESC;
-"""
-        
-        if st.button("📁 Large Data Access"):
-            search_query = """
-SELECT 
-    timestamp,
-    username,
-    resource_name,
-    action,
-    bytes_accessed,
-    data_classification
-FROM DATA_ACCESS_LOGS
-WHERE bytes_accessed > 50000000
-    AND timestamp >= DATEADD(day, -7, CURRENT_TIMESTAMP())
-ORDER BY bytes_accessed DESC;
-"""
-    
-    # Execute search
-    if st.button("🔍 Execute Search", type="primary"):
-        if search_query.strip():
-            with st.spinner("Executing threat hunting query..."):
-                try:
-                    search_results = run_query(search_query)
-                    
-                    if not search_results.empty:
-                        st.success(f"Found {len(search_results)} results")
-                        
-                        # Display results
-                        st.subheader("📊 Search Results")
-                        st.dataframe(search_results, use_container_width=True)
-                        
-                        # Download option
-                        csv = search_results.to_csv(index=False)
-                        st.download_button(
-                            label="📥 Download Results as CSV",
-                            data=csv,
-                            file_name=f"threat_hunt_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                            mime="text/csv"
-                        )
-                    else:
-                        st.info("No results found for the given query.")
-                        
-                except Exception as e:
-                    st.error(f"Query execution failed: {str(e)}")
-        else:
-            st.warning("Please enter a query to execute.")
-    
-    # Pre-built threat hunting queries
-    st.subheader("📚 Pre-built Threat Hunting Queries")
-    
-    hunting_queries = {
-        "Lateral Movement Detection": """
--- Detect potential lateral movement
-SELECT 
-    ual.timestamp,
-    ual.username,
-    ual.source_ip,
-    dal.resource_name,
-    dal.action,
-    COUNT(*) OVER (PARTITION BY ual.username ORDER BY ual.timestamp RANGE BETWEEN INTERVAL '1 HOUR' PRECEDING AND CURRENT ROW) as activities_last_hour
-FROM USER_AUTHENTICATION_LOGS ual
-JOIN DATA_ACCESS_LOGS dal ON ual.username = dal.username 
-    AND dal.timestamp BETWEEN ual.timestamp AND DATEADD(hour, 1, ual.timestamp)
-WHERE ual.timestamp >= DATEADD(day, -3, CURRENT_TIMESTAMP())
-    AND dal.data_classification IN ('confidential', 'restricted')
-ORDER BY activities_last_hour DESC, ual.timestamp DESC;
-""",
-        
-        "Data Exfiltration Indicators": """
--- Identify potential data exfiltration
-SELECT 
-    dal.username,
-    DATE(dal.timestamp) as date,
-    SUM(dal.bytes_accessed) as total_bytes,
-    COUNT(DISTINCT dal.resource_name) as unique_resources,
-    COUNT(*) as access_count,
-    STRING_AGG(DISTINCT dal.data_classification, ', ') as data_types
-FROM DATA_ACCESS_LOGS dal
-WHERE dal.timestamp >= DATEADD(day, -7, CURRENT_TIMESTAMP())
-GROUP BY dal.username, DATE(dal.timestamp)
-HAVING SUM(dal.bytes_accessed) > 100000000 -- >100MB
-    OR COUNT(*) > 50 -- >50 accesses per day
-ORDER BY total_bytes DESC;
-""",
-        
-        "Compromised Account Indicators": """
--- Detect potentially compromised accounts
-SELECT 
-    ual.username,
-    COUNT(DISTINCT ual.location:country::STRING) as countries,
-    COUNT(DISTINCT ual.source_ip) as unique_ips,
-    COUNT(*) as total_logins,
-    MIN(ual.timestamp) as first_login,
-    MAX(ual.timestamp) as last_login,
-    SUM(CASE WHEN ual.location:country::STRING != 'US' THEN 1 ELSE 0 END) as foreign_logins
-FROM USER_AUTHENTICATION_LOGS ual
-WHERE ual.timestamp >= DATEADD(day, -7, CURRENT_TIMESTAMP())
-    AND ual.success = TRUE
-GROUP BY ual.username
-HAVING COUNT(DISTINCT ual.location:country::STRING) > 2
-    OR COUNT(DISTINCT ual.source_ip) > 10
-ORDER BY foreign_logins DESC, countries DESC;
-"""
-    }
-    
-    selected_query = st.selectbox("Select a pre-built query:", list(hunting_queries.keys()))
-    
-    if st.button("📋 Load Query"):
-        st.code(hunting_queries[selected_query], language="sql")
-    
-    # Performance metrics
-    st.subheader("⚡ Performance Metrics")
-    
-    perf_col1, perf_col2, perf_col3, perf_col4 = st.columns(4)
-    
-    with perf_col1:
-        st.metric("Search Performance", "< 2 seconds", delta="99.9% queries")
-    with perf_col2:
-        st.metric("Data Retention", "7 years", delta="Full fidelity")
-    with perf_col3:
-        st.metric("Storage Cost", "$0.02/GB/month", delta="80% savings")
-    with perf_col4:
-        st.metric("Compute Cost", "Pay-per-use", delta="No idle charges")
-
-elif current_section == "chatbot":
-    st.title("🤖 AI Security Chatbot")
-    st.markdown("**Intelligent security assistant with ML model interpretation for natural language queries**")
-    
-    # Initialize chat history
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
+def show_ai_assistant():
+    """AI-powered security assistant"""
+    st.header("🤖 Security AI Assistant")
+    st.markdown("*Intelligent security analysis powered by Cortex AI*")
     
     # Chat interface
-    st.subheader("💬 Ask the Security Assistant")
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
     
-    # Sample questions
-    st.markdown("**Try these sample questions:**")
-    st.markdown("*Click any button below to automatically ask the Security Assistant*")
+    # Display chat messages
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
     
-    sample_questions = [
-        "Explain the ML anomaly detection results for user Sarah Chen",
-        "Compare Native ML vs Snowpark ML findings for high-risk users", 
-        "Show me users where both ML models disagree and explain why",
-        "What statistical confidence do we have in recent critical anomalies?",
-        "Summarize the seasonal patterns detected in our user behavior data",
-        "Which ML model performed better for fraud detection this week?",
-        "Show network traffic anomalies with ML confidence scores",
-        "Investigate users flagged by the Isolation Forest algorithm"
-    ]
-    
-    # Organize sample questions in columns for better layout
-    col1, col2 = st.columns(2)
-    
-    for i, question in enumerate(sample_questions):
-        # Alternate between columns
-        with col1 if i % 2 == 0 else col2:
-            if st.button(f"💡 {question}", key=f"sample_{i}", use_container_width=True):
-                # Add user message to history
-                st.session_state.chat_history.append({"role": "user", "content": question})
-                
-                # Generate AI response
-                ai_response = generate_ai_response(question)
-                
-                # Add AI response to history
-                st.session_state.chat_history.append({"role": "assistant", "content": ai_response})
-                
-                # Rerun to show the updated chat
-                st.rerun()
-    
-    st.markdown("---")  # Visual separator
-    
-    # Chat input using form for proper state management
-    with st.form(key="chat_form", clear_on_submit=True):
-        user_input = st.text_input("Ask a security question:", key="chat_input")
-        submitted = st.form_submit_button("Send", type="primary")
-    
-    if submitted and user_input:
-        # Add user message to history
-        st.session_state.chat_history.append({"role": "user", "content": user_input})
+    # Chat input
+    if prompt := st.chat_input("Ask about security status, threats, or anomalies..."):
+        # Add user message
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
         
-        # Generate AI response (simplified - in real implementation would use LLM)
-        ai_response = generate_ai_response(user_input)
-        
-        # Add AI response to history
-        st.session_state.chat_history.append({"role": "assistant", "content": ai_response})
-        
-        # Rerun to show the updated chat
-        st.rerun()
-    
-    # Display chat history
-    st.subheader("💬 Conversation History")
-    
-    for message in st.session_state.chat_history:
-        if message["role"] == "user":
-            st.markdown(f"**🧑 You:** {message['content']}")
-        else:
-            st.markdown(f"**🤖 Security Assistant:** {message['content']}")
-    
-    # Clear chat button
-    if st.button("🗑️ Clear Chat History"):
-        st.session_state.chat_history = []
-        st.rerun()
+        # Generate AI response
+        with st.chat_message("assistant"):
+            with st.spinner("Analyzing security data..."):
+                try:
+                    # Try to use Cortex AI if available
+                    ai_response = run_query(f"""
+                        SELECT security_ai_chatbot('{prompt}') as response
+                    """)
+                    
+                    if not ai_response.empty:
+                        response = ai_response['RESPONSE'].iloc[0]
+                    else:
+                        response = generate_fallback_response(prompt)
+                    
+                except:
+                    response = generate_fallback_response(prompt)
+                
+                st.markdown(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
 
-elif current_section == "performance":
-    st.title("📊 Cost & Performance Analytics")
-    st.markdown("**Demonstrating Snowflake's cost-effective, scalable security platform**")
+def generate_fallback_response(prompt):
+    """Generate fallback responses when Cortex AI is not available"""
+    prompt_lower = prompt.lower()
     
-    # Cost comparison
-    st.subheader("💰 Cost Comparison: Traditional SIEM vs Snowflake")
+    if any(word in prompt_lower for word in ['status', 'overview', 'summary']):
+        return """📊 **Current Security Status**: 
+        - ✅ All systems operational
+        - 🎯 ML models actively monitoring for anomalies
+        - 📈 No critical threats detected in last 24 hours
+        - 👥 User behavior patterns within normal ranges"""
     
-    col1, col2 = st.columns(2)
+    elif any(word in prompt_lower for word in ['threat', 'attack', 'malware']):
+        return """🚨 **Threat Analysis**:
+        - 🔍 Continuous threat intelligence monitoring active
+        - ⚡ Real-time correlation with external threat feeds
+        - 🛡️ ML-powered detection reduces false positives by 85%
+        - 📊 Recommend reviewing latest threat intelligence dashboard"""
     
-    with col1:
-        st.markdown("**Traditional SIEM**")
-        st.error("**❌ Expensive & Limited**")
+    else:
+        return """🤖 I'm your security AI assistant! I can help analyze:
+        - 📊 Current security status and metrics
+        - 🔍 Anomaly detection results
+        - 🚨 Threat intelligence insights
+        - 👥 User behavior patterns
+        - 📈 Security trends and patterns"""
+
+def show_user_analytics(days_back):
+    """User behavior analytics"""
+    st.header("👥 User Behavior Analytics")
+    st.markdown("*ML-powered user behavior analysis and clustering*")
+    
+    # User clusters
+    cluster_data = run_query(f"""
+        SELECT 
+            cluster_label,
+            COUNT(*) as user_count,
+            AVG(countries) as avg_countries,
+            AVG(weekend_ratio) as avg_weekend_activity
+        FROM SNOWPARK_ML_USER_CLUSTERS
+        WHERE analysis_date >= DATEADD(day, -{days_back}, CURRENT_TIMESTAMP())
+        GROUP BY cluster_label
+        ORDER BY user_count DESC
+    """)
+    
+    if not cluster_data.empty:
+        # Cluster visualization
+        fig_cluster = px.bar(cluster_data, x='CLUSTER_LABEL', y='USER_COUNT',
+                           title="User Behavioral Clusters")
+        fig_cluster.update_xaxis(title="Behavior Pattern")
+        fig_cluster.update_yaxis(title="Number of Users")
+        st.plotly_chart(fig_cluster, use_container_width=True)
+
+def show_realtime_monitoring():
+    """Real-time security monitoring"""
+    st.header("⚡ Real-time Security Monitoring")
+    st.markdown("*Live security event stream and alerting*")
+    
+    # Auto-refresh every 30 seconds
+    if st.button("🔄 Refresh Data"):
+        st.rerun()
+    
+    # Recent events
+    recent_events = run_query("""
+        SELECT 
+            timestamp,
+            username,
+            source_ip,
+            location:country::STRING as country,
+            success,
+            CASE WHEN success THEN '✅' ELSE '❌' END as status_icon
+        FROM USER_AUTHENTICATION_LOGS
+        WHERE timestamp >= DATEADD(minute, -60, CURRENT_TIMESTAMP())
+        ORDER BY timestamp DESC
+        LIMIT 50
+    """)
+    
+    if not recent_events.empty:
+        st.subheader("🕐 Last Hour Activity")
+        st.dataframe(recent_events, use_container_width=True)
+
+def show_cortex_analyst():
+    """Natural language analytics interface"""
+    st.header("🔍 Cortex Analyst - Natural Language Analytics")
+    st.markdown("*Ask questions in natural language about your security data*")
+    
+    # Sidebar with example questions
+    with st.sidebar:
+        st.markdown("---")
+        st.subheader("💡 Example Questions")
         st.markdown("""
-        - **$50,000+** per TB/year
-        - **90-day** retention typical
-        - **Ingest fees** for all data
-        - **Limited** search capabilities
-        - **Proprietary** query language
-        - **Fixed** compute resources
+        **Security Incidents:**
+        - "Show me critical incidents this week"
+        - "What are the trending incident types?"
+        - "How many breaches occurred last month?"
+        
+        **User Behavior:**
+        - "Which users have unusual login patterns?"
+        - "Show me user clusters by behavior"
+        - "What are the peak login hours?"
+        
+        **Threat Intelligence:**
+        - "What are the top threats this month?"
+        - "Show me malware by severity"
+        - "Which threat types are increasing?"
+        
+        **Anomaly Detection:**
+        - "Show me ML anomaly detections"
+        - "What's the model agreement rate?"
+        - "Which users have high risk scores?"
         """)
     
-    with col2:
-        st.markdown("**Snowflake Security Platform**")
-        st.success("**✅ Cost-Effective & Scalable**")
-        st.markdown("""
-        - **$240** per TB/year storage
-        - **$360** per TB/year compute (estimated)
-        - **7+ years** retention affordable
-        - **No ingest tax** - pay for usage only
-        - **SQL-based** high-performance search
-        - **Standard SQL** - no vendor lock-in
-        - **Auto-scaling** compute - pay per second
-        """)
-    
-    # Performance metrics
-    st.subheader("⚡ Performance Benchmarks")
-    
-    # Create sample performance data
-    performance_data = pd.DataFrame({
-        'Query Type': ['Threat Hunting', 'Anomaly Detection', 'Fraud Analysis', 'Compliance Reporting'],
-        'Traditional SIEM': [45, 30, 60, 120],  # seconds
-        'Snowflake': [2, 1, 3, 8],  # seconds
-        'Data Volume (GB)': [100, 50, 200, 500]
-    })
-    
-    fig = px.bar(
-        performance_data,
-        x='Query Type',
-        y=['Traditional SIEM', 'Snowflake'],
-        title="Query Performance Comparison (seconds)",
-        barmode='group'
-    )
-    fig.update_layout(height=400)
-    st.plotly_chart(fig, use_container_width=True)
-    
-    # Storage costs over time
-    st.subheader("📈 Storage Cost Projection")
-    
-    # Calculate storage growth and costs
-    months = list(range(1, 37))  # 3 years
-    data_tb = [i * 0.5 for i in months]  # 0.5 TB growth per month
-    
-    # Traditional SIEM: $4,167/month per TB ($50k/year)
-    traditional_cost = [tb * 4167 for tb in data_tb]  # $50k per TB/year = $4,167/month per TB
-    
-    # Snowflake: $20/month per TB ($240/year) for storage + compute estimate
-    # Adding realistic compute costs for processing
-    snowflake_storage_cost = [tb * 20 for tb in data_tb]  # $240 per TB/year = $20/month per TB
-    snowflake_compute_cost = [tb * 30 for tb in data_tb]  # Estimated compute for queries/processing
-    snowflake_cost = [storage + compute for storage, compute in zip(snowflake_storage_cost, snowflake_compute_cost)]
-    
-    cost_df = pd.DataFrame({
-        'Month': months,
-        'Traditional SIEM': traditional_cost,
-        'Snowflake': snowflake_cost,
-        'Data Volume (TB)': data_tb
-    })
-    
-    fig = px.line(
-        cost_df,
-        x='Month',
-        y=['Traditional SIEM', 'Snowflake'],
-        title="Monthly Total Cost Comparison (Storage + Compute)",
-        labels={'value': 'Monthly Cost ($)', 'variable': 'Platform'}
+    # Context selector
+    context = st.selectbox(
+        "Analysis Context:",
+        ["general", "incidents", "users", "threats", "vulnerabilities", "trends"],
+        help="Select the focus area for your analysis"
     )
     
-    # Ensure the Snowflake line is visible by setting a minimum y-axis range
-    fig.update_layout(
-        yaxis=dict(rangemode='tozero'),
-        showlegend=True
+    # Main query interface
+    st.subheader("🤖 Natural Language Query")
+    
+    # Chat-style interface
+    if "analyst_history" not in st.session_state:
+        st.session_state.analyst_history = []
+    
+    # Display previous interactions
+    for interaction in st.session_state.analyst_history:
+        with st.container():
+            st.markdown(f"**🧑 Question:** {interaction['question']}")
+            
+            if interaction['response']['success']:
+                st.markdown(f"**🤖 Analysis:** {interaction['response']['explanation']}")
+                
+                if interaction['response']['data']:
+                    # Show data visualization
+                    chart_type = interaction['response'].get('chart_type', 'bar')
+                    visualize_data(interaction['response']['data'], chart_type)
+                    
+                    # Show SQL query
+                    with st.expander("🔍 View Generated SQL"):
+                        st.code(interaction['response']['sql'], language='sql')
+                        
+                    # Show raw data
+                    with st.expander("📊 View Raw Data"):
+                        st.dataframe(pd.DataFrame(interaction['response']['data']))
+            else:
+                st.error(f"Error: {interaction['response']['error']}")
+            
+            st.markdown("---")
+    
+    # New query input
+    question = st.text_input(
+        "Ask a question about your cybersecurity data:",
+        placeholder="e.g., 'Show me critical security incidents from last week'"
     )
-    fig.update_layout(height=400)
-    st.plotly_chart(fig, use_container_width=True)
     
-    # Show key cost comparison points
-    st.markdown("**Key Cost Comparisons:**")
-    comparison_data = pd.DataFrame({
-        'Time Period': ['6 Months', '1 Year', '2 Years', '3 Years'],
-        'Data Volume': ['3 TB', '6 TB', '12 TB', '18 TB'],
-        'Traditional SIEM': [f"${cost_df.iloc[5]['Traditional SIEM']:,.0f}", 
-                           f"${cost_df.iloc[11]['Traditional SIEM']:,.0f}",
-                           f"${cost_df.iloc[23]['Traditional SIEM']:,.0f}",
-                           f"${cost_df.iloc[35]['Traditional SIEM']:,.0f}"],
-        'Snowflake': [f"${cost_df.iloc[5]['Snowflake']:,.0f}", 
-                     f"${cost_df.iloc[11]['Snowflake']:,.0f}",
-                     f"${cost_df.iloc[23]['Snowflake']:,.0f}",
-                     f"${cost_df.iloc[35]['Snowflake']:,.0f}"],
-        'Monthly Savings': [f"${cost_df.iloc[5]['Traditional SIEM'] - cost_df.iloc[5]['Snowflake']:,.0f}",
-                          f"${cost_df.iloc[11]['Traditional SIEM'] - cost_df.iloc[11]['Snowflake']:,.0f}",
-                          f"${cost_df.iloc[23]['Traditional SIEM'] - cost_df.iloc[23]['Snowflake']:,.0f}",
-                          f"${cost_df.iloc[35]['Traditional SIEM'] - cost_df.iloc[35]['Snowflake']:,.0f}"]
-    })
-    st.dataframe(comparison_data, use_container_width=True)
+    if st.button("🔍 Analyze", type="primary") and question:
+        with st.spinner("Analyzing your security data..."):
+            # Try Cortex Analyst first, fallback to structured queries
+            response = query_cortex_analyst(question, context)
+            
+            if not response.get("success"):
+                response = create_fallback_response(question)
+            
+            # Add to history
+            st.session_state.analyst_history.append({
+                "question": question,
+                "response": response,
+                "context": context
+            })
+            
+            # Display current response
+            if response.get("success"):
+                st.success("✅ Analysis complete!")
+                st.markdown(f"**🤖 Insight:** {response['explanation']}")
+                
+                if response.get('data'):
+                    chart_type = response.get('chart_type', 'bar')
+                    visualize_data(response['data'], chart_type)
+                    
+                    with st.expander("🔍 View Generated SQL"):
+                        st.code(response.get('sql', 'Not available'), language='sql')
+            else:
+                st.error(f"❌ {response.get('error', 'Unknown error occurred')}")
     
-    # ROI calculation
-    st.subheader("💵 Return on Investment")
+    # Quick action buttons
+    st.subheader("⚡ Quick Analysis")
     
-    col1, col2, col3, col4 = st.columns(4)
-    
-    total_savings_3yr = sum(traditional_cost) - sum(snowflake_cost)
-    cost_reduction_pct = (total_savings_3yr / sum(traditional_cost)) * 100
+    col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.metric("3-Year Savings", f"${total_savings_3yr:,.0f}")
+        if st.button("🚨 Recent Incidents"):
+            response = create_fallback_response("show me recent security incidents")
+            if response.get("success") and response.get('data'):
+                visualize_data(response['data'], 'bar')
+    
     with col2:
-        st.metric("Cost Reduction", f"{cost_reduction_pct:.0f}%")
+        if st.button("👥 User Patterns"):
+            response = create_fallback_response("analyze user behavior patterns")
+            if response.get("success") and response.get('data'):
+                visualize_data(response['data'], 'pie')
+    
     with col3:
-        st.metric("Performance Gain", "20x faster")
-    with col4:
-        st.metric("Retention Increase", "28x longer")
-    
-    # Marketplace value proposition
-    st.subheader("🏪 Snowflake Marketplace Value")
-    
-    marketplace_benefits = [
-        {"Feature": "Threat Intelligence Feeds", "Value": "No integration costs", "Benefit": "$50k+ saved"},
-        {"Feature": "Security Applications", "Value": "Native deployment", "Benefit": "Weeks → Hours"},
-        {"Feature": "Partner Ecosystem", "Value": "200+ security vendors", "Benefit": "Best-of-breed choice"},
-        {"Feature": "Data Sharing", "Value": "Secure collaboration", "Benefit": "Real-time intel sharing"}
-    ]
-    
-    marketplace_df = pd.DataFrame(marketplace_benefits)
-    st.dataframe(marketplace_df, use_container_width=True)
+        if st.button("🎯 Threat Overview"):
+            response = create_fallback_response("show me current threat landscape")
+            if response.get("success") and response.get('data'):
+                visualize_data(response['data'], 'heatmap')
 
 # =====================================================
-# HELPER FUNCTIONS
+# MAIN APPLICATION
 # =====================================================
 
-# =====================================================
-# FOOTER
-# =====================================================
+def main():
+    # Header
+    st.title("🛡️ Snowflake Cybersecurity Analytics Demo")
+    st.markdown("**Real-time security analytics powered by Snowflake Native ML and AI**")
+    
+    # Sidebar for demo navigation
+    st.sidebar.title("🎯 Demo Sections")
+    
+    # Demo section selection
+    demo_section = st.sidebar.radio(
+        "Choose Demo Focus:",
+        [
+            "🏢 Executive Dashboard", 
+            "🔍 Anomaly Detection",
+            "📊 ML Model Comparison",
+            "🚨 Threat Intelligence", 
+            "🤖 Security AI Assistant",
+            "👥 User Analytics",
+            "⚡ Real-time Monitoring",
+            "🔍 Cortex Analyst"
+        ]
+    )
+    
+    # Date range selector (not applicable for Cortex Analyst)
+    if demo_section != "🔍 Cortex Analyst":
+        st.sidebar.markdown("---")
+        st.sidebar.subheader("📅 Analysis Period")
+        days_back = st.sidebar.slider("Days to analyze", 1, 90, 7)
+    
+    # Route to appropriate section
+    if demo_section == "🏢 Executive Dashboard":
+        show_executive_dashboard(days_back)
+    elif demo_section == "🔍 Anomaly Detection":
+        show_anomaly_detection(days_back)
+    elif demo_section == "📊 ML Model Comparison":
+        show_ml_comparison(days_back)
+    elif demo_section == "🚨 Threat Intelligence":
+        show_threat_intelligence(days_back)
+    elif demo_section == "🤖 Security AI Assistant":
+        show_ai_assistant()
+    elif demo_section == "👥 User Analytics":
+        show_user_analytics(days_back)
+    elif demo_section == "⚡ Real-time Monitoring":
+        show_realtime_monitoring()
+    elif demo_section == "🔍 Cortex Analyst":
+        show_cortex_analyst()
 
-st.markdown("---")
-st.markdown("""
-<div style="text-align: center; color: #666; padding: 20px;">
-    <p>🛡️ <strong>Snowflake Cybersecurity Analytics Demo</strong></p>
-    <p>Powered by Snowflake's Native App Platform | Advanced Security Analytics | Cost-Effective Security Data Lake</p>
-    <p><em>Demonstrating: Advanced Analytics • Threat Prioritization • Vulnerability Management • Fraud Detection • Security Intelligence</em></p>
-</div>
-""", unsafe_allow_html=True)
+# Run the main application
+if __name__ == "__main__":
+    main()

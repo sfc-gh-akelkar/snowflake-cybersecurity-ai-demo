@@ -37,7 +37,7 @@ This repository demonstrates how Snowflake transforms cybersecurity operations t
 - ✅ **Sophisticated Fraud Detection** - Velocity analysis and transaction pattern ML with 500+ user profiles
 - ✅ **Time-Series Pattern Recognition** - Seasonal analysis with 180+ days of training data
 - ✅ **Insider Threat ML Classification** - Multi-dimensional risk scoring with persona-based analysis
-- ✅ **AI Security Chatbot** - Natural language security queries with ML insights
+- ✅ **Real Cortex AI Security Assistant** - Data-driven chatbot with live security analysis
 
 ## 🏗️ Enhanced ML Architecture
 
@@ -89,49 +89,31 @@ This repository demonstrates how Snowflake transforms cybersecurity operations t
 
 ```
 📦 snowflake-cybersecurity-demo
-├── 📄 README.md                           # Project overview & quick start
+├── 📄 README.md                                    # Project overview & quick start
 ├── 📁 docs/
-│   ├── 📄 GETTING_STARTED.md              # Complete setup instructions
-│   └── 📄 DEMO_GUIDE.md                   # Demo presentation script & talking points
-├── 📄 enhancement_roadmap.md              # Future enhancement plans
+│   ├── 📄 GETTING_STARTED.md                       # Complete setup instructions
+│   └── 📄 DEMO_GUIDE.md                            # Demo presentation script
+├── 📄 enhancement_roadmap.md                       # Future enhancement plans
 ├── 📁 notebooks/
-│   ├── 📓 Cybersecurity_ML_Demo_Companion.ipynb   # ML training & deployment
-│   └── 📄 requirements.txt                        # Python dependencies
-├── 📁 python/
-│   ├── 📄 streamlit_cybersecurity_demo.py # Main Streamlit application
-│   └── 📄 cortex_analyst_integration.py   # Natural language analytics
-├── 📁 semantic_models/
-│   └── 📄 cybersecurity_semantic_model.yaml # Cortex Analyst semantic model
-└── 📁 sql/
-    ├── 📄 01_cybersecurity_schema.sql     # Database schema & tables
-    ├── 📄 02_sample_data_generation.sql   # Realistic sample data
-    ├── 📄 03_ai_ml_models.sql             # AI/ML models & views
-    ├── 📄 04_snowpark_ml_deployment.sql   # UDF registration & deployment
-    ├── 📄 05_model_registry_deployment.sql # Model Registry integration
-    ├── 📄 06_cortex_ai_integration.sql    # Data-driven AI chatbot
-    └── 📄 07_cortex_analyst_integration.sql # Natural language BI
+│   ├── 📓 Cybersecurity_ML_Demo_Companion.ipynb    # ⭐ PLATFORM DEPLOYMENT
+│   └── 📄 requirements.txt                         # Python dependencies
+└── 📁 python/
+    └── 📄 streamlit_cybersecurity_demo.py          # 📱 COMPREHENSIVE STREAMLIT APP
 ```
 
 ## 🚀 Quick Start
 
 Ready to deploy? Get started in **15 minutes**:
 
-### **⚡ Express Setup**
-```sql
--- 1. Execute SQL scripts in order
-@01_cybersecurity_schema.sql      -- Database setup
-@02_sample_data_generation.sql    -- Sample data (500+ users, 180+ days)
-@03_ai_ml_models.sql             -- Native ML models
-@04_snowpark_ml_deployment.sql   -- Real ML models & UDFs
-```
+### **⚡ Hybrid Deployment**
+1. **Deploy Platform**: Upload [`notebooks/Cybersecurity_ML_Demo_Companion.ipynb`](notebooks/Cybersecurity_ML_Demo_Companion.ipynb) to **Snowflake Notebooks** and run
+2. **Deploy Application**: Upload [`python/streamlit_cybersecurity_demo.py`](python/streamlit_cybersecurity_demo.py) to **Snowflake Streamlit**
 
-### **🧠 Deploy ML Models**
-Upload [`notebooks/Cybersecurity_ML_Demo_Companion.ipynb`](notebooks/Cybersecurity_ML_Demo_Companion.ipynb) to **Snowflake Notebooks** and run all cells. No configuration needed!
-
-### **📱 Launch Streamlit App**
-1. **Snowflake UI → Streamlit** → Create new app
-2. Upload [`python/streamlit_cybersecurity_demo.py`](python/streamlit_cybersecurity_demo.py)
-3. Set context: `CYBERSECURITY_DEMO.SECURITY_AI`
+**🎯 Demo Options:**
+- **Basic Demo** (15 min): Core platform with comprehensive dashboard
+- **Technical Demo** (+5 min): + Snowpark ML UDFs  
+- **AI-Powered Demo** (+2 min): + Cortex AI integration
+- **Executive Demo** (+0 min): + Natural language Cortex Analyst section
 
 ### **📚 Detailed Instructions**
 👉 **[Complete Setup Guide](docs/GETTING_STARTED.md)** - Step-by-step deployment  
