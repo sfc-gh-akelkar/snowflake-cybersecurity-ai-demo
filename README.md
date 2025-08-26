@@ -89,92 +89,63 @@ This repository demonstrates how Snowflake transforms cybersecurity operations t
 
 ```
 📦 snowflake-cybersecurity-demo
-├── 📄 README.md                           # This file
-├── 📄 deployment_guide.md                 # Detailed setup instructions
-├── 📄 DEMO_WALKTHROUGH.md                 # Demo presentation script
+├── 📄 README.md                           # Project overview & quick start
+├── 📁 docs/
+│   ├── 📄 GETTING_STARTED.md              # Complete setup instructions
+│   └── 📄 DEMO_GUIDE.md                   # Demo presentation script & talking points
+├── 📄 enhancement_roadmap.md              # Future enhancement plans
 ├── 📁 notebooks/
-│   ├── 📓 Cybersecurity_ML_Demo_Companion.ipynb   # ML training companion for demo
-│   └── 📄 requirements.txt                        # Python dependencies (for local dev)
+│   ├── 📓 Cybersecurity_ML_Demo_Companion.ipynb   # ML training & deployment
+│   └── 📄 requirements.txt                        # Python dependencies
 ├── 📁 python/
-│   └── 📄 streamlit_cybersecurity_demo.py # Main Streamlit application
+│   ├── 📄 streamlit_cybersecurity_demo.py # Main Streamlit application
+│   └── 📄 cortex_analyst_integration.py   # Natural language analytics
+├── 📁 semantic_models/
+│   └── 📄 cybersecurity_semantic_model.yaml # Cortex Analyst semantic model
 └── 📁 sql/
     ├── 📄 01_cybersecurity_schema.sql     # Database schema & tables
     ├── 📄 02_sample_data_generation.sql   # Realistic sample data
     ├── 📄 03_ai_ml_models.sql             # AI/ML models & views
     ├── 📄 04_snowpark_ml_deployment.sql   # UDF registration & deployment
-    └── 📄 05_model_registry_deployment.sql # Model Registry integration
+    ├── 📄 05_model_registry_deployment.sql # Model Registry integration
+    ├── 📄 06_cortex_ai_integration.sql    # Data-driven AI chatbot
+    └── 📄 07_cortex_analyst_integration.sql # Natural language BI
 ```
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- Snowflake account with `ACCOUNTADMIN` privileges
-- Streamlit in Snowflake enabled
-- Basic familiarity with SQL and Snowflake
+Ready to deploy? Get started in **15 minutes**:
 
-### 1. Setup Database Schema
+### **⚡ Express Setup**
 ```sql
--- Execute in Snowflake worksheet
-@01_cybersecurity_schema.sql
+-- 1. Execute SQL scripts in order
+@01_cybersecurity_schema.sql      -- Database setup
+@02_sample_data_generation.sql    -- Sample data (500+ users, 180+ days)
+@03_ai_ml_models.sql             -- Native ML models
+@04_snowpark_ml_deployment.sql   -- Real ML models & UDFs
 ```
 
-### 2. Load Sample Data
-```sql
--- Execute in Snowflake worksheet  
-@02_sample_data_generation.sql
-```
+### **🧠 Deploy ML Models**
+Upload [`notebooks/Cybersecurity_ML_Demo_Companion.ipynb`](notebooks/Cybersecurity_ML_Demo_Companion.ipynb) to **Snowflake Notebooks** and run all cells. No configuration needed!
 
-### 3. Deploy AI/ML Models
-```sql
--- Execute in Snowflake worksheet
-@03_ai_ml_models.sql
-@04_snowpark_ml_deployment.sql
-```
+### **📱 Launch Streamlit App**
+1. **Snowflake UI → Streamlit** → Create new app
+2. Upload [`python/streamlit_cybersecurity_demo.py`](python/streamlit_cybersecurity_demo.py)
+3. Set context: `CYBERSECURITY_DEMO.SECURITY_AI`
 
-### 4. Train Real ML Models
-
-**Option A: Snowflake Notebooks (Recommended)**
-```bash
-# Upload notebooks/ML_Model_Training_and_Deployment.ipynb to Snowflake Notebooks
-# No connection setup needed - session is automatic!
-# Simply run all cells to train and deploy real ML models
-```
-
-**Option B: Local Development (Optional)**
-```bash
-# For local development outside Snowflake Notebooks:
-cd notebooks && pip install -r requirements.txt
-# Then modify notebook connection parameters and run locally
-```
-
-### 5. Launch Streamlit App
-1. Navigate to **Snowflake UI → Streamlit**
-2. Create new Streamlit app
-3. Upload `streamlit_cybersecurity_demo.py`
-4. Set context: `CYBERSECURITY_DEMO.SECURITY_AI`
-5. Run the application
+### **📚 Detailed Instructions**
+👉 **[Complete Setup Guide](docs/GETTING_STARTED.md)** - Step-by-step deployment  
+👉 **[Demo Presentation Guide](docs/DEMO_GUIDE.md)** - Talking points and demo flow
 
 ## 🎬 Demo Scenarios
 
-### Executive Dashboard (5 minutes)
-Perfect for C-level presentations focusing on:
-- Real-time security metrics
-- Cost savings vs traditional SIEM
-- ROI and business value
+| **Format** | **Duration** | **Best For** | **Key Focus** |
+|------------|-------------|-------------|---------------|
+| **⚡ Executive Summary** | 5 min | C-level | ROI, cost savings, business value |
+| **🔧 Technical Overview** | 15-30 min | Technical teams | AI/ML architecture, capabilities |  
+| **🧪 Interactive Workshop** | 45+ min | Hands-on | Custom analytics, live investigation |
 
-### Technical Deep Dive (30 minutes)
-Comprehensive tour including:
-- AI/ML anomaly detection algorithms
-- Threat hunting capabilities
-- Custom security analytics
-- Performance benchmarks
-
-### Interactive Workshop (60+ minutes)
-Hands-on exploration featuring:
-- Custom threat hunting queries
-- Live incident investigation
-- AI model explanations
-- Q&A and customization
+👉 **[Complete Demo Guide](docs/DEMO_GUIDE.md)** - Detailed talking points, technical deep-dives, and presentation flow
 
 ## 📊 Key Metrics & Value Propositions
 
@@ -186,144 +157,63 @@ Hands-on exploration featuring:
 | **Scaling** | Manual, expensive | Auto-scaling, elastic |
 | **Total Cost Savings** | Baseline | **99.5% reduction** |
 
-## 🔍 Enhanced ML Sample Queries
+## 🔍 Sample Analytics Queries
 
-### Native ML Anomaly Detection
+### **🧠 AI/ML Anomaly Detection**
 ```sql
--- Snowflake Native ML time-series anomaly detection
+-- Dual ML Engine Analysis: Compare Native ML vs Snowpark ML
 SELECT 
-    timestamp,
-    login_count,
-    expected_login_count,
-    native_confidence,
-    ml_risk_level,
-    CASE WHEN native_anomaly THEN 'ANOMALY DETECTED' ELSE 'NORMAL' END as status
-FROM NATIVE_ML_LOGIN_PATTERNS
-WHERE native_anomaly = TRUE
-    AND timestamp >= DATEADD(day, -7, CURRENT_TIMESTAMP())
-ORDER BY native_confidence DESC;
-```
-
-### Snowpark ML User Clustering
-```sql
--- Advanced user behavior clustering with Isolation Forest
-SELECT 
-    username,
-    cluster_label,
-    isolation_forest_score,
-    user_cluster,
-    countries,
-    unique_ips,
-    offhours_ratio
-FROM SNOWPARK_ML_USER_CLUSTERS
-WHERE snowpark_anomaly = TRUE
-ORDER BY isolation_forest_score ASC;  -- Most anomalous first
-```
-
-### ML Model Comparison
-```sql
--- Compare Native ML vs Snowpark ML results
-SELECT 
-    username,
-    analysis_date,
-    model_agreement,
-    hybrid_confidence,
-    hybrid_risk_assessment,
-    native_confidence,
-    snowpark_score,
-    cluster_label
+    username, analysis_date, model_agreement, risk_level,
+    native_confidence, snowpark_score, cluster_label
 FROM ML_MODEL_COMPARISON
-WHERE model_agreement IN ('BOTH_AGREE_ANOMALY', 'NATIVE_ONLY', 'SNOWPARK_ONLY')
-ORDER BY hybrid_confidence DESC;
+WHERE model_agreement = 'BOTH_AGREE_ANOMALY'  -- High confidence detections
+ORDER BY risk_level, native_confidence DESC;
 ```
 
-### Advanced Threat Hunting
+### **🔍 Advanced Threat Hunting**
 ```sql
--- ML-enhanced lateral movement detection
+-- ML-Enhanced Investigation: Correlate anomalies with data access
 SELECT 
-    ual.username,
-    ual.source_ip,
+    ual.username, ual.source_ip, 
     COUNT(DISTINCT dal.resource_name) as resources_accessed,
-    SUM(dal.bytes_accessed) as total_bytes,
-    ml.hybrid_risk_assessment,
-    ml.cluster_label
+    ml.risk_level, ml.cluster_label
 FROM USER_AUTHENTICATION_LOGS ual
 JOIN DATA_ACCESS_LOGS dal ON ual.username = dal.username
-LEFT JOIN ML_MODEL_COMPARISON ml ON ual.username = ml.username 
-    AND DATE(ual.timestamp) = ml.analysis_date
-WHERE ual.timestamp >= DATEADD(hour, -24, CURRENT_TIMESTAMP())
+JOIN ML_MODEL_COMPARISON ml ON ual.username = ml.username 
+WHERE ml.risk_level IN ('CRITICAL', 'HIGH')
     AND dal.data_classification = 'restricted'
-GROUP BY ual.username, ual.source_ip, ml.hybrid_risk_assessment, ml.cluster_label
-HAVING COUNT(DISTINCT dal.resource_name) > 5
-ORDER BY total_bytes DESC;
+GROUP BY 1,2,5,6 HAVING COUNT(DISTINCT dal.resource_name) > 5;
 ```
 
-## 🛠️ Customization
-
-### Adding New Data Sources
-1. Extend schema in `01_cybersecurity_schema.sql`
-2. Add sample data in `02_sample_data_generation.sql`
-3. Create analytics views in `03_ai_ml_models.sql`
-4. Update Streamlit app visualizations
-
-### Custom AI/ML Models
+### **💬 Natural Language Analytics**
 ```sql
--- Example: Custom fraud detection model
-CREATE OR REPLACE VIEW CUSTOM_FRAUD_MODEL AS
-SELECT 
-    transaction_id,
-    -- Your custom ML algorithm here
-    (risk_factor_1 * 0.4 + risk_factor_2 * 0.6) as custom_score
-FROM financial_transactions;
+-- Cortex Analyst: Ask questions in plain English
+SELECT ask_security_analyst('How many critical incidents this week?');
+SELECT security_ai_chatbot('Explain the anomaly detection for user Sarah Chen');
 ```
 
-## 🔧 Performance Optimization
+## 🛠️ Customization & Extensions
 
-### Clustering Keys
+### **🔧 Performance Optimization**
 ```sql
 -- Optimize time-series queries
-ALTER TABLE USER_AUTHENTICATION_LOGS 
-CLUSTER BY (DATE(TIMESTAMP), USERNAME);
+ALTER TABLE USER_AUTHENTICATION_LOGS CLUSTER BY (DATE(TIMESTAMP), USERNAME);
+
+-- Accelerate IP searches  
+ALTER TABLE NETWORK_SECURITY_LOGS ADD SEARCH OPTIMIZATION ON EQUALITY(SOURCE_IP);
 ```
 
-### Search Optimization
-```sql
--- Accelerate text searches
-ALTER TABLE NETWORK_SECURITY_LOGS 
-ADD SEARCH OPTIMIZATION ON EQUALITY(SOURCE_IP, DEST_IP);
-```
+### **🧪 Custom ML Models**
+Extend the platform with your own models using the ML training notebook as a template. Add new algorithms, features, or data sources following the established patterns.
 
-### Materialized Views
-```sql
--- Pre-compute expensive aggregations
-CREATE MATERIALIZED VIEW HOURLY_SECURITY_METRICS AS
-SELECT 
-    DATE_TRUNC('hour', timestamp) as hour,
-    COUNT(*) as total_events,
-    SUM(CASE WHEN risk_level = 'CRITICAL' THEN 1 ELSE 0 END) as critical_events
-FROM LOGIN_ANOMALY_DETECTION
-GROUP BY 1;
-```
+### **🎯 Demo Customization**
+| **Audience** | **Focus Areas** | **Key Messages** |
+|-------------|----------------|------------------|
+| **Sales Teams** | Cost savings, ROI, marketplace | 99.5% cost reduction vs traditional SIEM |
+| **Technical Teams** | Architecture, performance, scalability | Sub-second queries on TBs of data |
+| **Security Teams** | Threat hunting, incident response, compliance | Minutes vs hours for investigation |
 
-## 🎯 Demo Tips
-
-### For Sales Teams
-- Focus on cost savings and ROI metrics
-- Emphasize ease of use and SQL familiarity
-- Highlight marketplace and partner integrations
-- Show real-time performance comparisons
-
-### For Technical Teams
-- Deep dive into AI/ML algorithms
-- Demonstrate query performance at scale
-- Show integration possibilities
-- Discuss architecture and scaling
-
-### For Security Teams
-- Focus on threat hunting capabilities
-- Show incident response workflows
-- Demonstrate compliance reporting
-- Highlight detection accuracy
+👉 **[Enhancement Roadmap](enhancement_roadmap.md)** - Priority roadmap for future enhancements
 
 ## 🤝 Contributing
 
