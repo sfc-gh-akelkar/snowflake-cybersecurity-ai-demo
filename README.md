@@ -94,8 +94,12 @@ This repository demonstrates how Snowflake transforms cybersecurity operations t
 │   ├── 📄 GETTING_STARTED.md                       # Complete setup instructions
 │   └── 📄 DEMO_GUIDE.md                            # Demo presentation script
 ├── 📄 enhancement_roadmap.md                       # Future enhancement plans
+├── 📁 sql/                                         # ⭐ DATABASE SETUP SCRIPTS
+│   ├── 📄 01_cybersecurity_schema.sql               # Database & table creation
+│   ├── 📄 02_sample_data_generation.sql             # Realistic sample data
+│   └── 📄 03_native_ml_and_cortex.sql               # Native ML & Cortex AI setup
 ├── 📁 notebooks/
-│   ├── 📓 Cybersecurity_ML_Demo_Companion.ipynb    # ⭐ PLATFORM DEPLOYMENT
+│   ├── 📓 ML_Training_and_Deployment.ipynb         # 🤖 SNOWPARK ML TRAINING
 │   └── 📄 requirements.txt                         # Python dependencies
 └── 📁 python/
     └── 📄 streamlit_cybersecurity_demo.py          # 📱 COMPREHENSIVE STREAMLIT APP
@@ -105,9 +109,10 @@ This repository demonstrates how Snowflake transforms cybersecurity operations t
 
 Ready to deploy? Get started in **15 minutes**:
 
-### **⚡ Hybrid Deployment**
-1. **Deploy Platform**: Upload [`notebooks/Cybersecurity_ML_Demo_Companion.ipynb`](notebooks/Cybersecurity_ML_Demo_Companion.ipynb) to **Snowflake Notebooks** and run
-2. **Deploy Application**: Upload [`python/streamlit_cybersecurity_demo.py`](python/streamlit_cybersecurity_demo.py) to **Snowflake Streamlit**
+### **⚡ 3-Step Deployment**
+1. **Setup Database**: Run SQL scripts in order: `01_cybersecurity_schema.sql` → `02_sample_data_generation.sql` → `03_native_ml_and_cortex.sql`
+2. **Train ML Models**: Upload [`notebooks/ML_Training_and_Deployment.ipynb`](notebooks/ML_Training_and_Deployment.ipynb) to **Snowflake Notebooks** and run all cells
+3. **Deploy Application**: Upload [`python/streamlit_cybersecurity_demo.py`](python/streamlit_cybersecurity_demo.py) to **Snowflake Streamlit**
 
 **🎯 Demo Options:**
 - **Basic Demo** (15 min): Core platform with comprehensive dashboard

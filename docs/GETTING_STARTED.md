@@ -18,17 +18,23 @@
 
 ### **🚀 Hybrid Deployment Approach (Recommended)**
 
-**Step 1: Platform Deployment**
-Upload [`notebooks/Cybersecurity_ML_Demo_Companion.ipynb`](../notebooks/Cybersecurity_ML_Demo_Companion.ipynb) to **Snowflake Notebooks** and run all cells:
+**Step 1: Database Setup**
+Run the SQL setup scripts in your Snowflake account in this order:
+1. `sql/01_cybersecurity_schema.sql` (creates database, tables, warehouse)
+2. `sql/02_sample_data_generation.sql` (generates realistic sample data)  
+3. `sql/03_native_ml_and_cortex.sql` (sets up Native ML and Cortex AI)
 
-**🏆 Platform Components:**
-- ✅ Database, schema, and warehouse setup
-- ✅ Sample data generation (500+ users, 180+ days)  
-- ✅ Native ML and Snowpark ML model training
-- ✅ Advanced features (UDFs, Cortex AI)
-- ✅ Complete backend infrastructure
+**Step 2: ML Model Training**
+Upload [`notebooks/ML_Training_and_Deployment.ipynb`](../notebooks/ML_Training_and_Deployment.ipynb) to **Snowflake Notebooks** and run all cells:
 
-**Step 2: Application Deployment**
+**🤖 ML Training Components:**
+- ✅ Isolation Forest anomaly detection training
+- ✅ K-means user behavior clustering  
+- ✅ Model Registry integration with versioning
+- ✅ UDF deployment for production use
+- ✅ Hybrid ML analysis pipeline
+
+**Step 3: Application Deployment**
 Upload [`python/streamlit_cybersecurity_demo.py`](../python/streamlit_cybersecurity_demo.py) to **Snowflake Streamlit**:
 
 **📱 Comprehensive Application Features:**

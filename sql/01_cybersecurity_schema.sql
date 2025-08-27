@@ -1,0 +1,155 @@
+-- ===============================================
+-- Cybersecurity Demo - Database Schema Setup
+-- ===============================================
+-- This script creates the core database schema for the cybersecurity demo
+-- Run this first before data generation
+
+-- Create database and schema
+CREATE DATABASE IF NOT EXISTS CYBERSECURITY_DEMO;
+USE DATABASE CYBERSECURITY_DEMO;
+CREATE SCHEMA IF NOT EXISTS SECURITY_ANALYTICS;
+USE SCHEMA SECURITY_ANALYTICS;
+
+-- Enable required services
+CREATE WAREHOUSE IF NOT EXISTS CYBERSECURITY_WH 
+WITH WAREHOUSE_SIZE = 'MEDIUM' 
+AUTO_SUSPEND = 300 
+AUTO_RESUME = TRUE;
+
+USE WAREHOUSE CYBERSECURITY_WH;
+
+-- ===============================================
+-- Core Authentication and User Tables
+-- ===============================================
+
+-- Create primary authentication table for user login tracking
+DROP TABLE IF EXISTS USER_AUTHENTICATION_LOGS;
+
+CREATE TABLE USER_AUTHENTICATION_LOGS (
+    LOG_ID STRING DEFAULT UUID_STRING(),
+    USERNAME STRING NOT NULL,
+    TIMESTAMP TIMESTAMP_NTZ NOT NULL,
+    SOURCE_IP STRING,
+    LOCATION VARIANT,
+    SUCCESS BOOLEAN NOT NULL,
+    FAILURE_REASON STRING,
+    USER_AGENT STRING,
+    SESSION_ID STRING,
+    TWO_FACTOR_USED BOOLEAN DEFAULT FALSE,
+    PRIMARY KEY (LOG_ID)
+);
+
+-- Create employee directory and organizational structure
+DROP TABLE IF EXISTS EMPLOYEE_DATA;
+
+CREATE TABLE EMPLOYEE_DATA (
+    USERNAME STRING PRIMARY KEY,
+    DEPARTMENT STRING,
+    ROLE STRING,
+    MANAGER STRING,
+    HIRE_DATE DATE,
+    SECURITY_CLEARANCE STRING,
+    STATUS STRING DEFAULT 'active'
+);
+
+-- ===============================================
+-- Security Infrastructure Tables
+-- ===============================================
+
+-- Create remaining cybersecurity tables
+DROP TABLE IF EXISTS NETWORK_SECURITY_LOGS;
+DROP TABLE IF EXISTS SECURITY_INCIDENTS;
+DROP TABLE IF EXISTS VULNERABILITY_SCANS;
+DROP TABLE IF EXISTS THREAT_INTEL_FEED;
+
+CREATE TABLE NETWORK_SECURITY_LOGS (
+    LOG_ID STRING DEFAULT UUID_STRING(),
+    TIMESTAMP TIMESTAMP_NTZ NOT NULL,
+    SOURCE_IP STRING,
+    DEST_IP STRING,
+    SOURCE_PORT INTEGER,
+    DEST_PORT INTEGER,
+    PROTOCOL STRING,
+    ACTION STRING,
+    BYTES_TRANSFERRED INTEGER,
+    SEVERITY STRING,
+    RULE_MATCHED STRING,
+    PRIMARY KEY (LOG_ID)
+);
+
+CREATE TABLE SECURITY_INCIDENTS (
+    INCIDENT_ID STRING DEFAULT UUID_STRING(),
+    CREATED_AT TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
+    INCIDENT_TYPE STRING,
+    SEVERITY STRING,
+    STATUS STRING,
+    ASSIGNED_TO STRING,
+    DESCRIPTION STRING,
+    AFFECTED_SYSTEMS VARIANT,
+    RESOLVED_AT TIMESTAMP_NTZ,
+    PRIMARY KEY (INCIDENT_ID)
+);
+
+CREATE TABLE VULNERABILITY_SCANS (
+    SCAN_ID STRING DEFAULT UUID_STRING(),
+    ASSET_NAME STRING,
+    CVE_ID STRING,
+    CVSS_SCORE FLOAT,
+    SEVERITY STRING,
+    FIRST_DETECTED TIMESTAMP_NTZ,
+    STATUS STRING,
+    PATCH_AVAILABLE BOOLEAN,
+    PRIMARY KEY (SCAN_ID)
+);
+
+CREATE TABLE THREAT_INTEL_FEED (
+    FEED_ID STRING DEFAULT UUID_STRING(),
+    INDICATOR_TYPE STRING,
+    INDICATOR_VALUE STRING,
+    THREAT_TYPE STRING,
+    SEVERITY STRING,
+    CONFIDENCE_SCORE FLOAT,
+    SOURCE_TYPE STRING,
+    FIRST_SEEN TIMESTAMP_NTZ,
+    LAST_SEEN TIMESTAMP_NTZ,
+    PRIMARY KEY (FEED_ID)
+);
+
+-- ===============================================
+-- ML Model Results Storage
+-- ===============================================
+
+-- Table to store ML model comparison results
+CREATE TABLE IF NOT EXISTS ML_MODEL_COMPARISON (
+    ANALYSIS_ID STRING DEFAULT UUID_STRING(),
+    USERNAME STRING NOT NULL,
+    ANALYSIS_DATE TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
+    
+    -- Native ML Results (Snowflake built-in)
+    NATIVE_ANOMALY_SCORE FLOAT,
+    NATIVE_IS_ANOMALY BOOLEAN,
+    
+    -- Snowpark ML Results (Custom models)
+    ISOLATION_FOREST_SCORE FLOAT,
+    ISOLATION_FOREST_ANOMALY BOOLEAN,
+    CLUSTER_LABEL INTEGER,
+    CLUSTER_DISTANCE FLOAT,
+    
+    -- Hybrid Analysis
+    RISK_LEVEL STRING, -- CRITICAL, HIGH, MEDIUM, LOW
+    CONFIDENCE_SCORE FLOAT,
+    
+    PRIMARY KEY (ANALYSIS_ID),
+    FOREIGN KEY (USERNAME) REFERENCES EMPLOYEE_DATA(USERNAME)
+);
+
+-- ===============================================
+-- Verification and Summary
+-- ===============================================
+
+-- Show created tables
+SHOW TABLES;
+
+-- Verify table schemas
+SELECT 'Schema setup completed successfully!' as STATUS;
+SELECT 'Next step: Run 02_sample_data_generation.sql' as NEXT_ACTION;
