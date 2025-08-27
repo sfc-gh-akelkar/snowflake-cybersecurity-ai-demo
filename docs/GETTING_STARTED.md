@@ -66,7 +66,7 @@ Upload [`python/streamlit_cybersecurity_demo.py`](../python/streamlit_cybersecur
 ### **Step 2: Advanced ML Features (Optional)**
 
 #### **Option A: Snowflake Notebooks (Recommended) ✨**
-1. **Upload notebook**: `notebooks/Cybersecurity_ML_Demo_Companion.ipynb` to Snowflake Notebooks
+1. **Upload notebook**: `notebooks/ML_Training_and_Deployment.ipynb` to Snowflake Notebooks
 2. **Zero configuration**: Session automatically configured - no connection parameters needed!
 3. **Run all cells**: Trains and registers models in Model Registry with enterprise features
 4. **Validation**: Models automatically deployed as SQL UDFs
@@ -76,7 +76,7 @@ Upload [`python/streamlit_cybersecurity_demo.py`](../python/streamlit_cybersecur
 cd notebooks
 pip install -r requirements.txt
 # Modify notebook connection parameters
-# Run: Cybersecurity_ML_Demo_Companion.ipynb
+# Run: ML_Training_and_Deployment.ipynb
 ```
 
 ---
@@ -215,7 +215,7 @@ ALTER WAREHOUSE COMPUTE_WH SET
 |-----------|-------------|
 | **Permission Errors** | Ensure `ACCOUNTADMIN` role for setup |
 | **Slow Queries** | Scale up warehouse: `WAREHOUSE_SIZE = 'LARGE'` |
-| **Missing ML Data** | Run notebook: `Cybersecurity_ML_Demo_Companion.ipynb` |
+| **Missing ML Data** | Run notebook: `ML_Training_and_Deployment.ipynb` |
 | **Streamlit Errors** | Check database context: `CYBERSECURITY_DEMO.SECURITY_AI` |
 | **Model Registry Issues** | Verify `snowflake-ml-python>=1.1.0` installed |
 

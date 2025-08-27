@@ -73,7 +73,7 @@ $$
 - ✅ Dynamic incident investigation guidance
 
 #### ✅ Files Updated:
-- `notebooks/Cybersecurity_ML_Demo_Companion.ipynb` ✅ Cortex AI integration
+- `notebooks/ML_Training_and_Deployment.ipynb` ✅ Cortex AI integration
 - `python/streamlit_cybersecurity_demo.py` ✅ Real AI chatbot implementation
 
 ---
@@ -103,7 +103,7 @@ registry.log_model("fraud_detection_ensemble", fraud_ensemble)
 - ✅ Reduced false positives
 
 #### Files to Update:
-- `notebooks/Cybersecurity_ML_Demo_Companion.ipynb` → Add fraud ML training
+- `notebooks/ML_Training_and_Deployment.ipynb` → Add fraud ML training
 - `sql/03_ai_ml_models.sql` → Replace FRAUD_DETECTION_SCORING
 - `sql/04_snowpark_ml_deployment.sql` → Add fraud UDFs
 
