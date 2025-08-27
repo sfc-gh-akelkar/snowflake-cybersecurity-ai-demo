@@ -125,99 +125,19 @@ $$;
 -- Cortex Analyst - Semantic Model Setup
 -- ===============================================
 
--- Create a proper Snowflake Semantic View for Cortex Analyst
--- This enables natural language queries with proper relationships, dimensions, and metrics
-
--- First, ensure we have ACCOUNTADMIN role for semantic view creation
--- USE ROLE ACCOUNTADMIN;
-
--- Create the Cybersecurity Semantic View
-CREATE OR REPLACE SEMANTIC VIEW CYBERSECURITY_SEMANTIC_MODEL
-    tables (
-        EMPLOYEES as EMPLOYEE_DATA primary key (USERNAME),
-        AUTH_LOGS as USER_AUTHENTICATION_LOGS primary key (LOG_ID),
-        INCIDENTS as SECURITY_INCIDENTS primary key (INCIDENT_ID),
-        THREATS as THREAT_INTEL_FEED primary key (FEED_ID),
-        VULNS as VULNERABILITY_SCANS primary key (SCAN_ID)
-    )
-    relationships (
-        AUTH_TO_USER as AUTH_LOGS(USERNAME) references EMPLOYEES(USERNAME),
-        INCIDENT_TO_USER as INCIDENTS(ASSIGNED_TO) references EMPLOYEES(USERNAME)
-    )
-    dimensions (
-        -- Employee dimensions
-        EMPLOYEES.USERNAME as employee_username,
-        EMPLOYEES.DEPARTMENT as employee_department,
-        EMPLOYEES.ROLE as employee_role,
-        EMPLOYEES.SECURITY_CLEARANCE as security_clearance_level,
-        EMPLOYEES.STATUS as employee_status,
-        EMPLOYEES.HIRE_DATE as hire_date,
-        
-        -- Authentication dimensions
-        AUTH_LOGS.SOURCE_IP as source_ip_address,
-        AUTH_LOGS.LOCATION as login_location,
-        AUTH_LOGS.SUCCESS as login_success,
-        AUTH_LOGS.TWO_FACTOR_USED as two_factor_enabled,
-        AUTH_LOGS.FAILURE_REASON as failure_reason,
-        AUTH_LOGS.TIMESTAMP as auth_timestamp,
-        
-        -- Security incident dimensions
-        INCIDENTS.INCIDENT_TYPE as incident_type,
-        INCIDENTS.SEVERITY as incident_severity,
-        INCIDENTS.STATUS as incident_status,
-        INCIDENTS.CREATED_AT as incident_created_date,
-        INCIDENTS.RESOLVED_AT as incident_resolved_date,
-        
-        -- Threat intelligence dimensions
-        THREATS.INDICATOR_TYPE as threat_indicator_type,
-        THREATS.THREAT_TYPE as threat_type,
-        THREATS.SEVERITY as threat_severity,
-        THREATS.SOURCE_TYPE as threat_source,
-        
-        -- Vulnerability dimensions
-        VULNS.CVE_ID as vulnerability_cve,
-        VULNS.SEVERITY as vulnerability_severity,
-        VULNS.STATUS as vulnerability_status,
-        VULNS.PATCH_AVAILABLE as patch_available
-    ),
-    facts (
-        -- Authentication facts
-        AUTH_LOGS.LOG_ID as auth_event_count,
-        
-        -- Security incident facts  
-        INCIDENTS.INCIDENT_ID as incident_count,
-        
-        -- Threat intelligence facts
-        THREATS.CONFIDENCE_SCORE as threat_confidence,
-        
-        -- Vulnerability facts
-        VULNS.CVSS_SCORE as vulnerability_score
-    ),
-    expressions (
-        -- Authentication metrics
-        login_success_rate as AVG(CASE WHEN AUTH_LOGS.SUCCESS = TRUE THEN 1.0 ELSE 0.0 END),
-        failed_login_count as COUNT(CASE WHEN AUTH_LOGS.SUCCESS = FALSE THEN 1 END),
-        total_login_attempts as COUNT(AUTH_LOGS.LOG_ID),
-        unique_ip_count as COUNT(DISTINCT AUTH_LOGS.SOURCE_IP),
-        two_factor_usage_rate as AVG(CASE WHEN AUTH_LOGS.TWO_FACTOR_USED = TRUE THEN 1.0 ELSE 0.0 END),
-        
-        -- Security incident metrics
-        total_incidents as COUNT(INCIDENTS.INCIDENT_ID),
-        open_incidents as COUNT(CASE WHEN INCIDENTS.STATUS = 'Open' THEN 1 END),
-        critical_incidents as COUNT(CASE WHEN INCIDENTS.SEVERITY = 'CRITICAL' THEN 1 END),
-        avg_resolution_time_hours as AVG(DATEDIFF(hour, INCIDENTS.CREATED_AT, INCIDENTS.RESOLVED_AT)),
-        
-        -- Threat intelligence metrics
-        high_confidence_threats as COUNT(CASE WHEN THREATS.CONFIDENCE_SCORE > 0.8 THEN 1 END),
-        total_threats as COUNT(THREATS.FEED_ID),
-        avg_threat_confidence as AVG(THREATS.CONFIDENCE_SCORE),
-        
-        -- Vulnerability metrics
-        critical_vulnerabilities as COUNT(CASE WHEN VULNS.SEVERITY = 'Critical' THEN 1 END),
-        total_vulnerabilities as COUNT(VULNS.SCAN_ID),
-        avg_cvss_score as AVG(VULNS.CVSS_SCORE),
-        patchable_vulns as COUNT(CASE WHEN VULNS.PATCH_AVAILABLE = TRUE THEN 1 END)
-    );
+-- Note: The semantic model is created manually via Snowflake UI using the YAML definition.
+-- 
+-- To create the semantic model:
+-- 1. Navigate to Snowflake UI > Data > Semantic Views
+-- 2. Click "Create Semantic View" 
+-- 3. Upload or paste the YAML content from: semantic_models/cybersecurity_semantic_model.yaml
+-- 4. This enables natural language queries through Cortex Analyst
+--
+-- The semantic model includes:
+-- - 5 tables: EMPLOYEE_DATA, USER_AUTHENTICATION_LOGS, SECURITY_INCIDENTS, THREAT_INTEL_FEED, VULNERABILITY_SCANS
+-- - Rich dimensions with synonyms for natural language understanding
+-- - Facts and metrics for cybersecurity KPIs
+-- - Relationships between users, authentication events, and incidents
 
 -- ===============================================
 -- Testing and Validation
@@ -239,25 +159,9 @@ WHERE LOGIN_COUNT IS NOT NULL;
 -- Test the Cortex AI chatbot
 SELECT security_ai_chatbot('What are the main security risks in our authentication data?') as AI_RESPONSE;
 
--- Verify Cortex Analyst semantic view
-SELECT 'Cortex Analyst Semantic View Created' as STATUS;
-
--- Test the semantic view with a sample query
-SELECT * FROM SEMANTIC_VIEW (
-    CYBERSECURITY_SEMANTIC_MODEL
-    DIMENSIONS
-        employee_department,
-        incident_severity
-    EXPRESSIONS
-        total_incidents,
-        avg_resolution_time_hours
-) 
-WHERE total_incidents > 0
-ORDER BY total_incidents DESC
-LIMIT 5;
-
--- Show semantic view information
-SHOW SEMANTIC VIEWS;
+-- Verify Cortex Analyst setup
+SELECT 'Cortex Analyst components ready' as STATUS;
+SELECT 'Create semantic model manually via Snowflake UI or YAML file' as NEXT_STEP;
 
 -- ===============================================
 -- ML Model Comparison View (Placeholder)

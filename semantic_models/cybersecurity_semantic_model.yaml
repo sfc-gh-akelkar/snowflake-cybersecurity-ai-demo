@@ -1,0 +1,544 @@
+name: CYBERSECURITY_SEMANTIC_MODEL
+description: This semantic model provides a comprehensive business intelligence layer for cybersecurity data analysis. It combines user authentication logs, security incidents, threat intelligence, and vulnerability data to enable natural language queries about organizational security posture.
+tables:
+  - name: EMPLOYEE_DATA
+    base_table:
+      database: CYBERSECURITY_DEMO
+      schema: SECURITY_ANALYTICS
+      table: EMPLOYEE_DATA
+    dimensions:
+      - name: USERNAME
+        expr: USERNAME
+        data_type: VARCHAR(16777216)
+        sample_values:
+          - user_0000
+          - user_0001
+          - user_0015
+        description: The username assigned to each employee for system access and identification purposes.
+        synonyms:
+          - user_id
+          - login_name
+          - user_login
+          - account_name
+          - user_account
+          - login_id
+          - user_identifier
+      - name: DEPARTMENT
+        expr: DEPARTMENT
+        data_type: VARCHAR(16777216)
+        sample_values:
+          - Engineering
+          - Marketing
+          - Finance
+        description: The department within the company where the employee is assigned.
+        synonyms:
+          - division
+          - team
+          - unit
+          - section
+          - group
+          - branch
+          - organization
+          - sector
+          - category
+      - name: ROLE
+        expr: ROLE
+        description: The ROLE column represents the job title or position held by an employee within the organization, indicating their level of responsibility and expertise.
+        synonyms:
+          - position
+          - job_title
+          - occupation
+          - designation
+          - title
+          - function
+          - responsibility
+        data_type: VARCHAR(16777216)
+        sample_values:
+          - Analyst
+          - Senior Analyst
+          - Manager
+      - name: STATUS
+        expr: STATUS
+        description: Indicates the current employment status of an employee, either active or inactive.
+        synonyms:
+          - state
+          - condition
+          - situation
+          - standing
+          - employment_status
+          - job_status
+          - current_state
+          - operational_status
+        data_type: VARCHAR(16777216)
+        sample_values:
+          - inactive
+          - active
+    time_dimensions:
+      - name: HIRE_DATE
+        expr: HIRE_DATE
+        data_type: DATE
+        sample_values:
+          - '2023-06-01'
+          - '2022-05-23'
+          - '2024-06-19'
+        description: Date on which the employee was hired by the company.
+        synonyms:
+          - start_date
+          - employment_date
+          - join_date
+          - date_of_hire
+          - date_joined
+          - employment_start_date
+          - hire_anniversary
+    primary_key:
+      columns:
+        - USERNAME
+  - name: USER_AUTHENTICATION_LOGS
+    base_table:
+      database: CYBERSECURITY_DEMO
+      schema: SECURITY_ANALYTICS
+      table: USER_AUTHENTICATION_LOGS
+    dimensions:
+      - name: SOURCE_IP
+        expr: SOURCE_IP
+        data_type: VARCHAR(16777216)
+        sample_values:
+          - 192.168.1.118
+          - 10.0.0.252
+          - 192.168.1.251
+        description: The IP address of the device from which the user attempted to authenticate.
+        synonyms:
+          - originating_ip
+          - ip_address
+          - client_ip
+          - remote_ip
+          - source_address
+          - ip_origin
+          - originating_address
+      - name: LOCATION
+        expr: LOCATION
+        data_type: VARIANT
+        sample_values:
+          - |-
+            {
+              "city": "San Francisco",
+              "country": "US",
+              "state": "CA"
+            }
+          - |-
+            {
+              "city": "New York",
+              "country": "US",
+              "state": "NY"
+            }
+          - |-
+            {
+              "city": "Seattle",
+              "country": "US",
+              "state": "WA"
+            }
+        description: The location from which a user attempted to authenticate, including city, state, and country.
+        synonyms:
+          - site
+          - place
+          - address
+          - geographical_location
+          - coordinates
+          - position
+          - venue
+          - whereabouts
+          - geographical_coordinates
+      - name: SUCCESS
+        expr: SUCCESS
+        data_type: BOOLEAN
+        sample_values:
+          - 'TRUE'
+          - 'FALSE'
+        description: Indicates whether the user authentication attempt was successful or not.
+        synonyms:
+          - status
+          - outcome
+          - result
+          - pass
+          - pass_status
+          - success_status
+          - success_flag
+          - is_successful
+          - passed
+          - succeeded
+      - name: FAILURE_REASON
+        expr: FAILURE_REASON
+        data_type: VARCHAR(16777216)
+        sample_values:
+          - Invalid password
+          - Session timeout
+        description: The reason why a user's authentication attempt was unsuccessful.
+        synonyms:
+          - error_description
+          - failure_description
+          - error_message
+          - reason_for_failure
+          - failure_cause
+          - error_cause
+          - rejection_reason
+      - name: TWO_FACTOR_USED
+        expr: TWO_FACTOR_USED
+        data_type: BOOLEAN
+        sample_values:
+          - 'FALSE'
+          - 'TRUE'
+        description: Indicates whether two-factor authentication was used during the login attempt.
+        synonyms:
+          - two_factor_enabled
+          - two_factor_authenticated
+          - mfa_used
+          - multi_factor_authentication
+          - two_step_verification_used
+          - authentication_method_two_factor
+      - name: USERNAME
+        expr: USERNAME
+        description: The username of the user who attempted to authenticate.
+        synonyms:
+          - user_id
+          - login_name
+          - account_name
+          - user_login
+          - account_username
+          - user_identifier
+        data_type: VARCHAR(16777216)
+    time_dimensions:
+      - name: TIMESTAMP
+        expr: TIMESTAMP
+        data_type: TIMESTAMP_NTZ(9)
+        sample_values:
+          - 2025-06-22T16:00:07.344+0000
+          - 2025-06-11T20:29:07.344+0000
+          - 2025-06-14T18:07:07.344+0000
+        description: The date and time when a user authentication event occurred.
+        synonyms:
+          - date
+          - datetime
+          - log_time
+          - event_time
+          - creation_time
+          - record_time
+          - entry_time
+          - log_date
+    facts:
+      - name: auth_event_count
+        expr: LOG_ID
+        description: The total number of authentication events (e.g. login attempts, password resets, etc.) associated with a user.
+        synonyms:
+          - login_attempts
+          - authentication_events
+          - auth_events_total
+          - security_event_count
+          - access_attempts_count
+        data_type: NUMBER(38, 0)
+  - name: THREAT_INTEL_FEED
+    base_table:
+      database: CYBERSECURITY_DEMO
+      schema: SECURITY_ANALYTICS
+      table: THREAT_INTEL_FEED
+    dimensions:
+      - name: INDICATOR_TYPE
+        expr: INDICATOR_TYPE
+        data_type: VARCHAR(16777216)
+        sample_values:
+          - IP
+          - Domain
+          - Hash
+        description: The type of threat indicator, such as an IP address, domain name, or hash value, that is associated with a specific threat or malicious activity.
+        synonyms:
+          - indicator_category
+          - indicator_class
+          - threat_type_category
+          - alert_type
+          - warning_type
+          - signal_type
+          - notification_category
+          - event_type
+      - name: THREAT_TYPE
+        expr: THREAT_TYPE
+        description: The type of threat or malicious activity detected in the threat intelligence feed, such as malware, phishing, or botnet attacks.
+        synonyms:
+          - threat_category
+          - threat_class
+          - threat_classification
+          - attack_type
+          - risk_type
+          - vulnerability_type
+        data_type: VARCHAR(16777216)
+        sample_values:
+          - Malware
+          - Phishing
+          - Botnet
+      - name: SEVERITY
+        expr: SEVERITY
+        data_type: VARCHAR(16777216)
+        sample_values:
+          - HIGH
+          - MEDIUM
+          - LOW
+        description: The severity level of the threat intelligence feed, indicating the potential impact or risk associated with the threat, categorized as High, Medium, or Low.
+        synonyms:
+          - criticality
+          - threat_level
+          - impact_level
+          - risk_level
+          - danger_level
+          - alert_level
+          - priority
+      - name: SOURCE_TYPE
+        expr: SOURCE_TYPE
+        data_type: VARCHAR(16777216)
+        sample_values:
+          - Commercial
+          - Open Source
+          - Government
+        description: The type of source that provided the threat intelligence, such as a commercial vendor, open source information, or a government agency.
+        synonyms:
+          - data_source
+          - source_origin
+          - origin_type
+          - data_origin
+          - source_category
+          - information_source
+          - feed_source
+          - threat_source
+    facts:
+      - name: threat_confidence
+        expr: CONFIDENCE_SCORE
+        description: A numerical value representing the level of confidence in the accuracy of the threat intelligence, ranging from 0 (no confidence) to 1 (high confidence).
+        synonyms:
+          - threat_accuracy
+          - confidence_level
+          - threat_reliability
+          - confidence_score
+          - threat_certainty
+          - trust_level
+        data_type: FLOAT
+  - name: SECURITY_INCIDENTS
+    base_table:
+      database: CYBERSECURITY_DEMO
+      schema: SECURITY_ANALYTICS
+      table: SECURITY_INCIDENTS
+    dimensions:
+      - name: INCIDENT_TYPE
+        expr: INCIDENT_TYPE
+        data_type: VARCHAR(16777216)
+        sample_values:
+          - Malware Detection
+          - Phishing Attempt
+          - Unauthorized Access
+        description: The type of security incident that occurred, such as the detection of malicious software, an attempt to deceive an individual into divulging sensitive information, or unauthorized access to a system or data.
+        synonyms:
+          - incident_category
+          - event_type
+          - issue_type
+          - problem_category
+          - case_type
+          - occurrence_type
+          - event_classification
+      - name: SEVERITY
+        expr: SEVERITY
+        data_type: VARCHAR(16777216)
+        sample_values:
+          - CRITICAL
+          - HIGH
+          - MEDIUM
+        description: The severity level of the security incident, indicating the potential impact or risk associated with the incident, categorized as Critical (highly severe), High (severe), or Medium (moderate).
+        synonyms:
+          - criticality
+          - impact
+          - intensity
+          - level
+          - priority
+          - seriousness
+          - urgency
+      - name: STATUS
+        expr: STATUS
+        description: The current state of a security incident, indicating whether it is awaiting action (Open), being actively worked on (In Progress), or has been completed and closed (Resolved).
+        synonyms:
+          - state
+          - condition
+          - situation
+          - position
+          - phase
+          - standing
+        data_type: VARCHAR(16777216)
+        sample_values:
+          - Open
+          - In Progress
+          - Resolved
+      - name: ASSIGNED_TO
+        expr: ASSIGNED_TO
+        description: The person or team currently responsible for resolving the security incident.
+        synonyms:
+          - owner
+          - responsible_person
+          - assigned_user
+          - handler
+          - responsible_party
+          - assigned_entity
+          - point_of_contact
+        data_type: VARCHAR(16777216)
+    time_dimensions:
+      - name: CREATED_AT
+        expr: CREATED_AT
+        data_type: TIMESTAMP_NTZ(9)
+        sample_values:
+          - 2025-08-27T07:26:09.649+0000
+        description: Date and time when the security incident was reported or created.
+        synonyms:
+          - created_date
+          - creation_time
+          - incident_timestamp
+          - timestamp
+          - date_created
+          - time_of_creation
+          - inception_time
+          - start_time
+      - name: RESOLVED_AT
+        expr: RESOLVED_AT
+        data_type: TIMESTAMP_NTZ(9)
+        description: The date and time when the security incident was resolved.
+        synonyms:
+          - resolved_on
+          - closed_at
+          - fixed_at
+          - completed_at
+          - resolved_date
+          - closure_date
+          - completion_date
+          - resolved_timestamp
+    facts:
+      - name: incident_count
+        expr: INCIDENT_ID
+        description: The total number of security incidents that have occurred.
+        synonyms:
+          - incident_total
+          - incident_number
+          - incident_tally
+          - incident_volume
+          - incident_quantity
+        data_type: NUMBER(38, 0)
+  - name: VULNERABILITY_SCANS
+    base_table:
+      database: CYBERSECURITY_DEMO
+      schema: SECURITY_ANALYTICS
+      table: VULNERABILITY_SCANS
+    dimensions:
+      - name: CVE_ID
+        expr: CVE_ID
+        data_type: VARCHAR(16777216)
+        description: A unique identifier for a vulnerability, assigned by the Common Vulnerabilities and Exposures (CVE) system, which provides a standardized way to identify and catalog publicly known cybersecurity vulnerabilities.
+        synonyms:
+          - vulnerability_id
+          - cve_number
+          - exploit_id
+          - vulnerability_reference
+          - cve_identifier
+          - exploit_reference
+      - name: SEVERITY
+        expr: SEVERITY
+        data_type: VARCHAR(16777216)
+        description: The severity level of the vulnerability detected during the scan, indicating the potential impact or risk associated with the vulnerability, such as Critical, High, Medium, Low, or Informational.
+        synonyms:
+          - criticality
+          - threat_level
+          - risk_level
+          - impact_level
+          - vulnerability_level
+          - danger_level
+      - name: STATUS
+        expr: STATUS
+        data_type: VARCHAR(16777216)
+        description: The current status of the vulnerability scan, indicating whether it is completed, in progress, or pending.
+        synonyms:
+          - state
+          - condition
+          - situation
+          - position
+          - standing
+          - state_of_being
+          - current_state
+          - progress
+          - phase
+      - name: PATCH_AVAILABLE
+        expr: PATCH_AVAILABLE
+        data_type: BOOLEAN
+        description: Indicates whether a patch is available to remediate the identified vulnerability.
+        synonyms:
+          - fix_available
+          - patch_exists
+          - update_ready
+          - hotfix_available
+          - security_patch_available
+          - patch_ready
+          - fix_ready
+          - update_available
+    facts:
+      - name: vulnerability_score
+        expr: CVSS_SCORE
+        description: A numerical representation of the severity of a vulnerability, with higher values indicating a greater potential impact or risk.
+        synonyms:
+          - risk_score
+          - threat_level
+          - cvss_rating
+          - severity_level
+          - exploitability_score
+          - vulnerability_rating
+        data_type: FLOAT
+    metrics:
+      - name: critical_vulnerabilities
+        expr: COUNT(CASE WHEN SEVERITY = 'Critical' THEN 1 END)
+        description: The number of critical vulnerabilities detected in a vulnerability scan.
+        synonyms:
+          - high_risk_vulnerabilities
+          - severe_vulnerabilities
+          - critical_threats
+          - high_severity_vulnerabilities
+          - critical_exposures
+      - name: total_vulnerabilities
+        expr: COUNT(SCAN_ID)
+        description: The total number of vulnerabilities detected in a vulnerability scan.
+        synonyms:
+          - total_risks
+          - vulnerability_count
+          - risk_count
+          - total_exposures
+          - vulnerability_tally
+          - threat_count
+          - total_weaknesses
+      - name: avg_cvss_score
+        expr: AVG(CVSS_SCORE)
+        description: The average CVSS (Common Vulnerability Scoring System) score of the vulnerabilities detected in the scan, providing a quantitative measure of the severity of the vulnerabilities.
+        synonyms:
+          - average_severity_score
+          - mean_cvss_rating
+          - average_vulnerability_score
+          - cvss_average
+          - average_risk_score
+      - name: patchable_vulns
+        expr: COUNT(CASE WHEN PATCH_AVAILABLE = TRUE THEN 1 END)
+        description: The number of patchable vulnerabilities detected during a scan.
+        synonyms:
+          - fixable_vulns
+          - patch_available_vulns
+          - vulns_with_fix
+          - remediable_vulns
+          - fixable_cves
+relationships:
+  - name: AUTH_TO_USER
+    left_table: USER_AUTHENTICATION_LOGS
+    relationship_columns:
+      - left_column: USERNAME
+        right_column: USERNAME
+    right_table: EMPLOYEE_DATA
+  - name: INCIDENT_TO_USER
+    left_table: SECURITY_INCIDENTS
+    relationship_columns:
+      - left_column: ASSIGNED_TO
+        right_column: USERNAME
+    right_table: EMPLOYEE_DATA

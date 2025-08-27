@@ -98,6 +98,8 @@ This repository demonstrates how Snowflake transforms cybersecurity operations t
 │   ├── 📄 01_cybersecurity_schema.sql               # Database & table creation
 │   ├── 📄 02_sample_data_generation.sql             # Realistic sample data
 │   └── 📄 03_native_ml_and_cortex.sql               # Native ML & Cortex AI setup
+├── 📁 semantic_models/                             # 🧠 CORTEX ANALYST SEMANTIC MODELS
+│   └── 📄 cybersecurity_semantic_model.yaml        # Natural language BI definition
 ├── 📁 notebooks/
 │   ├── 📓 ML_Training_and_Deployment.ipynb         # 🤖 SNOWPARK ML TRAINING
 │   └── 📄 requirements.txt                         # Python dependencies
