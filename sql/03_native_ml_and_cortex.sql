@@ -26,55 +26,30 @@ WHERE TIMESTAMP >= DATEADD(day, -30, CURRENT_TIMESTAMP())
 GROUP BY USERNAME, LOGIN_HOUR
 ORDER BY USERNAME, LOGIN_HOUR;
 
--- Create Native ML anomaly detection using built-in functions
--- For this demo, we'll use a simpler approach with window functions and statistical methods
+-- ===============================================
+-- Snowflake Native ML Anomaly Detection
+-- ===============================================
+-- This showcases Snowflake's built-in ML capabilities using the 
+-- SNOWFLAKE.ML.ANOMALY_DETECTION class for time-series anomaly detection
+
+-- Create and train the Native ML anomaly detection model
+CREATE OR REPLACE SNOWFLAKE.ML.ANOMALY_DETECTION USER_BEHAVIOR_ANOMALY_DETECTOR(
+    INPUT_DATA => TABLE(USER_LOGIN_TIME_SERIES),
+    TIMESTAMP_COLNAME => 'LOGIN_HOUR',
+    TARGET_COLNAME => 'LOGIN_COUNT',
+    LABEL_COLNAME => ''
+);
+
+-- Create a view to access Native ML anomaly detection results
 CREATE OR REPLACE VIEW NATIVE_ML_ANOMALY_RESULTS AS
-WITH user_stats AS (
-    SELECT 
-        USERNAME,
-        LOGIN_HOUR,
-        LOGIN_COUNT,
-        FAILED_ATTEMPTS,
-        UNIQUE_IPS,
-        UNIQUE_COUNTRIES,
-        
-        -- Calculate rolling averages and standard deviations per user
-        AVG(LOGIN_COUNT) OVER (
-            PARTITION BY USERNAME 
-            ORDER BY LOGIN_HOUR 
-            ROWS BETWEEN 10 PRECEDING AND CURRENT ROW
-        ) as avg_login_count,
-        
-        STDDEV(LOGIN_COUNT) OVER (
-            PARTITION BY USERNAME 
-            ORDER BY LOGIN_HOUR 
-            ROWS BETWEEN 10 PRECEDING AND CURRENT ROW
-        ) as stddev_login_count,
-        
-        -- Z-score calculation for anomaly detection
-        (LOGIN_COUNT - AVG(LOGIN_COUNT) OVER (
-            PARTITION BY USERNAME 
-            ORDER BY LOGIN_HOUR 
-            ROWS BETWEEN 10 PRECEDING AND CURRENT ROW
-        )) / NULLIF(STDDEV(LOGIN_COUNT) OVER (
-            PARTITION BY USERNAME 
-            ORDER BY LOGIN_HOUR 
-            ROWS BETWEEN 10 PRECEDING AND CURRENT ROW
-        ), 0) as z_score
-        
-    FROM USER_LOGIN_TIME_SERIES
-)
-SELECT 
-    *,
-    ABS(z_score) as ANOMALY_SCORE,
-    CASE 
-        WHEN ABS(z_score) > 2.5 THEN 1  -- Statistical anomaly threshold
-        WHEN FAILED_ATTEMPTS > 5 THEN 1  -- Business rule for failed attempts
-        WHEN UNIQUE_IPS > 3 THEN 1       -- Business rule for multiple IPs
-        ELSE 0 
-    END as IS_ANOMALY
-FROM user_stats
-WHERE z_score IS NOT NULL;
+SELECT * FROM TABLE(
+    USER_BEHAVIOR_ANOMALY_DETECTOR!DETECT_ANOMALIES(
+        INPUT_DATA => TABLE(USER_LOGIN_TIME_SERIES),
+        TIMESTAMP_COLNAME => 'LOGIN_HOUR', 
+        TARGET_COLNAME => 'LOGIN_COUNT',
+        CONFIG_OBJECT => {'prediction_interval': 0.95}
+    )
+);
 
 -- ===============================================
 -- Cortex AI - Security Chatbot Function
@@ -202,14 +177,15 @@ CREATE OR REPLACE SEMANTIC VIEW CYBERSECURITY_SEMANTIC_MODEL
 -- Testing and Validation
 -- ===============================================
 
--- Test the Native ML model
+-- Test the Snowflake Native ML anomaly detection model
 SELECT 
-    'Testing Native ML Anomaly Detection...' as STATUS,
+    'Testing Snowflake Native ML Anomaly Detection...' as STATUS,
     COUNT(*) as ANALYZED_RECORDS,
-    COUNT(CASE WHEN IS_ANOMALY = 1 THEN 1 END) as ANOMALIES_DETECTED,
-    AVG(ANOMALY_SCORE) as AVG_ANOMALY_SCORE,
-    MAX(ANOMALY_SCORE) as MAX_ANOMALY_SCORE
-FROM NATIVE_ML_ANOMALY_RESULTS;
+    COUNT(CASE WHEN IS_ANOMALY THEN 1 END) as ANOMALIES_DETECTED,
+    AVG(CASE WHEN FORECAST IS NOT NULL THEN ABS(LOGIN_COUNT - FORECAST) ELSE NULL END) as AVG_FORECAST_ERROR,
+    COUNT(CASE WHEN LOWER_BOUND IS NOT NULL AND UPPER_BOUND IS NOT NULL THEN 1 END) as RECORDS_WITH_BOUNDS
+FROM NATIVE_ML_ANOMALY_RESULTS
+WHERE LOGIN_COUNT IS NOT NULL;
 
 -- Test the Cortex AI chatbot
 SELECT security_ai_chatbot('What are the main security risks in our authentication data?') as AI_RESPONSE;
@@ -238,7 +214,7 @@ SHOW SEMANTIC VIEWS;
 -- ML Model Comparison View (Placeholder)
 -- ===============================================
 -- This will be enhanced by the Snowpark ML notebook
--- For now, create a basic version with just Native ML results
+-- For now, create a basic version with Native ML results using proper Snowflake Native ML output
 
 CREATE OR REPLACE VIEW ML_MODEL_COMPARISON AS
 SELECT 
@@ -247,9 +223,9 @@ SELECT
     ed.ROLE,
     CURRENT_TIMESTAMP() as ANALYSIS_DATE,
     
-    -- Native ML Results
-    CASE WHEN n.IS_ANOMALY = 1 THEN TRUE ELSE FALSE END as NATIVE_IS_ANOMALY,
-    COALESCE(n.ANOMALY_SCORE, 0) as NATIVE_ANOMALY_SCORE,
+    -- Native ML Results (from Snowflake's DETECT_ANOMALIES output)
+    n.IS_ANOMALY as NATIVE_IS_ANOMALY,
+    COALESCE(ABS(n.LOGIN_COUNT - n.FORECAST), 0) as NATIVE_ANOMALY_SCORE,
     
     -- Placeholder Snowpark ML Results (will be populated by notebook)
     FALSE as ISOLATION_FOREST_ANOMALY,
@@ -257,18 +233,22 @@ SELECT
     0 as CLUSTER_LABEL,
     0.0 as CLUSTER_DISTANCE,
     
-    -- Basic Risk Assessment (will be enhanced by notebook)
+    -- Enhanced Risk Assessment using Native ML predictions
     CASE 
-        WHEN n.IS_ANOMALY = 1 AND n.LOGIN_COUNT > 50 THEN 'CRITICAL'
-        WHEN n.IS_ANOMALY = 1 THEN 'HIGH'
-        WHEN n.FAILED_ATTEMPTS > 5 THEN 'MEDIUM'
+        WHEN n.IS_ANOMALY = TRUE AND n.LOGIN_COUNT > 50 THEN 'CRITICAL'
+        WHEN n.IS_ANOMALY = TRUE THEN 'HIGH'
+        WHEN n.LOGIN_COUNT < n.LOWER_BOUND OR n.LOGIN_COUNT > n.UPPER_BOUND THEN 'MEDIUM'
         ELSE 'LOW'
     END as RISK_LEVEL,
     
-    -- Basic confidence score
-    CASE WHEN n.IS_ANOMALY = 1 THEN 0.8 ELSE 0.6 END as CONFIDENCE_SCORE,
+    -- Confidence score based on prediction bounds
+    CASE 
+        WHEN n.IS_ANOMALY = TRUE THEN 0.9
+        WHEN n.FORECAST IS NOT NULL THEN 0.7
+        ELSE 0.5 
+    END as CONFIDENCE_SCORE,
     
-    -- Model agreement (placeholder)
+    -- Model agreement (placeholder - will be enhanced by Snowpark ML)
     'NATIVE_ONLY' as MODEL_AGREEMENT
     
 FROM NATIVE_ML_ANOMALY_RESULTS n
