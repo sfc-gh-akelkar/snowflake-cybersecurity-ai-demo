@@ -179,7 +179,7 @@ CREATE OR REPLACE SEMANTIC VIEW CYBERSECURITY_SEMANTIC_MODEL
         VULNS.SEVERITY as vulnerability_severity,
         VULNS.STATUS as vulnerability_status,
         VULNS.PATCH_AVAILABLE as patch_available
-    )
+    ),
     facts (
         -- Authentication facts
         AUTH_LOGS.LOG_ID as auth_event_count,
@@ -192,7 +192,7 @@ CREATE OR REPLACE SEMANTIC VIEW CYBERSECURITY_SEMANTIC_MODEL
         
         -- Vulnerability facts
         VULNS.CVSS_SCORE as vulnerability_score
-    )
+    ),
     expressions (
         -- Authentication metrics
         login_success_rate as AVG(CASE WHEN AUTH_LOGS.SUCCESS = TRUE THEN 1.0 ELSE 0.0 END),
