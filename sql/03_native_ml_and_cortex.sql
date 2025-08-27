@@ -40,8 +40,9 @@ CREATE OR REPLACE SNOWFLAKE.ML.ANOMALY_DETECTION USER_BEHAVIOR_ANOMALY_DETECTOR(
     LABEL_COLNAME => ''
 );
 
--- Create a view to access Native ML anomaly detection results
-CREATE OR REPLACE VIEW NATIVE_ML_ANOMALY_RESULTS AS
+-- Create table to store Native ML anomaly detection results
+-- Note: Views cannot contain procedure calls, so we use a table approach
+CREATE OR REPLACE TABLE NATIVE_ML_ANOMALY_RESULTS AS
 SELECT * FROM TABLE(
     USER_BEHAVIOR_ANOMALY_DETECTOR!DETECT_ANOMALIES(
         INPUT_DATA => TABLE(USER_LOGIN_TIME_SERIES),
@@ -50,6 +51,35 @@ SELECT * FROM TABLE(
         CONFIG_OBJECT => {'prediction_interval': 0.95}
     )
 );
+
+-- Create a view for easier access to the anomaly results
+CREATE OR REPLACE VIEW ANOMALY_DETECTION_VIEW AS
+SELECT * FROM NATIVE_ML_ANOMALY_RESULTS;
+
+-- Create a stored procedure to refresh anomaly detection results
+-- This can be called periodically or on-demand to update anomaly analysis
+CREATE OR REPLACE PROCEDURE REFRESH_ANOMALY_DETECTION()
+RETURNS STRING
+LANGUAGE SQL
+AS
+$$
+BEGIN
+    -- Truncate and repopulate the anomaly results table
+    TRUNCATE TABLE NATIVE_ML_ANOMALY_RESULTS;
+    
+    INSERT INTO NATIVE_ML_ANOMALY_RESULTS
+    SELECT * FROM TABLE(
+        USER_BEHAVIOR_ANOMALY_DETECTOR!DETECT_ANOMALIES(
+            INPUT_DATA => TABLE(USER_LOGIN_TIME_SERIES),
+            TIMESTAMP_COLNAME => 'LOGIN_HOUR', 
+            TARGET_COLNAME => 'LOGIN_COUNT',
+            CONFIG_OBJECT => {'prediction_interval': 0.95}
+        )
+    );
+    
+    RETURN 'Anomaly detection results refreshed successfully';
+END;
+$$;
 
 -- ===============================================
 -- Cortex AI - Security Chatbot Function
@@ -176,6 +206,9 @@ CREATE OR REPLACE SEMANTIC VIEW CYBERSECURITY_SEMANTIC_MODEL
 -- ===============================================
 -- Testing and Validation
 -- ===============================================
+
+-- Run initial anomaly detection to populate results table
+CALL REFRESH_ANOMALY_DETECTION();
 
 -- Test the Snowflake Native ML anomaly detection model
 SELECT 
