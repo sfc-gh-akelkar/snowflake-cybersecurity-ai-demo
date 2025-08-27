@@ -27,23 +27,27 @@ GROUP BY USERNAME, LOGIN_HOUR
 ORDER BY USERNAME, LOGIN_HOUR;
 
 -- Create Native ML anomaly detection model for time-series data
-CREATE OR REPLACE MODEL USER_BEHAVIOR_ANOMALY_DETECTOR(
-    INPUT(USERNAME VARCHAR, LOGIN_HOUR TIMESTAMP, LOGIN_COUNT NUMBER, FAILED_ATTEMPTS NUMBER, UNIQUE_IPS NUMBER, UNIQUE_COUNTRIES NUMBER),
-    OUTPUT(ANOMALY_SCORE FLOAT, IS_ANOMALY BOOLEAN)
-) AS 
+-- Using Snowflake's built-in anomaly detection class
+CREATE OR REPLACE SNOWFLAKE.ML.ANOMALY_DETECTION USER_BEHAVIOR_ANOMALY_DETECTOR(
+    INPUT_DATA => SYSTEM$REFERENCE('VIEW', 'USER_LOGIN_TIME_SERIES'),
+    TIMESTAMP_COLNAME => 'LOGIN_HOUR',
+    TARGET_COLNAME => 'LOGIN_COUNT',
+    LABEL_COLNAME => ''
+);
+
+-- Create a view to easily access anomaly detection results
+CREATE OR REPLACE VIEW NATIVE_ML_ANOMALY_RESULTS AS
 SELECT 
-    USERNAME,
-    LOGIN_HOUR,
-    LOGIN_COUNT,
-    FAILED_ATTEMPTS,
-    UNIQUE_IPS,
-    UNIQUE_COUNTRIES,
-    SNOWFLAKE.ML.ANOMALY_DETECTION(LOGIN_COUNT, FAILED_ATTEMPTS, UNIQUE_IPS, UNIQUE_COUNTRIES) OVER (
-        PARTITION BY USERNAME 
-        ORDER BY LOGIN_HOUR
-        ROWS BETWEEN 10 PRECEDING AND CURRENT ROW
-    ) as (ANOMALY_SCORE, IS_ANOMALY)
-FROM USER_LOGIN_TIME_SERIES;
+    ts.*,
+    anomaly_results.*
+FROM USER_LOGIN_TIME_SERIES ts,
+TABLE(USER_BEHAVIOR_ANOMALY_DETECTOR!DETECT_ANOMALIES(
+    INPUT_DATA => SYSTEM$REFERENCE('VIEW', 'USER_LOGIN_TIME_SERIES'),
+    TIMESTAMP_COLNAME => 'LOGIN_HOUR',
+    TARGET_COLNAME => 'LOGIN_COUNT'
+)) anomaly_results
+WHERE ts.USERNAME = anomaly_results.USERNAME 
+    AND ts.LOGIN_HOUR = anomaly_results.LOGIN_HOUR;
 
 -- ===============================================
 -- Cortex AI - Security Chatbot Function
@@ -73,61 +77,99 @@ $$;
 -- Cortex Analyst - Semantic Model Setup
 -- ===============================================
 
--- Create a semantic model definition for Cortex Analyst
--- This enables natural language queries against our security data
+-- Create a proper Snowflake Semantic View for Cortex Analyst
+-- This enables natural language queries with proper relationships, dimensions, and metrics
 
--- Note: In practice, you would upload the semantic model YAML file
--- For this demo, we'll create the key views that support natural language queries
+-- First, ensure we have ACCOUNTADMIN role for semantic view creation
+-- USE ROLE ACCOUNTADMIN;
 
--- Create a comprehensive view for Cortex Analyst
-CREATE OR REPLACE VIEW SECURITY_ANALYTICS_SUMMARY AS
-SELECT 
-    -- User information
-    ed.USERNAME,
-    ed.DEPARTMENT,
-    ed.ROLE,
-    ed.SECURITY_CLEARANCE,
-    
-    -- Authentication patterns (last 30 days)
-    COUNT(ual.LOG_ID) as TOTAL_LOGINS,
-    COUNT(CASE WHEN ual.SUCCESS = FALSE THEN 1 END) as FAILED_LOGINS,
-    COUNT(DISTINCT ual.SOURCE_IP) as UNIQUE_IPS_USED,
-    COUNT(DISTINCT ual.LOCATION:country::STRING) as COUNTRIES_ACCESSED_FROM,
-    AVG(CASE WHEN ual.TWO_FACTOR_USED THEN 1 ELSE 0 END) as TWO_FACTOR_USAGE_RATE,
-    
-    -- Risk indicators
-    CASE 
-        WHEN COUNT(CASE WHEN ual.SUCCESS = FALSE THEN 1 END) > 10 THEN 'HIGH'
-        WHEN COUNT(DISTINCT ual.SOURCE_IP) > 5 THEN 'MEDIUM'
-        WHEN COUNT(DISTINCT ual.LOCATION:country::STRING) > 2 THEN 'MEDIUM'
-        ELSE 'LOW'
-    END as AUTHENTICATION_RISK_LEVEL,
-    
-    -- Recent activity
-    MAX(ual.TIMESTAMP) as LAST_LOGIN,
-    MIN(ual.TIMESTAMP) as FIRST_LOGIN_IN_PERIOD
-
-FROM EMPLOYEE_DATA ed
-LEFT JOIN USER_AUTHENTICATION_LOGS ual ON ed.USERNAME = ual.USERNAME 
-    AND ual.TIMESTAMP >= DATEADD(day, -30, CURRENT_TIMESTAMP())
-GROUP BY ed.USERNAME, ed.DEPARTMENT, ed.ROLE, ed.SECURITY_CLEARANCE;
-
--- Create incident summary view for Cortex Analyst
-CREATE OR REPLACE VIEW INCIDENT_ANALYTICS AS
-SELECT 
-    INCIDENT_TYPE,
-    SEVERITY,
-    STATUS,
-    COUNT(*) as INCIDENT_COUNT,
-    AVG(CASE 
-        WHEN RESOLVED_AT IS NOT NULL THEN 
-            DATEDIFF(hour, CREATED_AT, RESOLVED_AT) 
-        ELSE NULL 
-    END) as AVG_RESOLUTION_TIME_HOURS,
-    COUNT(CASE WHEN STATUS = 'Open' THEN 1 END) as OPEN_INCIDENTS,
-    COUNT(CASE WHEN CREATED_AT >= DATEADD(day, -7, CURRENT_TIMESTAMP()) THEN 1 END) as RECENT_INCIDENTS
-FROM SECURITY_INCIDENTS
-GROUP BY INCIDENT_TYPE, SEVERITY, STATUS;
+-- Create the Cybersecurity Semantic View
+CREATE OR REPLACE SEMANTIC VIEW CYBERSECURITY_SEMANTIC_MODEL
+    tables (
+        EMPLOYEES as EMPLOYEE_DATA primary key (USERNAME),
+        AUTH_LOGS as USER_AUTHENTICATION_LOGS primary key (LOG_ID),
+        INCIDENTS as SECURITY_INCIDENTS primary key (INCIDENT_ID),
+        THREATS as THREAT_INTEL_FEED primary key (FEED_ID),
+        VULNS as VULNERABILITY_SCANS primary key (SCAN_ID)
+    )
+    relationships (
+        AUTH_TO_USER as AUTH_LOGS(USERNAME) references EMPLOYEES(USERNAME),
+        INCIDENT_TO_USER as INCIDENTS(ASSIGNED_TO) references EMPLOYEES(USERNAME)
+    )
+    dimensions (
+        -- Employee dimensions
+        EMPLOYEES.USERNAME as employee_username,
+        EMPLOYEES.DEPARTMENT as employee_department,
+        EMPLOYEES.ROLE as employee_role,
+        EMPLOYEES.SECURITY_CLEARANCE as security_clearance_level,
+        EMPLOYEES.STATUS as employee_status,
+        EMPLOYEES.HIRE_DATE as hire_date,
+        
+        -- Authentication dimensions
+        AUTH_LOGS.SOURCE_IP as source_ip_address,
+        AUTH_LOGS.LOCATION as login_location,
+        AUTH_LOGS.SUCCESS as login_success,
+        AUTH_LOGS.TWO_FACTOR_USED as two_factor_enabled,
+        AUTH_LOGS.FAILURE_REASON as failure_reason,
+        AUTH_LOGS.TIMESTAMP as auth_timestamp,
+        
+        -- Security incident dimensions
+        INCIDENTS.INCIDENT_TYPE as incident_type,
+        INCIDENTS.SEVERITY as incident_severity,
+        INCIDENTS.STATUS as incident_status,
+        INCIDENTS.CREATED_AT as incident_created_date,
+        INCIDENTS.RESOLVED_AT as incident_resolved_date,
+        
+        -- Threat intelligence dimensions
+        THREATS.INDICATOR_TYPE as threat_indicator_type,
+        THREATS.THREAT_TYPE as threat_type,
+        THREATS.SEVERITY as threat_severity,
+        THREATS.SOURCE_TYPE as threat_source,
+        
+        -- Vulnerability dimensions
+        VULNS.CVE_ID as vulnerability_cve,
+        VULNS.SEVERITY as vulnerability_severity,
+        VULNS.STATUS as vulnerability_status,
+        VULNS.PATCH_AVAILABLE as patch_available
+    )
+    facts (
+        -- Authentication facts
+        AUTH_LOGS.LOG_ID as auth_event_count,
+        
+        -- Security incident facts  
+        INCIDENTS.INCIDENT_ID as incident_count,
+        
+        -- Threat intelligence facts
+        THREATS.CONFIDENCE_SCORE as threat_confidence,
+        
+        -- Vulnerability facts
+        VULNS.CVSS_SCORE as vulnerability_score
+    )
+    expressions (
+        -- Authentication metrics
+        login_success_rate as AVG(CASE WHEN AUTH_LOGS.SUCCESS = TRUE THEN 1.0 ELSE 0.0 END),
+        failed_login_count as COUNT(CASE WHEN AUTH_LOGS.SUCCESS = FALSE THEN 1 END),
+        total_login_attempts as COUNT(AUTH_LOGS.LOG_ID),
+        unique_ip_count as COUNT(DISTINCT AUTH_LOGS.SOURCE_IP),
+        two_factor_usage_rate as AVG(CASE WHEN AUTH_LOGS.TWO_FACTOR_USED = TRUE THEN 1.0 ELSE 0.0 END),
+        
+        -- Security incident metrics
+        total_incidents as COUNT(INCIDENTS.INCIDENT_ID),
+        open_incidents as COUNT(CASE WHEN INCIDENTS.STATUS = 'Open' THEN 1 END),
+        critical_incidents as COUNT(CASE WHEN INCIDENTS.SEVERITY = 'CRITICAL' THEN 1 END),
+        avg_resolution_time_hours as AVG(DATEDIFF(hour, INCIDENTS.CREATED_AT, INCIDENTS.RESOLVED_AT)),
+        
+        -- Threat intelligence metrics
+        high_confidence_threats as COUNT(CASE WHEN THREATS.CONFIDENCE_SCORE > 0.8 THEN 1 END),
+        total_threats as COUNT(THREATS.FEED_ID),
+        avg_threat_confidence as AVG(THREATS.CONFIDENCE_SCORE),
+        
+        -- Vulnerability metrics
+        critical_vulnerabilities as COUNT(CASE WHEN VULNS.SEVERITY = 'Critical' THEN 1 END),
+        total_vulnerabilities as COUNT(VULNS.SCAN_ID),
+        avg_cvss_score as AVG(VULNS.CVSS_SCORE),
+        patchable_vulns as COUNT(CASE WHEN VULNS.PATCH_AVAILABLE = TRUE THEN 1 END)
+    );
 
 -- ===============================================
 -- Testing and Validation
@@ -137,22 +179,103 @@ GROUP BY INCIDENT_TYPE, SEVERITY, STATUS;
 SELECT 
     'Testing Native ML Anomaly Detection...' as STATUS,
     COUNT(*) as ANALYZED_RECORDS,
-    AVG(ANOMALY_SCORE) as AVG_ANOMALY_SCORE,
-    COUNT(CASE WHEN IS_ANOMALY THEN 1 END) as ANOMALIES_DETECTED
-FROM (
-    SELECT * FROM ML.PREDICT(
-        MODEL USER_BEHAVIOR_ANOMALY_DETECTOR,
-        (SELECT * FROM USER_LOGIN_TIME_SERIES LIMIT 1000)
-    )
-);
+    COUNT(CASE WHEN IS_ANOMALY = 1 THEN 1 END) as ANOMALIES_DETECTED
+FROM NATIVE_ML_ANOMALY_RESULTS;
 
 -- Test the Cortex AI chatbot
 SELECT security_ai_chatbot('What are the main security risks in our authentication data?') as AI_RESPONSE;
 
--- Verify Cortex Analyst views
-SELECT 'Cortex Analyst Views Created' as STATUS;
-SELECT COUNT(*) as USERS_WITH_RISK_ANALYSIS FROM SECURITY_ANALYTICS_SUMMARY;
-SELECT COUNT(*) as INCIDENT_ANALYTICS_RECORDS FROM INCIDENT_ANALYTICS;
+-- Verify Cortex Analyst semantic view
+SELECT 'Cortex Analyst Semantic View Created' as STATUS;
+
+-- Test the semantic view with a sample query
+SELECT * FROM SEMANTIC_VIEW (
+    CYBERSECURITY_SEMANTIC_MODEL
+    DIMENSIONS
+        employee_department,
+        incident_severity
+    EXPRESSIONS
+        total_incidents,
+        avg_resolution_time_hours
+) 
+WHERE total_incidents > 0
+ORDER BY total_incidents DESC
+LIMIT 5;
+
+-- Show semantic view information
+SHOW SEMANTIC VIEWS;
+
+-- ===============================================
+-- ML Model Comparison View (Placeholder)
+-- ===============================================
+-- This will be enhanced by the Snowpark ML notebook
+-- For now, create a basic version with just Native ML results
+
+CREATE OR REPLACE VIEW ML_MODEL_COMPARISON AS
+SELECT 
+    n.USERNAME,
+    ed.DEPARTMENT,
+    ed.ROLE,
+    CURRENT_TIMESTAMP() as ANALYSIS_DATE,
+    
+    -- Native ML Results
+    CASE WHEN n.IS_ANOMALY = 1 THEN TRUE ELSE FALSE END as NATIVE_IS_ANOMALY,
+    COALESCE(n.ANOMALY_SCORE, 0) as NATIVE_ANOMALY_SCORE,
+    
+    -- Placeholder Snowpark ML Results (will be populated by notebook)
+    FALSE as ISOLATION_FOREST_ANOMALY,
+    0.0 as ISOLATION_FOREST_SCORE,
+    0 as CLUSTER_LABEL,
+    0.0 as CLUSTER_DISTANCE,
+    
+    -- Basic Risk Assessment (will be enhanced by notebook)
+    CASE 
+        WHEN n.IS_ANOMALY = 1 AND n.LOGIN_COUNT > 50 THEN 'CRITICAL'
+        WHEN n.IS_ANOMALY = 1 THEN 'HIGH'
+        WHEN n.FAILED_ATTEMPTS > 5 THEN 'MEDIUM'
+        ELSE 'LOW'
+    END as RISK_LEVEL,
+    
+    -- Basic confidence score
+    CASE WHEN n.IS_ANOMALY = 1 THEN 0.8 ELSE 0.6 END as CONFIDENCE_SCORE,
+    
+    -- Model agreement (placeholder)
+    'NATIVE_ONLY' as MODEL_AGREEMENT
+    
+FROM NATIVE_ML_ANOMALY_RESULTS n
+JOIN EMPLOYEE_DATA ed ON n.USERNAME = ed.USERNAME
+WHERE ed.STATUS = 'active';
+
+-- ===============================================
+-- Example Natural Language Queries for Cortex Analyst
+-- ===============================================
+
+/*
+With the CYBERSECURITY_SEMANTIC_MODEL semantic view, you can now ask Cortex Analyst 
+natural language questions like:
+
+1. "Show me login success rates by department"
+2. "What are the critical security incidents by severity?"
+3. "Which employees have the most failed login attempts?"
+4. "Show me vulnerability counts by department"
+5. "What is the average resolution time for security incidents?"
+6. "Which departments have the highest two-factor authentication usage?"
+7. "Show me threat intelligence by confidence score"
+
+Cortex Analyst will automatically translate these to semantic SQL queries like:
+
+SELECT * FROM SEMANTIC_VIEW (
+    CYBERSECURITY_SEMANTIC_MODEL
+    DIMENSIONS employee_department
+    EXPRESSIONS login_success_rate, failed_login_count
+)
+ORDER BY failed_login_count DESC;
+*/
 
 SELECT 'Native ML and Cortex AI setup completed!' as FINAL_STATUS;
 SELECT 'Next step: Run the Snowpark ML training notebook!' as NEXT_ACTION;
+
+-- Dynamic Cortex Analyst URL (uncomment to use in Snowflake Notebooks)
+-- SELECT 'https://app.snowflake.com/' || CURRENT_ORGANIZATION_NAME() || '/' || CURRENT_ACCOUNT_NAME() || 
+--        '/#/studio/analyst/databases/CYBERSECURITY_DEMO/schemas/SECURITY_ANALYTICS/semanticView/CYBERSECURITY_SEMANTIC_MODEL/edit' 
+--        AS CORTEX_ANALYST_URL;
