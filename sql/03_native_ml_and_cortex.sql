@@ -26,28 +26,55 @@ WHERE TIMESTAMP >= DATEADD(day, -30, CURRENT_TIMESTAMP())
 GROUP BY USERNAME, LOGIN_HOUR
 ORDER BY USERNAME, LOGIN_HOUR;
 
--- Create Native ML anomaly detection model for time-series data
--- Using Snowflake's built-in anomaly detection class
-CREATE OR REPLACE SNOWFLAKE.ML.ANOMALY_DETECTION USER_BEHAVIOR_ANOMALY_DETECTOR(
-    INPUT_DATA => SYSTEM$REFERENCE('VIEW', 'USER_LOGIN_TIME_SERIES'),
-    TIMESTAMP_COLNAME => 'LOGIN_HOUR',
-    TARGET_COLNAME => 'LOGIN_COUNT',
-    LABEL_COLNAME => ''
-);
-
--- Create a view to easily access anomaly detection results
+-- Create Native ML anomaly detection using built-in functions
+-- For this demo, we'll use a simpler approach with window functions and statistical methods
 CREATE OR REPLACE VIEW NATIVE_ML_ANOMALY_RESULTS AS
+WITH user_stats AS (
+    SELECT 
+        USERNAME,
+        LOGIN_HOUR,
+        LOGIN_COUNT,
+        FAILED_ATTEMPTS,
+        UNIQUE_IPS,
+        UNIQUE_COUNTRIES,
+        
+        -- Calculate rolling averages and standard deviations per user
+        AVG(LOGIN_COUNT) OVER (
+            PARTITION BY USERNAME 
+            ORDER BY LOGIN_HOUR 
+            ROWS BETWEEN 10 PRECEDING AND CURRENT ROW
+        ) as avg_login_count,
+        
+        STDDEV(LOGIN_COUNT) OVER (
+            PARTITION BY USERNAME 
+            ORDER BY LOGIN_HOUR 
+            ROWS BETWEEN 10 PRECEDING AND CURRENT ROW
+        ) as stddev_login_count,
+        
+        -- Z-score calculation for anomaly detection
+        (LOGIN_COUNT - AVG(LOGIN_COUNT) OVER (
+            PARTITION BY USERNAME 
+            ORDER BY LOGIN_HOUR 
+            ROWS BETWEEN 10 PRECEDING AND CURRENT ROW
+        )) / NULLIF(STDDEV(LOGIN_COUNT) OVER (
+            PARTITION BY USERNAME 
+            ORDER BY LOGIN_HOUR 
+            ROWS BETWEEN 10 PRECEDING AND CURRENT ROW
+        ), 0) as z_score
+        
+    FROM USER_LOGIN_TIME_SERIES
+)
 SELECT 
-    ts.*,
-    anomaly_results.*
-FROM USER_LOGIN_TIME_SERIES ts,
-TABLE(USER_BEHAVIOR_ANOMALY_DETECTOR!DETECT_ANOMALIES(
-    INPUT_DATA => SYSTEM$REFERENCE('VIEW', 'USER_LOGIN_TIME_SERIES'),
-    TIMESTAMP_COLNAME => 'LOGIN_HOUR',
-    TARGET_COLNAME => 'LOGIN_COUNT'
-)) anomaly_results
-WHERE ts.USERNAME = anomaly_results.USERNAME 
-    AND ts.LOGIN_HOUR = anomaly_results.LOGIN_HOUR;
+    *,
+    ABS(z_score) as ANOMALY_SCORE,
+    CASE 
+        WHEN ABS(z_score) > 2.5 THEN 1  -- Statistical anomaly threshold
+        WHEN FAILED_ATTEMPTS > 5 THEN 1  -- Business rule for failed attempts
+        WHEN UNIQUE_IPS > 3 THEN 1       -- Business rule for multiple IPs
+        ELSE 0 
+    END as IS_ANOMALY
+FROM user_stats
+WHERE z_score IS NOT NULL;
 
 -- ===============================================
 -- Cortex AI - Security Chatbot Function
@@ -179,7 +206,9 @@ CREATE OR REPLACE SEMANTIC VIEW CYBERSECURITY_SEMANTIC_MODEL
 SELECT 
     'Testing Native ML Anomaly Detection...' as STATUS,
     COUNT(*) as ANALYZED_RECORDS,
-    COUNT(CASE WHEN IS_ANOMALY = 1 THEN 1 END) as ANOMALIES_DETECTED
+    COUNT(CASE WHEN IS_ANOMALY = 1 THEN 1 END) as ANOMALIES_DETECTED,
+    AVG(ANOMALY_SCORE) as AVG_ANOMALY_SCORE,
+    MAX(ANOMALY_SCORE) as MAX_ANOMALY_SCORE
 FROM NATIVE_ML_ANOMALY_RESULTS;
 
 -- Test the Cortex AI chatbot
