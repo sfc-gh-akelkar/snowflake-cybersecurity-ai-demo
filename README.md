@@ -104,7 +104,7 @@ This repository demonstrates how Snowflake transforms cybersecurity operations t
 │   ├── 📓 ML_Training_and_Deployment.ipynb         # 🤖 SNOWPARK ML TRAINING
 │   └── 📄 requirements.txt                         # Python dependencies
 └── 📁 python/
-    └── 📄 streamlit_cybersecurity_demo.py          # 📱 COMPREHENSIVE STREAMLIT APP
+    └── 📄 streamlit_cybersecurity_demo.py          # 📱 CORTEX ANALYST-POWERED APP
 ```
 
 ## 🚀 Quick Start

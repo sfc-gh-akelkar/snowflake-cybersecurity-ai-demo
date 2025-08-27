@@ -125,13 +125,15 @@ $$;
 -- Cortex Analyst - Semantic Model Setup
 -- ===============================================
 
--- Note: The semantic model is created manually via Snowflake UI using the YAML definition.
--- 
--- To create the semantic model:
--- 1. Navigate to Snowflake UI > Data > Semantic Views
--- 2. Click "Create Semantic View" 
--- 3. Upload or paste the YAML content from: semantic_models/cybersecurity_semantic_model.yaml
--- 4. This enables natural language queries through Cortex Analyst
+-- Create stage for Cortex Analyst semantic model file
+CREATE OR REPLACE STAGE SEMANTIC_MODEL_STAGE 
+DIRECTORY = (ENABLE = TRUE)
+COMMENT = 'Stage for storing Cortex Analyst semantic model YAML files';
+
+-- Note: Upload the semantic model YAML file to this stage:
+-- 1. Navigate to Snowflake UI > Data > Databases > CYBERSECURITY_DEMO > SECURITY_ANALYTICS > Stages > SEMANTIC_MODEL_STAGE
+-- 2. Click "Upload Files" and upload: semantic_models/cybersecurity_semantic_model.yaml
+-- 3. This enables the Cortex Analyst chatbot in the Streamlit app
 --
 -- The semantic model includes:
 -- - 5 tables: EMPLOYEE_DATA, USER_AUTHENTICATION_LOGS, SECURITY_INCIDENTS, THREAT_INTEL_FEED, VULNERABILITY_SCANS

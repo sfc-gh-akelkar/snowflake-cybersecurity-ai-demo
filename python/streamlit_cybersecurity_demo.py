@@ -9,8 +9,8 @@ Features:
 - ML-Powered Anomaly Detection  
 - Threat Intelligence Analytics
 - User Behavior Analysis
-- AI Security Assistant (Cortex AI)
-- Natural Language Analytics (Cortex Analyst)
+- AI Security Assistant (Cortex Analyst)  
+- Natural Language Analytics (Semantic Models)
 - Real-time Security Monitoring
 
 Use Cases Demonstrated:
@@ -31,7 +31,8 @@ from plotly.subplots import make_subplots
 import numpy as np
 from datetime import datetime, timedelta
 import json
-from typing import Dict, Any, Optional
+import requests
+from typing import Dict, Any, Optional, List
 
 # Import Snowflake modules
 from snowflake.snowpark.context import get_active_session
@@ -46,6 +47,89 @@ st.set_page_config(
 
 # Get Snowflake session
 session = get_active_session()
+
+# =====================================================
+# CORTEX ANALYST CONFIGURATION
+# =====================================================
+
+# Configuration for Cortex Analyst
+DATABASE = "CYBERSECURITY_DEMO"
+SCHEMA = "SECURITY_ANALYTICS" 
+STAGE = "SEMANTIC_MODEL_STAGE"
+FILE = "cybersecurity_semantic_model.yaml"
+
+def send_cortex_analyst_message(prompt: str) -> Dict[str, Any]:
+    """Calls the Cortex Analyst REST API and returns the response."""
+    try:
+        # Get connection info from active session
+        connection_params = session.connection.get_config()
+        account = connection_params.get('account')
+        host = f"{account}.snowflakecomputing.com"
+        
+        request_body = {
+            "messages": [{"role": "user", "content": [{"type": "text", "text": prompt}]}],
+            "semantic_model_file": f"@{DATABASE}.{SCHEMA}.{STAGE}/{FILE}",
+        }
+        
+        resp = requests.post(
+            url=f"https://{host}/api/v2/cortex/analyst/message",
+            json=request_body,
+            headers={
+                "Authorization": f'Snowflake Token="{session.connection.rest.token}"',
+                "Content-Type": "application/json",
+            },
+        )
+        
+        request_id = resp.headers.get("X-Snowflake-Request-Id")
+        if resp.status_code < 400:
+            return {**resp.json(), "request_id": request_id}
+        else:
+            raise Exception(f"Failed request (id: {request_id}) with status {resp.status_code}: {resp.text}")
+    except Exception as e:
+        st.error(f"Cortex Analyst API Error: {str(e)}")
+        return None
+
+def display_cortex_content(content: List[Dict[str, str]], request_id: Optional[str] = None) -> None:
+    """Displays content from Cortex Analyst response."""
+    if request_id:
+        with st.expander("🔍 Request ID", expanded=False):
+            st.code(request_id)
+    
+    for item in content:
+        if item["type"] == "text":
+            st.markdown(item["text"])
+        elif item["type"] == "suggestions":
+            with st.expander("💡 Suggested Questions", expanded=True):
+                for suggestion in item["suggestions"]:
+                    if st.button(f"➤ {suggestion}", key=f"suggestion_{hash(suggestion)}"):
+                        st.session_state.active_suggestion = suggestion
+        elif item["type"] == "sql":
+            with st.expander("📊 Generated SQL Query", expanded=False):
+                st.code(item["statement"], language="sql")
+            
+            with st.expander("📈 Query Results", expanded=True):
+                with st.spinner("Executing query..."):
+                    try:
+                        # Execute the SQL using Snowflake session
+                        df = session.sql(item["statement"]).to_pandas()
+                        
+                        if len(df.index) > 1:
+                            # Create tabs for different visualizations
+                            data_tab, line_tab, bar_tab = st.tabs(["📋 Data", "📈 Line Chart", "📊 Bar Chart"])
+                            
+                            with data_tab:
+                                st.dataframe(df, use_container_width=True)
+                            
+                            if len(df.columns) > 1:
+                                df_viz = df.set_index(df.columns[0])
+                                with line_tab:
+                                    st.line_chart(df_viz)
+                                with bar_tab:
+                                    st.bar_chart(df_viz)
+                        else:
+                            st.dataframe(df, use_container_width=True)
+                    except Exception as e:
+                        st.error(f"Error executing query: {str(e)}")
 
 # =====================================================
 # UTILITY FUNCTIONS
@@ -427,71 +511,114 @@ def show_threat_intelligence(days_back):
         st.plotly_chart(fig_heatmap, use_container_width=True)
 
 def show_ai_assistant():
-    """AI-powered security assistant"""
-    st.header("🤖 Security AI Assistant")
-    st.markdown("*Intelligent security analysis powered by Cortex AI*")
+    """Cortex Analyst-powered security assistant"""
+    st.header("🤖 Cortex Analyst Security Assistant")
+    st.markdown("*Ask questions about your cybersecurity data in natural language*")
     
-    # Chat interface
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+    # Display semantic model info
+    with st.expander("📋 Semantic Model Information", expanded=False):
+        st.markdown(f"""
+        **Model**: `{FILE}`  
+        **Database**: `{DATABASE}.{SCHEMA}`  
+        **Stage**: `{STAGE}`
+        
+        **Available Data**:
+        - 👥 Employee Data (departments, roles, security clearances)
+        - 🔐 Authentication Logs (login attempts, sources, failures)
+        - 🚨 Security Incidents (types, severity, status)
+        - 🛡️ Threat Intelligence (indicators, confidence scores)
+        - 🔍 Vulnerability Scans (CVE scores, patch availability)
+        
+        **Example Questions**:
+        - "Which departments have the most failed login attempts?"
+        - "Show me critical security incidents this month"
+        - "What's the average CVSS score by department?"
+        - "Which employees had login attempts from multiple countries?"
+        """)
+    
+    # Initialize chat history and suggestions
+    if "cortex_messages" not in st.session_state:
+        st.session_state.cortex_messages = []
+        st.session_state.active_suggestion = None
     
     # Display chat messages
-    for message in st.session_state.messages:
+    for message_index, message in enumerate(st.session_state.cortex_messages):
         with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+            if message["role"] == "assistant":
+                display_cortex_content(
+                    content=message["content"],
+                    request_id=message.get("request_id")
+                )
+            else:
+                st.markdown(message["content"][0]["text"])
+    
+    # Handle suggestions
+    if st.session_state.active_suggestion:
+        process_cortex_message(st.session_state.active_suggestion)
+        st.session_state.active_suggestion = None
     
     # Chat input
-    if prompt := st.chat_input("Ask about security status, threats, or anomalies..."):
-        # Add user message
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-        
-        # Generate AI response
-        with st.chat_message("assistant"):
-            with st.spinner("Analyzing security data..."):
-                try:
-                    # Try to use Cortex AI if available
-                    ai_response = run_query(f"""
-                        SELECT security_ai_chatbot('{prompt}') as response
-                    """)
-                    
-                    if not ai_response.empty:
-                        response = ai_response['RESPONSE'].iloc[0]
-                    else:
-                        response = generate_fallback_response(prompt)
-                    
-                except:
-                    response = generate_fallback_response(prompt)
-                
-                st.markdown(response)
-                st.session_state.messages.append({"role": "assistant", "content": response})
+    if prompt := st.chat_input("Ask me about your cybersecurity data..."):
+        process_cortex_message(prompt)
 
-def generate_fallback_response(prompt):
-    """Generate fallback responses when Cortex AI is not available"""
-    prompt_lower = prompt.lower()
+def process_cortex_message(prompt: str) -> None:
+    """Processes a message using Cortex Analyst and adds response to chat."""
+    # Add user message to chat history
+    st.session_state.cortex_messages.append({
+        "role": "user", 
+        "content": [{"type": "text", "text": prompt}]
+    })
     
-    if any(word in prompt_lower for word in ['status', 'overview', 'summary']):
-        return """📊 **Current Security Status**: 
-        - ✅ All systems operational
-        - 🎯 ML models actively monitoring for anomalies
-        - 📈 No critical threats detected in last 24 hours
-        - 👥 User behavior patterns within normal ranges"""
+    # Display user message
+    with st.chat_message("user"):
+        st.markdown(prompt)
     
-    elif any(word in prompt_lower for word in ['threat', 'attack', 'malware']):
-        return """🚨 **Threat Analysis**:
-        - 🔍 Continuous threat intelligence monitoring active
-        - ⚡ Real-time correlation with external threat feeds
-        - 🛡️ ML-powered detection reduces false positives by 85%
-        - 📊 Recommend reviewing latest threat intelligence dashboard"""
-    
-        else:
-        return """🤖 I'm your security AI assistant! I can help analyze:
-        - 📊 Current security status and metrics
-        - 🔍 Anomaly detection results
-        - 🚨 Threat intelligence insights
-        - 👥 User behavior patterns
-        - 📈 Security trends and patterns"""
+    # Generate and display assistant response
+    with st.chat_message("assistant"):
+        with st.spinner("Analyzing with Cortex Analyst..."):
+            response = send_cortex_analyst_message(prompt)
+            
+            if response:
+                request_id = response.get("request_id")
+                content = response["message"]["content"]
+                display_cortex_content(content=content, request_id=request_id)
+                
+                # Add to chat history
+                st.session_state.cortex_messages.append({
+                    "role": "assistant", 
+                    "content": content, 
+                    "request_id": request_id
+                })
+            else:
+                # Fallback response
+                fallback_content = [{
+                    "type": "text",
+                    "text": """❌ **Cortex Analyst Unavailable**
+                    
+This could be due to:
+- Semantic model file not uploaded to stage
+- Cortex Analyst not enabled for this account
+- Network connectivity issues
+
+**To enable Cortex Analyst**:
+1. Upload `cybersecurity_semantic_model.yaml` to stage `SEMANTIC_MODEL_STAGE`
+2. Ensure Cortex Analyst is enabled for your account
+3. Verify your role has the required privileges
+
+**Try these sample insights instead**:
+- Recent authentication patterns show 85% success rate
+- 15% of logins fail due to invalid passwords
+- Engineering department has highest activity volume
+- 3 critical security incidents currently open
+                    """
+                }]
+                display_cortex_content(content=fallback_content)
+                
+                # Add fallback to chat history
+                st.session_state.cortex_messages.append({
+                    "role": "assistant",
+                    "content": fallback_content
+                })
 
 def show_user_analytics(days_back):
     """User behavior analytics"""
