@@ -12,8 +12,8 @@ USE WAREHOUSE CYBERSECURITY_WH;
 -- Snowflake Native ML - Time Series Anomaly Detection
 -- ===============================================
 
--- Create a view that prepares data for Native ML time-series analysis
-CREATE OR REPLACE VIEW USER_LOGIN_TIME_SERIES AS
+-- Create training data for Native ML (older data for training)
+CREATE OR REPLACE VIEW USER_LOGIN_TIME_SERIES_TRAINING AS
 SELECT 
     USERNAME,
     DATE_TRUNC('hour', TIMESTAMP) as LOGIN_HOUR,
@@ -23,6 +23,21 @@ SELECT
     COUNT(DISTINCT LOCATION:country::STRING) as UNIQUE_COUNTRIES
 FROM USER_AUTHENTICATION_LOGS 
 WHERE TIMESTAMP >= DATEADD(day, -30, CURRENT_TIMESTAMP())
+    AND TIMESTAMP <= DATEADD(day, -7, CURRENT_TIMESTAMP())  -- Train on older data
+GROUP BY USERNAME, LOGIN_HOUR
+ORDER BY USERNAME, LOGIN_HOUR;
+
+-- Create evaluation data for Native ML (newer data for evaluation)
+CREATE OR REPLACE VIEW USER_LOGIN_TIME_SERIES_EVALUATION AS
+SELECT 
+    USERNAME,
+    DATE_TRUNC('hour', TIMESTAMP) as LOGIN_HOUR,
+    COUNT(*) as LOGIN_COUNT,
+    COUNT(CASE WHEN SUCCESS = FALSE THEN 1 END) as FAILED_ATTEMPTS,
+    COUNT(DISTINCT SOURCE_IP) as UNIQUE_IPS,
+    COUNT(DISTINCT LOCATION:country::STRING) as UNIQUE_COUNTRIES
+FROM USER_AUTHENTICATION_LOGS 
+WHERE TIMESTAMP > DATEADD(day, -7, CURRENT_TIMESTAMP())  -- Evaluate on recent data
 GROUP BY USERNAME, LOGIN_HOUR
 ORDER BY USERNAME, LOGIN_HOUR;
 
@@ -32,9 +47,9 @@ ORDER BY USERNAME, LOGIN_HOUR;
 -- This showcases Snowflake's built-in ML capabilities using the 
 -- SNOWFLAKE.ML.ANOMALY_DETECTION class for time-series anomaly detection
 
--- Create and train the Native ML anomaly detection model
+-- Create and train the Native ML anomaly detection model using training data
 CREATE OR REPLACE SNOWFLAKE.ML.ANOMALY_DETECTION USER_BEHAVIOR_ANOMALY_DETECTOR(
-    INPUT_DATA => TABLE(USER_LOGIN_TIME_SERIES),
+    INPUT_DATA => TABLE(USER_LOGIN_TIME_SERIES_TRAINING),
     TIMESTAMP_COLNAME => 'LOGIN_HOUR',
     TARGET_COLNAME => 'LOGIN_COUNT',
     LABEL_COLNAME => ''
@@ -42,10 +57,11 @@ CREATE OR REPLACE SNOWFLAKE.ML.ANOMALY_DETECTION USER_BEHAVIOR_ANOMALY_DETECTOR(
 
 -- Create table to store Native ML anomaly detection results
 -- Note: Views cannot contain procedure calls, so we use a table approach
+-- Train on older data, evaluate on newer data to satisfy time-series requirements
 CREATE OR REPLACE TABLE NATIVE_ML_ANOMALY_RESULTS AS
 SELECT * FROM TABLE(
     USER_BEHAVIOR_ANOMALY_DETECTOR!DETECT_ANOMALIES(
-        INPUT_DATA => TABLE(USER_LOGIN_TIME_SERIES),
+        INPUT_DATA => TABLE(USER_LOGIN_TIME_SERIES_EVALUATION),
         TIMESTAMP_COLNAME => 'LOGIN_HOUR', 
         TARGET_COLNAME => 'LOGIN_COUNT',
         CONFIG_OBJECT => {'prediction_interval': 0.95}
@@ -70,7 +86,7 @@ BEGIN
     INSERT INTO NATIVE_ML_ANOMALY_RESULTS
     SELECT * FROM TABLE(
         USER_BEHAVIOR_ANOMALY_DETECTOR!DETECT_ANOMALIES(
-            INPUT_DATA => TABLE(USER_LOGIN_TIME_SERIES),
+            INPUT_DATA => TABLE(USER_LOGIN_TIME_SERIES_EVALUATION),
             TIMESTAMP_COLNAME => 'LOGIN_HOUR', 
             TARGET_COLNAME => 'LOGIN_COUNT',
             CONFIG_OBJECT => {'prediction_interval': 0.95}
