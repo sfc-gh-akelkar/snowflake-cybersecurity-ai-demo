@@ -329,29 +329,29 @@ def show_executive_dashboard(days_back):
         st.metric("🚨 Security Incidents", format_metric(incident_count))
         
         with col2:
-        critical_threats = run_query(f"""
-            SELECT COUNT(*) as count 
-            FROM THREAT_INTEL_FEED 
-            WHERE severity = 'critical' 
-            AND first_seen >= DATEADD(day, -{days_back}, CURRENT_TIMESTAMP())
-        """)
-        threat_count = critical_threats['COUNT'].iloc[0] if not critical_threats.empty else 0
-        st.metric("⚡ Critical Threats", format_metric(threat_count))
+            critical_threats = run_query(f"""
+                SELECT COUNT(*) as count 
+                FROM THREAT_INTEL_FEED 
+                WHERE severity = 'critical' 
+                AND first_seen >= DATEADD(day, -{days_back}, CURRENT_TIMESTAMP())
+            """)
+            threat_count = critical_threats['COUNT'].iloc[0] if not critical_threats.empty else 0
+            st.metric("⚡ Critical Threats", format_metric(threat_count))
         
         with col3:
-        ml_anomalies = run_query(f"""
-            SELECT COUNT(*) as count 
-            FROM ML_MODEL_COMPARISON 
-            WHERE risk_level IN ('CRITICAL', 'HIGH')
-            AND analysis_date >= DATEADD(day, -{days_back}, CURRENT_TIMESTAMP())
-        """)
-        anomaly_count = ml_anomalies['COUNT'].iloc[0] if not ml_anomalies.empty else 0
-        st.metric("🎯 ML Anomalies", format_metric(anomaly_count))
+            ml_anomalies = run_query(f"""
+                SELECT COUNT(*) as count 
+                FROM ML_MODEL_COMPARISON 
+                WHERE risk_level IN ('CRITICAL', 'HIGH')
+                AND analysis_date >= DATEADD(day, -{days_back}, CURRENT_TIMESTAMP())
+            """)
+            anomaly_count = ml_anomalies['COUNT'].iloc[0] if not ml_anomalies.empty else 0
+            st.metric("🎯 ML Anomalies", format_metric(anomaly_count))
         
         with col4:
-        total_users = run_query("SELECT COUNT(DISTINCT username) as count FROM EMPLOYEE_DATA")
-        user_count = total_users['COUNT'].iloc[0] if not total_users.empty else 0
-        st.metric("👥 Protected Users", format_metric(user_count))
+            total_users = run_query("SELECT COUNT(DISTINCT username) as count FROM EMPLOYEE_DATA")
+            user_count = total_users['COUNT'].iloc[0] if not total_users.empty else 0
+            st.metric("👥 Protected Users", format_metric(user_count))
     
     # Risk trend chart
     st.subheader("📈 Security Risk Trends")
@@ -376,7 +376,7 @@ def show_executive_dashboard(days_back):
                          'MEDIUM': '#FFD700',
                          'LOW': '#90EE90'
                      })
-            st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True)
     
 def show_anomaly_detection(days_back):
     """ML-powered anomaly detection analytics"""
@@ -776,7 +776,7 @@ def show_cortex_analyst():
                     
                     with st.expander("🔍 View Generated SQL"):
                         st.code(response.get('sql', 'Not available'), language='sql')
-        else:
+            else:
                 st.error(f"❌ {response.get('error', 'Unknown error occurred')}")
     
     # Quick action buttons
