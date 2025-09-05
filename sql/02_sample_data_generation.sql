@@ -70,7 +70,20 @@ SELECT
             ELSE 
                 UNIFORM(0, 1440, RANDOM()) -- Any time
         END,
-        DATEADD(day, -UNIFORM(0, 90, RANDOM()), CURRENT_TIMESTAMP())
+        DATEADD(day, 
+            CASE 
+                -- 70% in last 7 days (ensures ML training data)
+                WHEN UNIFORM(1,10,RANDOM()) <= 7 THEN 
+                    -UNIFORM(0, 7, RANDOM()) -- Last week
+                -- 25% in last 30 days (still qualifies for ML)
+                WHEN UNIFORM(1,10,RANDOM()) <= 9 THEN 
+                    -UNIFORM(7, 30, RANDOM()) -- Last month
+                -- 5% older (historical context)
+                ELSE 
+                    -UNIFORM(30, 90, RANDOM()) -- Older data
+            END,
+            CURRENT_TIMESTAMP()
+        )
     ) as timestamp,
     
     -- Generate realistic IP addresses (mix of corporate and remote)
