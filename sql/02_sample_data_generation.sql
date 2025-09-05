@@ -1,18 +1,12 @@
 -- ===============================================
 -- Cybersecurity Demo - Sample Data Generation
 -- ===============================================
--- This script generates realistic sample data optimized for dashboard visualization
+-- This script generates realistic sample data for the cybersecurity demo
 -- Prerequisites: Run 01_cybersecurity_schema.sql first
 
 USE DATABASE CYBERSECURITY_DEMO;
 USE SCHEMA SECURITY_ANALYTICS;
 USE WAREHOUSE CYBERSECURITY_WH;
-
--- Clear existing data for fresh demo (optional - uncomment if needed)
--- TRUNCATE TABLE IF EXISTS USER_AUTHENTICATION_LOGS;
--- TRUNCATE TABLE IF EXISTS EMPLOYEE_DATA;
--- TRUNCATE TABLE IF EXISTS SECURITY_INCIDENTS;
--- TRUNCATE TABLE IF EXISTS THREAT_INTEL_FEED;
 
 -- ===============================================
 -- Employee Data Generation
@@ -56,49 +50,35 @@ FROM TABLE(GENERATOR(ROWCOUNT => 500));
 -- Authentication Logs Generation
 -- ===============================================
 
--- Generate authentication data with enhanced time distribution for dashboards
+-- Generate 90 days of authentication data (realistic patterns)
 INSERT INTO USER_AUTHENTICATION_LOGS 
 (USERNAME, TIMESTAMP, SOURCE_IP, LOCATION, SUCCESS, FAILURE_REASON, USER_AGENT, SESSION_ID, TWO_FACTOR_USED)
 SELECT 
-    -- Select from actual employees with weighted distribution
-    CASE 
-        WHEN UNIFORM(1,10,RANDOM()) <= 7 THEN 
-            (SELECT USERNAME FROM EMPLOYEE_DATA WHERE STATUS = 'active' ORDER BY RANDOM() LIMIT 1)
-        ELSE 
-            (SELECT USERNAME FROM EMPLOYEE_DATA ORDER BY RANDOM() LIMIT 1)
-    END as username,
+    -- Select random users from our employee data
+    (SELECT USERNAME FROM EMPLOYEE_DATA ORDER BY RANDOM() LIMIT 1) as username,
     
-    -- Enhanced timestamp generation with more recent activity for dashboards
-    DATEADD(second, 
-        UNIFORM(0, 86400, RANDOM()), -- Random seconds within day
-        DATEADD(hour,
-            CASE 
-                -- 40% in last 7 days (very recent for dashboards)
-                WHEN UNIFORM(1,10,RANDOM()) <= 4 THEN 
-                    -UNIFORM(0, 168, RANDOM()) -- Last week
-                -- 30% in last 30 days (recent)
-                WHEN UNIFORM(1,10,RANDOM()) <= 7 THEN 
-                    -UNIFORM(168, 720, RANDOM()) -- Last month
-                -- 30% in last 90 days (historical)
-                ELSE 
-                    -UNIFORM(720, 2160, RANDOM()) -- Last 3 months
-            END,
-            CURRENT_TIMESTAMP()
-        )
+    -- Generate timestamps over last 90 days with business hour bias
+    DATEADD(minute, 
+        CASE 
+            -- 70% during business hours (8 AM - 6 PM on weekdays)
+            WHEN UNIFORM(1,10,RANDOM()) <= 7 THEN 
+                UNIFORM(480, 1080, RANDOM()) -- 8 AM to 6 PM in minutes
+            -- 20% during extended hours (6 AM - 10 PM)
+            WHEN UNIFORM(1,10,RANDOM()) <= 9 THEN 
+                UNIFORM(360, 1320, RANDOM()) -- 6 AM to 10 PM
+            -- 10% during off hours (night/weekend)
+            ELSE 
+                UNIFORM(0, 1440, RANDOM()) -- Any time
+        END,
+        DATEADD(day, -UNIFORM(0, 90, RANDOM()), CURRENT_TIMESTAMP())
     ) as timestamp,
     
-    -- Enhanced IP generation with suspicious patterns for demos
-    CASE (seq4() % 12)
+    -- Generate realistic IP addresses (mix of corporate and remote)
+    CASE (seq4() % 10)
         WHEN 0 THEN '192.168.1.' || UNIFORM(10, 254, RANDOM())
         WHEN 1 THEN '10.0.0.' || UNIFORM(10, 254, RANDOM())
         WHEN 2 THEN '172.16.1.' || UNIFORM(10, 254, RANDOM())
-        WHEN 3 THEN '172.16.2.' || UNIFORM(10, 254, RANDOM())
-        WHEN 4 THEN '10.1.0.' || UNIFORM(10, 254, RANDOM())
-        WHEN 5 THEN '192.168.100.' || UNIFORM(10, 254, RANDOM())
-        -- Suspicious/external IPs for demo anomaly detection
-        WHEN 6 THEN '203.0.113.' || UNIFORM(1, 254, RANDOM()) -- TEST-NET-3
-        WHEN 7 THEN '198.51.100.' || UNIFORM(1, 254, RANDOM()) -- TEST-NET-2
-        -- Normal external IPs
+        -- External IPs for remote work
         ELSE UNIFORM(1, 223, RANDOM()) || '.' || 
              UNIFORM(0, 255, RANDOM()) || '.' || 
              UNIFORM(0, 255, RANDOM()) || '.' || 
@@ -117,16 +97,8 @@ SELECT
         ELSE PARSE_JSON('{"country": "SG", "state": "Central", "city": "Singapore"}')
     END as location,
     
-    -- Enhanced success/failure patterns for better anomaly detection
-    CASE 
-        -- Some users have consistent failures (potential compromise)
-        WHEN MOD(HASH(username), 50) = 1 AND UNIFORM(1,100,RANDOM()) <= 40 THEN FALSE
-        -- Some IPs are consistently suspicious
-        WHEN source_ip LIKE '203.0.113.%' AND UNIFORM(1,100,RANDOM()) <= 60 THEN FALSE
-        -- Normal pattern: 88% success
-        WHEN UNIFORM(1,100,RANDOM()) <= 88 THEN TRUE 
-        ELSE FALSE 
-    END as success,
+    -- 85% success rate, 15% failures
+    CASE WHEN UNIFORM(1,100,RANDOM()) <= 85 THEN TRUE ELSE FALSE END as success,
     
     -- Failure reasons for unsuccessful logins
     CASE WHEN UNIFORM(1,100,RANDOM()) > 85 THEN
@@ -155,14 +127,14 @@ SELECT
     -- 60% use two-factor authentication
     CASE WHEN UNIFORM(1,100,RANDOM()) <= 60 THEN TRUE ELSE FALSE END as two_factor_used
 
-FROM TABLE(GENERATOR(ROWCOUNT => 120000)); -- More data for richer dashboards
+FROM TABLE(GENERATOR(ROWCOUNT => 100000));
 
 -- ===============================================
 -- Security Incidents Data
 -- ===============================================
 
--- Generate security incidents with timestamps for dashboard relevance
-INSERT INTO SECURITY_INCIDENTS (INCIDENT_TYPE, SEVERITY, STATUS, ASSIGNED_TO, DESCRIPTION, AFFECTED_SYSTEMS, CREATED_AT)
+-- Generate security incidents
+INSERT INTO SECURITY_INCIDENTS (INCIDENT_TYPE, SEVERITY, STATUS, ASSIGNED_TO, DESCRIPTION, AFFECTED_SYSTEMS)
 SELECT 
     CASE (seq4() % 8)
         WHEN 0 THEN 'Malware Detection'
@@ -192,28 +164,11 @@ SELECT
     
     (SELECT USERNAME FROM EMPLOYEE_DATA WHERE DEPARTMENT = 'Security' ORDER BY RANDOM() LIMIT 1) as assigned_to,
     
-    CASE (seq4() % 6)
-        WHEN 0 THEN 'Automated detection triggered for suspicious activity pattern in user authentication logs'
-        WHEN 1 THEN 'Multiple failed login attempts detected from single IP address'
-        WHEN 2 THEN 'Unusual data access pattern identified during off-hours'
-        WHEN 3 THEN 'Suspicious file download activity detected'
-        WHEN 4 THEN 'Potential credential stuffing attack identified'
-        ELSE 'Anomalous network traffic pattern detected'
-    END as description,
+    'Automated detection triggered for suspicious activity pattern' as description,
     
-    ARRAY_CONSTRUCT(
-        'server-' || UNIFORM(1,50,RANDOM()), 
-        'endpoint-' || UNIFORM(1,200,RANDOM()),
-        CASE WHEN UNIFORM(1,3,RANDOM()) = 1 THEN 'database-' || UNIFORM(1,10,RANDOM()) ELSE NULL END
-    ) as affected_systems,
-    
-    -- Recent incident timestamps for dashboard relevance
-    DATEADD(hour, 
-        -UNIFORM(0, 720, RANDOM()), -- Last 30 days
-        CURRENT_TIMESTAMP()
-    ) as created_at
+    ARRAY_CONSTRUCT('server-' || UNIFORM(1,20,RANDOM()), 'endpoint-' || UNIFORM(1,100,RANDOM())) as affected_systems
 
-FROM TABLE(GENERATOR(ROWCOUNT => 250)); -- More incidents for analysis
+FROM TABLE(GENERATOR(ROWCOUNT => 200));
 
 -- ===============================================
 -- Threat Intelligence Feed
@@ -222,27 +177,31 @@ FROM TABLE(GENERATOR(ROWCOUNT => 250)); -- More incidents for analysis
 -- Generate enhanced threat intelligence data with timestamps
 INSERT INTO THREAT_INTEL_FEED (INDICATOR_TYPE, INDICATOR_VALUE, THREAT_TYPE, SEVERITY, CONFIDENCE_SCORE, SOURCE_TYPE, FIRST_SEEN, LAST_SEEN)
 SELECT 
-    CASE (seq4() % 4)
+    CASE (seq4() % 5)
         WHEN 0 THEN 'IP'
         WHEN 1 THEN 'Domain'
         WHEN 2 THEN 'Hash'
-        ELSE 'URL'
+        WHEN 3 THEN 'URL'
+        ELSE 'Email'
     END as indicator_type,
     
-    CASE (seq4() % 4)
+    CASE (seq4() % 5)
         WHEN 0 THEN UNIFORM(1, 223, RANDOM()) || '.' || UNIFORM(0, 255, RANDOM()) || '.' || UNIFORM(0, 255, RANDOM()) || '.' || UNIFORM(1, 254, RANDOM())
         WHEN 1 THEN 'malicious-' || UNIFORM(1000, 9999, RANDOM()) || '.com'
-        WHEN 2 THEN 'a' || SUBSTR(UUID_STRING(), 1, 32)
-        ELSE 'http://suspicious-site-' || UNIFORM(100, 999, RANDOM()) || '.org/malware'
+        WHEN 2 THEN 'sha256:' || LOWER(SUBSTR(UUID_STRING() || UUID_STRING(), 1, 64))
+        WHEN 3 THEN 'http://suspicious-site-' || UNIFORM(100, 999, RANDOM()) || '.org/malware'
+        ELSE 'phishing.' || UNIFORM(100, 999, RANDOM()) || '@spam-domain.net'
     END as indicator_value,
     
-    CASE (seq4() % 6)
+    CASE (seq4() % 8)
         WHEN 0 THEN 'Malware'
         WHEN 1 THEN 'Phishing'
         WHEN 2 THEN 'Botnet'
         WHEN 3 THEN 'APT'
         WHEN 4 THEN 'Ransomware'
-        ELSE 'Trojan'
+        WHEN 5 THEN 'Trojan'
+        WHEN 6 THEN 'Command and Control'
+        ELSE 'Data Exfiltration'
     END as threat_type,
     
     CASE (seq4() % 3)
@@ -251,7 +210,7 @@ SELECT
         ELSE 'LOW'
     END as severity,
     
-    UNIFORM(50, 100, RANDOM()) / 100.0 as confidence_score,
+    UNIFORM(60, 100, RANDOM()) / 100.0 as confidence_score,
     
     CASE (seq4() % 5)
         WHEN 0 THEN 'Commercial Feed'
@@ -266,28 +225,6 @@ SELECT
     DATEADD(day, -UNIFORM(0, 7, RANDOM()), CURRENT_TIMESTAMP()) as last_seen
 
 FROM TABLE(GENERATOR(ROWCOUNT => 1200)); -- More threat intel for analysis
-
--- ===============================================
--- Additional Demo Data for Dashboard Richness
--- ===============================================
-
--- Create some targeted scenarios for CEO account (high-value user)
-INSERT INTO USER_AUTHENTICATION_LOGS 
-(USERNAME, TIMESTAMP, SOURCE_IP, LOCATION, SUCCESS, FAILURE_REASON, USER_AGENT, SESSION_ID, TWO_FACTOR_USED)
-SELECT 
-    'user_0001' as username, -- CEO account
-    DATEADD(hour, -seq4(), CURRENT_TIMESTAMP()) as timestamp,
-    CASE WHEN seq4() <= 5 THEN '192.168.1.100' ELSE '203.0.113.' || UNIFORM(1,50,RANDOM()) END as source_ip,
-    CASE WHEN source_ip LIKE '192.168.%' 
-        THEN PARSE_JSON('{"country": "US", "state": "CA", "city": "San Francisco"}')
-        ELSE PARSE_JSON('{"country": "CN", "state": "Beijing", "city": "Beijing"}')
-    END as location,
-    CASE WHEN source_ip NOT LIKE '192.168.%' THEN FALSE ELSE TRUE END as success,
-    CASE WHEN success = FALSE THEN 'Geo-location policy violation' ELSE NULL END as failure_reason,
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' as user_agent,
-    UUID_STRING() as session_id,
-    TRUE as two_factor_used
-FROM TABLE(GENERATOR(ROWCOUNT => 20));
 
 -- ===============================================
 -- Enhanced Data Verification and Analytics
